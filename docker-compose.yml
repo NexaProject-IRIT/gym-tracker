@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: gym_postgres
+    environment:
+      POSTGRES_USER: gym_user
+      POSTGRES_PASSWORD: gym_password
+      POSTGRES_DB: gym_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    container_name: gym_backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://gym_user:gym_password@db:5432/gym_db
+    volumes:
+      - ./backend:/app # Это нужно, чтобы код обновлялся без перезагрузки контейнера
+
+  frontend:
+    build: ./frontend
+    container_name: gym_frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # Изолируем зависимости контейнера
+
+volumes:
+  postgres_data:
