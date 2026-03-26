@@ -6,6 +6,9 @@ from app.models import exercise  # Импортируем, чтобы SQLAlchemy
 from sqlalchemy import func
 from app.models import workout
 from app.routes import exercises, workouts
+from app.md_parser import rebuild_exercises_json
+from app.exercise_sync import sync_exercises_to_api_after_startup
+import asyncio
 
 # Создаем таблицы в БД
 Base.metadata.create_all(bind=engine)
@@ -60,3 +63,13 @@ def get_statistics(db: Session = Depends(get_db)):
         "total_exercises": total_exercises,
         "workout_types": [{"type": wt[0], "count": wt[1]} for wt in workout_types]
     }
+
+@app.on_event("startup")
+async def startup_event():
+    rebuild_exercises_json()
+    asyncio.create_task(sync_exercises_to_api_after_startup())
+
+@app.post("/api/exercises/")
+def receive_exercise(exercise_data: dict):
+    print("[API] Получено упражнение:", exercise_data.get("name"))
+    return {"status": "ok", "received": exercise_data.get("name")}
