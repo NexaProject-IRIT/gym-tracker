@@ -2,17 +2,20 @@ from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+import asyncio
 
 from app.database.connection import engine, Base, get_db
 from app.models import exercise, workout
 from app.routes import exercises, workouts
+from app.md_parser import rebuild_exercises_json
+from app.exercise_sync import sync_exercises_to_api_after_startup
 
 # 1. Создаем таблицы
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Gym Tracker API")
 
-# 2. Настраиваем CORS (объединенный список разрешений)
+# 2. Настраиваем CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://frontend:5173"],
@@ -21,9 +24,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 3. Подключаем роутеры (путь ребят)
+# 3. Подключаем роутеры
 app.include_router(exercises.router)
 app.include_router(workouts.router)
+
+# Логика синхронизации при запуске (от ребят)
+@app.on_event("startup")
+async def startup_event():
+    rebuild_exercises_json()
+    asyncio.create_task(sync_exercises_to_api_after_startup())
 
 @app.get("/")
 def read_root():
@@ -35,15 +44,6 @@ def read_root():
             "workouts": "/workouts/"
         }
     }
-
-# Тестовый эндпоинт для проверки БД
-@app.get("/health/db")
-def health_check_db(db: Session = Depends(get_db)):
-    try:
-        db.execute("SELECT 1")
-        return {"status": "ok", "message": "Database connection successful"}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
 
 # Твой эндпоинт статистики
 @app.get("/api/statistics")
@@ -61,3 +61,8 @@ def get_statistics(db: Session = Depends(get_db)):
         "total_exercises": total_exercises,
         "workout_types": [{"type": wt[0], "count": wt[1]} for wt in workout_types]
     }
+
+@app.post("/api/exercises/")
+def receive_exercise(exercise_data: dict):
+    print("[API] Получено упражнение:", exercise_data.get("name"))
+    return {"status": "ok", "received": exercise_data.get("name")}
