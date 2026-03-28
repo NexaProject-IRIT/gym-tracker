@@ -5,7 +5,9 @@ import requests
 
 from app.md_parser import OUTPUT_JSON_PATH
 
-API_URL = "http://backend:8000/api/exercises/"
+
+API_URL = "http://backend:8000/exercises/"
+
 
 
 def load_exercises_from_json(json_path: Path) -> list:
