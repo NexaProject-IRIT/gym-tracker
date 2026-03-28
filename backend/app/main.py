@@ -3,9 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from app.database.connection import engine, Base, get_db
 from app.models import exercise  # Импортируем, чтобы SQLAlchemy увидел модель
-from sqlalchemy import func
+from sqlalchemy import func, text
 from app.models import workout
 from app.routes import exercises, workouts
+from app.md_parser import rebuild_exercises_json
+from app.exercise_sync import sync_exercises_to_api_after_startup
+import asyncio
 
 # Создаем таблицы в БД
 Base.metadata.create_all(bind=engine)
@@ -14,7 +17,7 @@ app = FastAPI(title="Gym Tracker API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://frontend:5173"],
+    allow_origins=["http://localhost:5173", "http://frontend:5173", "http://127.0.0.1:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -38,7 +41,7 @@ def read_root():
 @app.get("/health/db")
 def health_check_db(db: Session = Depends(get_db)):
     try:
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))
         return {"status": "ok", "message": "Database connection successful"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -60,3 +63,8 @@ def get_statistics(db: Session = Depends(get_db)):
         "total_exercises": total_exercises,
         "workout_types": [{"type": wt[0], "count": wt[1]} for wt in workout_types]
     }
+
+@app.on_event("startup")
+async def startup_event():
+    rebuild_exercises_json()
+    asyncio.create_task(sync_exercises_to_api_after_startup())

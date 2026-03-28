@@ -24,8 +24,8 @@ class WorkoutExercise(Base):
     workout_id = Column(Integer, ForeignKey("workouts.id"), nullable=False)
     exercise_id = Column(String, nullable=True)  # ссылка на exercise.uid, может быть null для кастомных
     custom_name = Column(String, nullable=True)
-    sets = Column(Integer, nullable=False)
-    reps = Column(Integer, nullable=False)
+    sets = Column(Integer, nullable=True)
+    reps = Column(Integer, nullable=True)
     weight = Column(Float, nullable=True)
     time = Column(Integer, nullable=True)
     distance = Column(Float, nullable=True)

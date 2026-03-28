@@ -11,7 +11,6 @@ class Exercise(Base):
     uid = Column(String, unique=True, index=True, nullable=False)  # для соответствия id из TypeScript
     name = Column(String, index=True, nullable=False)
     equipment = Column(String, nullable=True)
-    type = Column(String, nullable=False) # Силовое, Кардио и т.д.
     target_muscles = Column(JSON, nullable=True) # JSON или строка через запятую
     description = Column(Text, nullable=True)
     tags = Column(JSON, nullable=True)  # храним как JSON массив
