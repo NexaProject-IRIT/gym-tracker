@@ -1,6 +1,5 @@
 from enum import Enum
-
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 from datetime import datetime
 
@@ -13,18 +12,20 @@ class WorkoutType(str, Enum):
     CUSTOM = 'custom'
 
 class WorkoutExercise(BaseModel):
-    id: str
+    id: Optional[str] = None
     exerciseId: str
     customName: Optional[str] = None
-    sets: int
-    reps: int
+    sets: Optional[int] = None
+    reps: Optional[int] = None
     weight: Optional[float] = None
     time: Optional[int] = None
     distance: Optional[float] = None
     isCustom: bool = False
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        from_attributes=True
+    )
 
 class Workout(BaseModel):
     id: str
@@ -34,8 +35,11 @@ class Workout(BaseModel):
     exercises: List[WorkoutExercise]
     color: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        from_attributes=True
+    )
+
 
 # Для списка тренировок (краткая информация)
 class WorkoutListItem(BaseModel):
@@ -46,5 +50,33 @@ class WorkoutListItem(BaseModel):
     color: str
     exercise_count: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        from_attributes=True
+    )
+
+# Для создания тренировки
+class WorkoutCreate(BaseModel):
+    name: str
+    type: WorkoutType
+    date: Optional[datetime] = None
+    exercises: List[WorkoutExercise]
+    color: Optional[str] = None
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        from_attributes=True
+    )
+
+    # Для обновления тренировки
+class WorkoutUpdate(BaseModel):
+    name: Optional[str] = None
+    type: Optional[WorkoutType] = None
+    date: Optional[datetime] = None
+    exercises: Optional[List[WorkoutExercise]] = None
+    color: Optional[str] = None
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        from_attributes=True
+    )

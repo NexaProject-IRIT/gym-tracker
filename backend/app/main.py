@@ -10,12 +10,12 @@ from app.routes import exercises, workouts
 from app.md_parser import rebuild_exercises_json
 from app.exercise_sync import sync_exercises_to_api_after_startup
 
-# 1. Создаем таблицы
+# Создаем таблицы
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Gym Tracker API")
 
-# 2. Настраиваем CORS
+# Настраиваем CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://frontend:5173"],
@@ -24,11 +24,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 3. Подключаем роутеры
+# Подключаем роутеры (те самые CRUD)
 app.include_router(exercises.router)
 app.include_router(workouts.router)
 
-# Логика синхронизации при запуске (от ребят)
+# Логика синхронизации при запуске
 @app.on_event("startup")
 async def startup_event():
     rebuild_exercises_json()

@@ -21,13 +21,12 @@ def init_db():
     try:
         print("Добавление тестовых упражнений...")
 
-        # Создаем упражнения с добавленным полем type
+        # Упражнения без поля type
         exercises = [
             {
                 "uid": str(uuid.uuid4()),
                 "name": "Присед со штангой",
-                "type": "strength",  # ✅ ДОБАВЛЕНО
-                "description": "Базовое упражнение для ног",
+                "description": "Базовое упражнение для развития мышц ног. Держите спину прямой, опускайтесь до параллели бедер с полом.",
                 "equipment": "Штанга, стойка для приседа",
                 "target_muscles": ["quadriceps", "glutes", "hamstrings"],
                 "tags": ["#ноги", "#база", "#силовое"],
@@ -40,8 +39,7 @@ def init_db():
             {
                 "uid": str(uuid.uuid4()),
                 "name": "Жим штанги лежа",
-                "type": "strength",  # ✅ ДОБАВЛЕНО
-                "description": "Базовое упражнение для груди",
+                "description": "Базовое упражнение для развития грудных мышц. Лягте на скамью, ноги на полу.",
                 "equipment": "Штанга, скамья для жима",
                 "target_muscles": ["chest", "triceps", "shoulders"],
                 "tags": ["#грудь", "#база", "#силовое"],
@@ -54,8 +52,7 @@ def init_db():
             {
                 "uid": str(uuid.uuid4()),
                 "name": "Бег на дорожке",
-                "type": "cardio",  # ✅ ДОБАВЛЕНО
-                "description": "Кардио упражнение",
+                "description": "Кардио упражнение для улучшения выносливости и сжигания калорий.",
                 "equipment": "Беговая дорожка",
                 "target_muscles": ["cardiovascular", "legs"],
                 "tags": ["#кардио", "#ноги"],
@@ -68,8 +65,7 @@ def init_db():
             {
                 "uid": str(uuid.uuid4()),
                 "name": "Планка",
-                "type": "flexibility",  # ✅ ДОБАВЛЕНО
-                "description": "Упражнение для кора",
+                "description": "Статическое упражнение для укрепления мышц кора. Держите тело прямым.",
                 "equipment": "Коврик",
                 "target_muscles": ["abs", "core"],
                 "tags": ["#пресс", "#гибкость"],
@@ -82,8 +78,7 @@ def init_db():
             {
                 "uid": str(uuid.uuid4()),
                 "name": "Тяга верхнего блока",
-                "type": "strength",  # ✅ ДОБАВЛЕНО (новое упражнение)
-                "description": "Упражнение для широчайших мышц спины",
+                "description": "Упражнение для развития широчайших мышц спины.",
                 "equipment": "Верхний блок",
                 "target_muscles": ["lats", "biceps"],
                 "tags": ["#спина", "#силовое"],
@@ -96,8 +91,7 @@ def init_db():
             {
                 "uid": str(uuid.uuid4()),
                 "name": "Скручивания на пресс",
-                "type": "flexibility",  # ✅ ДОБАВЛЕНО (новое упражнение)
-                "description": "Изолированное упражнение для пресса",
+                "description": "Изолированное упражнение для прямой мышцы живота.",
                 "equipment": "Коврик",
                 "target_muscles": ["abs"],
                 "tags": ["#пресс", "#гибкость"],
@@ -119,7 +113,7 @@ def init_db():
                 parameters = [
                     {"exercise_id": exercise.id, "type": "sets", "label": "Подходы", "unit": ""},
                     {"exercise_id": exercise.id, "type": "reps", "label": "Повторения", "unit": ""},
-                    {"exercise_id": exercise.id, "type": "weight", "label": "Вес", "unit": "кг"}
+                    {"exercise_id": exercise.id, "type": "weight", "label": "Вес", "unit": "кг"}  # ← исправлено
                 ]
             elif ex_data["name"] == "Бег на дорожке":
                 parameters = [
@@ -147,7 +141,7 @@ def init_db():
                 db.add(param)
 
         db.commit()
-        print("Упражнения добавлены")
+        print("✅ Упражнения добавлены")
 
         print("Добавление тестовых тренировок...")
 
@@ -286,14 +280,16 @@ def init_db():
                 db.add(workout_exercise)
 
         db.commit()
-        print("Тренировки добавлены")
+        print("✅ Тренировки добавлены")
 
-        print("\n✅ База данных успешно инициализирована!")
+        print("\n" + "="*50)
+        print("✅ База данных успешно инициализирована!")
         print(f"📊 Добавлено упражнений: {len(exercises)}")
         print(f"📊 Добавлено тренировок: {len(workouts)}")
+        print("="*50)
 
     except Exception as e:
-        print(f"❌ Ошибка: {e}")
+        print(f"\n❌ Ошибка: {e}")
         db.rollback()
         raise
     finally:
