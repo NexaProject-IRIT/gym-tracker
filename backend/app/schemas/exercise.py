@@ -61,12 +61,12 @@ class ExerciseListItem(BaseModel):
 
 class ExerciseCreate(BaseModel):
     name: str
-    description: str
-    equipment: str
-    targetMuscles: List[str]
-    tags: List[str]
-    parameters: List[ExerciseParameter]
-    images: ExerciseImages
+    description: str = ""
+    equipment: str = ""
+    targetMuscles: List[str] = []
+    tags: List[str] = []
+    parameters: List[ExerciseParameter] = []
+    images: Optional[List[str]] = []
 
     model_config = ConfigDict(
         populate_by_name=True,
