@@ -83,6 +83,13 @@ def create_exercise(
         exercise: ExerciseCreate,
         db: Session = Depends(get_db)
 ):
+    raw = exercise.images or []
+    images_dict = {
+        "cover": raw[0] if len(raw) > 0 else "",
+        "technique": raw[1:] if len(raw) > 1 else [],
+        "muscleMap": ""
+    }
+
     db_exercise = ExerciseModel(
         uid=str(uuid.uuid4()),
         name=exercise.name,
@@ -90,7 +97,7 @@ def create_exercise(
         equipment=exercise.equipment,
         target_muscles=exercise.targetMuscles,
         tags=exercise.tags,
-        images=exercise.images.dict()
+        images=images_dict
     )
     db.add(db_exercise)
     db.flush()
@@ -102,7 +109,6 @@ def create_exercise(
             unit=param.unit
         )
         db.add(db_param)
-
     db.commit()
     db.refresh(db_exercise)
     parameters_response = []
