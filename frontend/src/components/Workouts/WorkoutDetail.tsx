@@ -14,7 +14,6 @@ interface Props {
   onAddExercise: (exercise: Omit<WorkoutExercise, 'id'>) => void;
 }
 
-// SVG иконки
 const IconBack = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
     <path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
@@ -66,7 +65,6 @@ function formatExerciseLine(ex: WorkoutExercise): string {
   return parts.join(' ');
 }
 
-// Модалка редактирования упражнения (bottom sheet)
 const ExerciseEditModal: React.FC<{
   exercise: WorkoutExercise;
   onSave: (u: Partial<WorkoutExercise>) => void;
@@ -105,7 +103,6 @@ const ExerciseEditModal: React.FC<{
         style={{ width: '100%', maxWidth: 480, background: '#1a1d24', borderRadius: 20, padding: '24px', border: '1px solid rgba(255,255,255,0.1)', maxHeight: '90vh', overflowY: 'auto' }}
         onClick={e => e.stopPropagation()}
       >
-        
         <h3 style={{ color: '#f1f5f9', fontWeight: 700, fontSize: 16, margin: '0 0 20px' }}>Редактировать упражнение</h3>
 
         <label style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>Название</label>
@@ -147,7 +144,6 @@ const ExerciseEditModal: React.FC<{
   );
 };
 
-// Модалка добавления упражнения
 const AddExerciseModal: React.FC<{
   workoutType: WorkoutType;
   onAdd: (ex: Omit<WorkoutExercise, 'id'>) => void;
@@ -185,7 +181,6 @@ const AddExerciseModal: React.FC<{
         style={{ width: '100%', maxWidth: 480, background: '#1a1d24', borderRadius: 20, padding: '24px', border: '1px solid rgba(255,255,255,0.1)', maxHeight: '90vh', overflowY: 'auto' }}
         onClick={e => e.stopPropagation()}
       >
-        
         <h3 style={{ color: '#f1f5f9', fontWeight: 700, fontSize: 16, margin: '0 0 20px' }}>Добавить упражнение</h3>
 
         <label style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>Название</label>
@@ -222,7 +217,6 @@ const AddExerciseModal: React.FC<{
   );
 };
 
-// Вспомогательные стили
 function btnStyle(variant: 'primary' | 'danger' | 'ghost'): React.CSSProperties {
   const base: React.CSSProperties = {
     flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
@@ -233,7 +227,6 @@ function btnStyle(variant: 'primary' | 'danger' | 'ghost'): React.CSSProperties 
   if (variant === 'danger') return { ...base, background: 'rgba(248,113,113,0.1)', color: '#f87171', outline: '1px solid rgba(248,113,113,0.2)' };
   return { ...base, background: 'rgba(255,255,255,0.05)', color: '#94a3b8', outline: '1px solid rgba(255,255,255,0.08)' };
 }
-
 
 const TimeFieldD: React.FC<{ value: string; onChange: (v: string) => void }> = ({ value, onChange }) => {
   const [unit, setUnit] = React.useState<'sec' | 'min'>('sec');
@@ -328,7 +321,6 @@ const Field: React.FC<{ label: string; value: string; onChange: (v: string) => v
   );
 };
 
-// Главный компонент
 export const WorkoutDetail: React.FC<Props> = ({
   workout, onClose, onUpdate, onDelete, onRepeat, onUpdateExercise, onDeleteExercise, onAddExercise,
 }) => {
@@ -343,8 +335,17 @@ export const WorkoutDetail: React.FC<Props> = ({
   const [noteValue, setNoteValue] = useState(workout.notes ?? '');
   const [isEditingNote, setIsEditingNote] = useState(false);
 
-  const c = WORKOUT_TYPE_COLORS[workout.type];
+  // ── Чекбоксы выполнения ──
+  const [doneExercises, setDoneExercises] = useState<Set<string>>(new Set());
+  const toggleDone = (id: string) => {
+    setDoneExercises(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
 
+  const c = WORKOUT_TYPE_COLORS[workout.type];
   const formatDate = (iso: string) => new Date(iso).toLocaleDateString('ru-RU', { day: '2-digit', month: 'long', year: 'numeric' });
 
   return (
@@ -474,7 +475,6 @@ export const WorkoutDetail: React.FC<Props> = ({
           </p>
         )}
 
-
         {/* Заметка */}
         <div style={{ marginBottom: 24 }}>
           {isEditingNote ? (
@@ -549,6 +549,26 @@ export const WorkoutDetail: React.FC<Props> = ({
         {/* Разделитель */}
         <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', marginBottom: 20 }} />
 
+        {/* Прогресс выполнения */}
+        {!isEditMode && workout.exercises.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <span style={{ fontSize: 12, color: '#475569' }}>Выполнено</span>
+              <span style={{ fontSize: 12, color: '#6ee7b7', fontWeight: 600 }}>
+                {doneExercises.size} / {workout.exercises.length}
+              </span>
+            </div>
+            <div style={{ height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+              <div style={{
+                height: '100%',
+                width: `${(doneExercises.size / workout.exercises.length) * 100}%`,
+                background: 'linear-gradient(90deg, #6ee7b7, #34d399)',
+                borderRadius: 2,
+                transition: 'width 0.3s ease',
+              }} />
+            </div>
+          </div>
+        )}
 
         {/* Упражнения */}
         {workout.exercises.length === 0 && !isEditMode && (
@@ -556,47 +576,88 @@ export const WorkoutDetail: React.FC<Props> = ({
         )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {workout.exercises.map((ex, idx) => (
-            <div
-              key={ex.id}
-              onClick={() => isEditMode && setEditingExercise(ex)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 12,
-                padding: '14px 16px', borderRadius: 14,
-                background: isEditMode ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.025)',
-                border: `1px solid ${isEditMode ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)'}`,
-                cursor: isEditMode ? 'pointer' : 'default',
-                transition: 'background 0.1s',
-              }}
-              onMouseEnter={e => isEditMode && ((e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.07)')}
-              onMouseLeave={e => isEditMode && ((e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.04)')}
-            >
-              <span style={{ fontSize: 11, color: '#334155', width: 20, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{idx + 1}</span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ color: '#f1f5f9', fontSize: 14, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ex.name}</span>
-                  {ex.isCustom && <span style={{ fontSize: 10, color: '#334155', flexShrink: 0 }}>кастом</span>}
+          {workout.exercises.map((ex, idx) => {
+            const isDone = doneExercises.has(ex.id);
+            return (
+              <div
+                key={ex.id}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '14px 16px', borderRadius: 14,
+                  background: isDone
+                    ? 'rgba(110,231,183,0.04)'
+                    : isEditMode ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.025)',
+                  border: `1px solid ${isDone
+                    ? 'rgba(110,231,183,0.15)'
+                    : isEditMode ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)'}`,
+                  cursor: isEditMode ? 'pointer' : 'default',
+                  transition: 'background 0.15s, border-color 0.15s, opacity 0.15s',
+                  opacity: isDone ? 0.6 : 1,
+                }}
+                onClick={() => isEditMode && setEditingExercise(ex)}
+                onMouseEnter={e => isEditMode && ((e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.07)')}
+                onMouseLeave={e => isEditMode && ((e.currentTarget as HTMLDivElement).style.background = isDone ? 'rgba(110,231,183,0.04)' : 'rgba(255,255,255,0.04)')}
+              >
+                {/* Чекбокс — только в режиме просмотра */}
+                {!isEditMode && (
+                  <button
+                    onClick={e => { e.stopPropagation(); toggleDone(ex.id); }}
+                    style={{
+                      width: 22, height: 22, borderRadius: 6, flexShrink: 0,
+                      border: `1.5px solid ${isDone ? '#6ee7b7' : 'rgba(255,255,255,0.15)'}`,
+                      background: isDone ? 'rgba(110,231,183,0.15)' : 'transparent',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'all 0.15s',
+                      padding: 0,
+                    }}
+                  >
+                    {isDone && (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                        <path d="M5 13l4 4L19 7" stroke="#6ee7b7" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </button>
+                )}
+
+                <span style={{ fontSize: 11, color: '#334155', width: 20, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{idx + 1}</span>
+
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{
+                      color: isDone ? '#475569' : '#f1f5f9',
+                      fontSize: 14, fontWeight: 500,
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      textDecoration: isDone ? 'line-through' : 'none',
+                      transition: 'color 0.15s',
+                    }}>
+                      {ex.name}
+                    </span>
+                    {ex.isCustom && <span style={{ fontSize: 10, color: '#334155', flexShrink: 0 }}>кастом</span>}
+                  </div>
+                  <div style={{ color: isDone ? '#334155' : '#475569', fontSize: 12, marginTop: 2, transition: 'color 0.15s' }}>
+                    {formatExerciseLine(ex)}
+                  </div>
                 </div>
-                <div style={{ color: '#475569', fontSize: 12, marginTop: 2 }}>{formatExerciseLine(ex)}</div>
+
+                {!ex.isCustom && !isEditMode && (
+                  <button
+                    onClick={e => { e.stopPropagation(); alert(`База знаний: ${ex.name}`); }}
+                    style={{
+                      width: 24, height: 24, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.1)',
+                      background: 'none', color: '#475569', cursor: 'pointer', flexShrink: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                    title="База знаний"
+                  >
+                    <IconInfo />
+                  </button>
+                )}
+                {isEditMode && (
+                  <span style={{ color: '#334155', flexShrink: 0 }}><IconEdit2 /></span>
+                )}
               </div>
-              {!ex.isCustom && !isEditMode && (
-                <button
-                  onClick={e => { e.stopPropagation(); alert(`База знаний: ${ex.name}`); }}
-                  style={{
-                    width: 24, height: 24, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.1)',
-                    background: 'none', color: '#475569', cursor: 'pointer', flexShrink: 0,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}
-                  title="База знаний"
-                >
-                  <IconInfo />
-                </button>
-              )}
-              {isEditMode && (
-                <span style={{ color: '#334155', flexShrink: 0 }}><IconEdit2 /></span>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {isEditMode && (

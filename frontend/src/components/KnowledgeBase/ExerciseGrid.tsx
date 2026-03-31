@@ -66,7 +66,7 @@ export const ExerciseGrid = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <span className="absolute left-4 top-4.5 text-xl opacity-30">🔍</span>
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl opacity-30"> 🔍 </span>
         </div>
 
         {/* Облако тегов (Хэштеги по ТЗ) */}
