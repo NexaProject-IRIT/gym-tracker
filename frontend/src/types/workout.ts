@@ -1,7 +1,9 @@
 // src/types/workout.ts
 
+// Типы тренировок согласно ТЗ (п. 24) [cite: 24, 58]
 export type WorkoutType = 'strength' | 'cardio' | 'flexibility' | 'functional' | 'custom';
 
+// Типы параметров для упражнений (п. 32) [cite: 32, 55]
 export type ParameterType = 'weight' | 'reps' | 'sets' | 'time' | 'distance';
 
 export interface ExerciseParameter {
@@ -10,30 +12,56 @@ export interface ExerciseParameter {
   unit: string;
 }
 
+/**
+ * Интерфейс для Базы знаний (справочника) [cite: 54, 55]
+ */
+export interface Exercise {
+  id: string;
+  name: string;
+  description: string;
+  equipment: string;
+  targetMuscles: string[];
+  tags: string[];
+  parameters: ExerciseParameter[];
+  images: {
+    cover: string;
+    technique: string[]; // Галерея (карусель) из ТЗ (п. 46) [cite: 46, 55]
+    muscleMap: string;   // 2D силуэт мышц (п. 46) [cite: 46, 55]
+  };
+}
+
+/**
+ * Интерфейс упражнения внутри конкретной тренировки [cite: 57, 58]
+ */
 export interface WorkoutExercise {
   id: string;
-  exerciseId?: string;      // ссылка на базу знаний (опционально для кастомных)
-  customName?: string;       // кастомное название
-  name: string;              // итоговое отображаемое название
+  exerciseId?: string;      // Ссылка на ID из базы знаний [cite: 57]
+  customName?: string;      // Кастомное название (п. 20) [cite: 20, 57]
+  name: string;             // Отображаемое имя
   sets?: number;
   reps?: number;
   weight?: number;
-  time?: number;             // в секундах
-  distance?: number;         // в км
-  isCustom: boolean;
-  parameters: ParameterType[]; // выбранные параметры
+  time?: number;            // В секундах
+  distance?: number;        // В км
+  isCustom: boolean;        // Флаг кастомного упражнения (п. 32) [cite: 32, 58]
+  parameters: ParameterType[]; // Выбранные пользователем параметры [cite: 32, 58]
   note?: string;
 }
 
+/**
+ * Интерфейс самой тренировки [cite: 56, 57]
+ */
 export interface Workout {
   id: string;
   name: string;
   type: WorkoutType;
-  date: string;              // ISO-строка
+  date: string;             // ISO-строка (п. 38) [cite: 38, 56]
   exercises: WorkoutExercise[];
-  color: string;
+  color: string;            // Цвет заливки в списке (п. 14) [cite: 14, 57]
   notes?: string;
 }
+
+// --- Справочные данные для UI ---
 
 export const WORKOUT_TYPE_LABELS: Record<WorkoutType, string> = {
   strength: 'Силовая',
@@ -43,6 +71,7 @@ export const WORKOUT_TYPE_LABELS: Record<WorkoutType, string> = {
   custom: 'Прочее',
 };
 
+// Цветовая схема согласно ТЗ (п. 14, 24) [cite: 14, 24]
 export const WORKOUT_TYPE_COLORS: Record<WorkoutType, { bg: string; border: string; accent: string; tag: string }> = {
   strength: {
     bg: 'rgba(59,130,246,0.08)',
@@ -76,7 +105,7 @@ export const WORKOUT_TYPE_COLORS: Record<WorkoutType, { bg: string; border: stri
   },
 };
 
-// Параметры по умолчанию для каждого типа тренировки
+// Параметры по умолчанию (п. 31) [cite: 31]
 export const DEFAULT_PARAMS_FOR_TYPE: Record<WorkoutType, ParameterType[]> = {
   strength: ['sets', 'reps', 'weight'],
   cardio: ['time', 'distance'],
