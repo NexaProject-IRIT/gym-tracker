@@ -2,9 +2,10 @@ import os
 import re
 import json
 from pathlib import Path
+from django.conf import settings
 
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(settings.BASE_DIR)
 KNOWLEDGE_BASE_PATH = BASE_DIR / "knowledge_base"
 OUTPUT_JSON_PATH = BASE_DIR / "exercises.json"
 
