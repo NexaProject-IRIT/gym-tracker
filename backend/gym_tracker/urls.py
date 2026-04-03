@@ -4,8 +4,8 @@ from workouts.views import ExportWorkoutsView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/auth/', include('profiles.urls')),
-    path('api/exercises/', include('exercises.urls')),
-    path('api/workouts/', include('workouts.urls')),
-    path('api/export/', ExportWorkoutsView.as_view(), name='export'),
+    path('auth/', include('profiles.urls')),
+    path('exercises/', include('exercises.urls')),
+    path('workouts/', include('workouts.urls')),
+    path('export/', ExportWorkoutsView.as_view(), name='export'),
 ]
