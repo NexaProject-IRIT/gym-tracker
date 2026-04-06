@@ -1,6 +1,6 @@
 // src/components/Workouts/WorkoutList.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { useWorkouts } from '../../hooks/useWorkouts';
+import { useWorkoutsApi } from '../../hooks/useWorkoutsApi';
 import type { Workout, WorkoutType } from '../../types/workout';
 import { WORKOUT_TYPE_LABELS, WORKOUT_TYPE_COLORS } from '../../types/workout';
 import { WorkoutDetail } from './WorkoutDetail';
@@ -141,7 +141,8 @@ const WorkoutTypeIcon: React.FC<{ type: WorkoutType; color: string; size?: numbe
 );
 
 export const WorkoutList: React.FC = () => {
-  const { workouts, addWorkout, updateWorkout, deleteWorkout, repeatWorkout, addExercise, updateExercise, deleteExercise } = useWorkouts();
+  const { workouts, loading, error, fetchWorkouts, addWorkout, updateWorkout, deleteWorkout, repeatWorkout, addExercise, updateExercise, deleteExercise } = useWorkoutsApi();
+  useEffect(() => { fetchWorkouts(); }, [fetchWorkouts]);
   const [selectedWorkoutId, setSelectedWorkoutId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);

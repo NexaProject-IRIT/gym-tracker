@@ -9,6 +9,7 @@ interface LoginForm {
 interface FormErrors {
   login?: string;
   password?: string;
+  api?: string;
 }
 
 export const LoginPage = () => {
@@ -16,6 +17,7 @@ export const LoginPage = () => {
   const [form, setForm] = useState<LoginForm>({ login: '', password: '' });
   const [errors, setErrors] = useState<FormErrors>({});
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const validate = (): boolean => {
     const e: FormErrors = {};
@@ -26,10 +28,29 @@ export const LoginPage = () => {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) return;
-    // TODO: подключить API
-    navigate('/');
+    setLoading(true);
+    setErrors({});
+    try {
+      const res = await fetch('http://localhost:8000/auth/login/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: form.login, password: form.password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setErrors({ api: data.error || 'Неверные данные' });
+        return;
+      }
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      navigate('/');
+    } catch {
+      setErrors({ api: 'Нет связи с сервером' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -89,18 +110,27 @@ export const LoginPage = () => {
             }
           />
 
+          {errors.api && (
+            <div style={{
+              background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.3)',
+              borderRadius: 10, padding: '10px 14px', marginBottom: 12,
+              color: '#f87171', fontSize: 13,
+            }}>
+              {errors.api}
+            </div>
+          )}
+
           <button
             onClick={handleSubmit}
+            disabled={loading}
             style={{
               width: '100%', padding: '14px', borderRadius: 12, border: 'none',
-              background: 'linear-gradient(135deg, #6ee7b7, #34d399)',
-              color: '#052e16', fontWeight: 700, fontSize: 15, cursor: 'pointer',
+              background: loading ? 'rgba(110,231,183,0.4)' : 'linear-gradient(135deg, #6ee7b7, #34d399)',
+              color: '#052e16', fontWeight: 700, fontSize: 15, cursor: loading ? 'default' : 'pointer',
               marginTop: 8, transition: 'opacity 0.15s',
             }}
-            onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
-            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
           >
-            Войти
+            {loading ? 'Вход...' : 'Войти'}
           </button>
 
           <p style={{ textAlign: 'center', marginTop: 20, fontSize: 14, color: '#475569' }}>
@@ -115,7 +145,6 @@ export const LoginPage = () => {
   );
 };
 
-// Переиспользуемое поле
 const Field = ({
   label, value, onChange, error, placeholder, type = 'text', rightEl
 }: {

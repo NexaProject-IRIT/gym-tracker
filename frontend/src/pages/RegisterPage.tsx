@@ -24,6 +24,7 @@ interface AccountErrors {
 interface BodyErrors {
   height?: string;
   weight?: string;
+  api?: string;
 }
 
 export const RegisterPage = () => {
@@ -36,6 +37,7 @@ export const RegisterPage = () => {
   const [bodyErrors, setBodyErrors] = useState<BodyErrors>({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const validateAccount = (): boolean => {
     const e: AccountErrors = {};
@@ -67,10 +69,36 @@ export const RegisterPage = () => {
     if (validateAccount()) setStep('body');
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateBody()) return;
-    // TODO: подключить API
-    navigate('/');
+    setLoading(true);
+    setBodyErrors({});
+    try {
+      const res = await fetch('http://localhost:8000/auth/register/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: account.login,
+          password: account.password,
+          password2: account.confirmPassword,
+          height: parseFloat(body.height),
+          weight: parseFloat(body.weight),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        const msg = data.username?.[0] || data.password?.[0] || data.detail || 'Ошибка регистрации';
+        setBodyErrors({ api: msg });
+        return;
+      }
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      navigate('/');
+    } catch {
+      setBodyErrors({ api: 'Нет связи с сервером' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -103,9 +131,7 @@ export const RegisterPage = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
           {(['account', 'body'] as Step[]).map((s, i) => (
             <React.Fragment key={s}>
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 8, flex: 1,
-              }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
                 <div style={{
                   width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -189,8 +215,6 @@ export const RegisterPage = () => {
                   color: '#052e16', fontWeight: 700, fontSize: 15, cursor: 'pointer',
                   marginTop: 8, transition: 'opacity 0.15s',
                 }}
-                onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
-                onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
               >
                 Далее →
               </button>
@@ -221,6 +245,16 @@ export const RegisterPage = () => {
                 type="number"
               />
 
+              {bodyErrors.api && (
+                <div style={{
+                  background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.3)',
+                  borderRadius: 10, padding: '10px 14px', marginBottom: 12,
+                  color: '#f87171', fontSize: 13,
+                }}>
+                  {bodyErrors.api}
+                </div>
+              )}
+
               <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
                 <button
                   onClick={() => setStep('account')}
@@ -235,16 +269,15 @@ export const RegisterPage = () => {
                 </button>
                 <button
                   onClick={handleSubmit}
+                  disabled={loading}
                   style={{
                     flex: 2, padding: '14px', borderRadius: 12, border: 'none',
-                    background: 'linear-gradient(135deg, #6ee7b7, #34d399)',
-                    color: '#052e16', fontWeight: 700, fontSize: 14, cursor: 'pointer',
+                    background: loading ? 'rgba(110,231,183,0.4)' : 'linear-gradient(135deg, #6ee7b7, #34d399)',
+                    color: '#052e16', fontWeight: 700, fontSize: 14, cursor: loading ? 'default' : 'pointer',
                     transition: 'opacity 0.15s',
                   }}
-                  onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
-                  onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
                 >
-                  Создать аккаунт
+                  {loading ? 'Создаём...' : 'Создать аккаунт'}
                 </button>
               </div>
             </>
