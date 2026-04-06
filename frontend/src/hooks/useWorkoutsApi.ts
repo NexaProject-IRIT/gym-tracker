@@ -11,12 +11,27 @@ function getToken(): string {
 function authHeaders(): HeadersInit {
   return {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${getToken()}`,
+    // DRF TokenAuthentication требует "Token <token>", не "Bearer"
+    Authorization: `Token ${getToken()}`,
   };
 }
 
 function generateExId(): string {
   return `ex_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+}
+
+// Маппинг WorkoutExercise (фронт) → формат тела запроса (бэк)
+function serializeExercise(e: WorkoutExercise) {
+  return {
+    exerciseId: e.exerciseId ?? '',
+    customName: e.customName ?? e.name ?? '',
+    sets: e.sets ?? 0,
+    reps: e.reps ?? 0,
+    weight: e.weight ?? null,
+    time: e.time ?? null,
+    distance: e.distance ?? null,
+    isCustom: e.isCustom,
+  };
 }
 
 export const useWorkoutsApi = () => {
@@ -48,7 +63,13 @@ export const useWorkoutsApi = () => {
       const res = await fetch(`${BASE}/workouts/`, {
         method: 'POST',
         headers: authHeaders(),
-        body: JSON.stringify(workout),
+        body: JSON.stringify({
+          name: workout.name,
+          type: workout.type,
+          date: workout.date,
+          color: workout.color,
+          exercises: workout.exercises.map(serializeExercise),
+        }),
       });
       if (!res.ok) throw new Error(`Ошибка ${res.status}`);
       const created: Workout = await res.json();
@@ -60,13 +81,22 @@ export const useWorkoutsApi = () => {
     }
   }, []);
 
-  // PUT /workouts/:id
+  // PUT /workouts/:id/  <- trailing slash обязателен для Django Router
   const updateWorkout = useCallback(async (id: string, updates: Partial<Workout>) => {
     try {
-      const res = await fetch(`${BASE}/workouts/${id}`, {
+      const body: Record<string, unknown> = {
+        name: updates.name,
+        type: updates.type,
+        date: updates.date,
+        color: updates.color,
+      };
+      if (updates.exercises !== undefined) {
+        body.exercises = updates.exercises.map(serializeExercise);
+      }
+      const res = await fetch(`${BASE}/workouts/${id}/`, {
         method: 'PUT',
         headers: authHeaders(),
-        body: JSON.stringify(updates),
+        body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error(`Ошибка ${res.status}`);
       const updated: Workout = await res.json();
@@ -76,10 +106,10 @@ export const useWorkoutsApi = () => {
     }
   }, []);
 
-  // DELETE /workouts/:id
+  // DELETE /workouts/:id/
   const deleteWorkout = useCallback(async (id: string) => {
     try {
-      const res = await fetch(`${BASE}/workouts/${id}`, {
+      const res = await fetch(`${BASE}/workouts/${id}/`, {
         method: 'DELETE',
         headers: authHeaders(),
       });
@@ -90,7 +120,7 @@ export const useWorkoutsApi = () => {
     }
   }, []);
 
-  // Повторить тренировку, создает копию через POST
+  // Повторить тренировку - создаёт копию через POST
   const repeatWorkout = useCallback(async (id: string): Promise<string | null> => {
     const original = workouts.find(w => w.id === id);
     if (!original) return null;
@@ -103,7 +133,7 @@ export const useWorkoutsApi = () => {
     return addWorkout(copy);
   }, [workouts, addWorkout]);
 
-  // Добавить упражнение в тренировку, через PUT всей тренировки
+  // Добавить упражнение через PUT всей тренировки
   const addExercise = useCallback(async (workoutId: string, exercise: Omit<WorkoutExercise, 'id'>) => {
     const workout = workouts.find(w => w.id === workoutId);
     if (!workout) return;
@@ -113,7 +143,7 @@ export const useWorkoutsApi = () => {
     await updateWorkout(workoutId, updated);
   }, [workouts, updateWorkout]);
 
-  // Обновить упражнение, через PUT всей тренировки
+  // Обновить упражнение через PUT всей тренировки
   const updateExercise = useCallback(async (
     workoutId: string,
     exerciseId: string,
@@ -127,7 +157,7 @@ export const useWorkoutsApi = () => {
     await updateWorkout(workoutId, updated);
   }, [workouts, updateWorkout]);
 
-  // Удалить упражнение, через PUT всей тренировки
+  // Удалить упражнение через PUT всей тренировки
   const deleteExercise = useCallback(async (workoutId: string, exerciseId: string) => {
     const workout = workouts.find(w => w.id === workoutId);
     if (!workout) return;
