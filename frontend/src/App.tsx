@@ -6,6 +6,8 @@ import { TimerComponent } from './components/Timer/TimerComponent';
 import { ExerciseGrid } from './components/KnowledgeBase/ExerciseGrid';
 import { ProfilePage } from './pages/ProfilePage';
 import { SettingsPage } from './pages/SettingsPage';
+import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
 
 function App() {
   return (
@@ -18,16 +20,16 @@ function App() {
 
       <BrowserRouter>
         <Routes>
+          {/* Страницы без навигации */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+
+          {/* Страницы с навигацией */}
           <Route element={<MainLayout />}>
-            {/* Главная страница */}
             <Route index element={<HomePage />} />
-            
-            {/* Твои разделы */}
             <Route path="workouts" element={<WorkoutList />} />
             <Route path="timer" element={<TimerComponent />} />
             <Route path="knowledge" element={<ExerciseGrid />} />
-            
-            {/* Новые страницы из GitHub */}
             <Route path="profile" element={<ProfilePage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>

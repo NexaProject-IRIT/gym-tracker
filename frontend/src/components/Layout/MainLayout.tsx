@@ -1,10 +1,11 @@
+import { useState, useEffect } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 
 const SIDEBAR_WIDTH = 220;
 
 const IconHome = ({ active }: { active: boolean }) => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-    <path d="M3 12L12 3l9 9" stroke={active ? '#6ee7b7' : '#64748b'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>   
+    <path d="M3 12L12 3l9 9" stroke={active ? '#6ee7b7' : '#64748b'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
     <path d="M5 10v9a1 1 0 001 1h4v-4h4v4h4a1 1 0 001-1v-9" stroke={active ? '#6ee7b7' : '#64748b'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
@@ -18,7 +19,7 @@ const IconDumbbell = ({ active }: { active: boolean }) => (
 
 const IconBook = ({ active }: { active: boolean }) => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 4.5A2.5 2.5 0 0 1 6.5 7H20v13H6.5A2.5 2.5 0 0 1 4 17.5V4.5z" 
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 4.5A2.5 2.5 0 0 1 6.5 7H20v13H6.5A2.5 2.5 0 0 1 4 17.5V4.5z"
       stroke={active ? '#6ee7b7' : '#64748b'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
@@ -47,12 +48,12 @@ const IconSettings = ({ active }: { active: boolean }) => (
 );
 
 const NAV_ITEMS = [
-  { to: '/',         label: 'Главная',    icon: (a: boolean) => <IconHome active={a} />,     end: true  },
-  { to: '/workouts', label: 'Тренировки', icon: (a: boolean) => <IconDumbbell active={a} />, end: false },
-  { to: '/knowledge', label: 'База знаний', icon: (a: boolean) => <IconBook active={a} />,   end: false },
-  { to: '/timer',    label: 'Таймер',     icon: (a: boolean) => <IconTimer active={a} />,    end: false },
-  { to: '/profile',  label: 'Профиль',    icon: (a: boolean) => <IconUser active={a} />,     end: false },
-  { to: '/settings', label: 'Настройки',  icon: (a: boolean) => <IconSettings active={a} />, end: false },
+  { to: '/',          label: 'Главная',      icon: (a: boolean) => <IconHome active={a} />,     end: true  },
+  { to: '/workouts',  label: 'Тренировки',   icon: (a: boolean) => <IconDumbbell active={a} />, end: false },
+  { to: '/knowledge', label: 'База знаний',  icon: (a: boolean) => <IconBook active={a} />,     end: false },
+  { to: '/timer',     label: 'Таймер',       icon: (a: boolean) => <IconTimer active={a} />,    end: false },
+  { to: '/profile',   label: 'Профиль',      icon: (a: boolean) => <IconUser active={a} />,     end: false },
+  { to: '/settings',  label: 'Настройки',    icon: (a: boolean) => <IconSettings active={a} />, end: false },
 ];
 
 const Logo = () => (
@@ -76,7 +77,13 @@ const Logo = () => (
 );
 
 export const MainLayout = () => {
-  const isMobile = window.innerWidth < 768;
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
 
   return (
     <>
@@ -162,7 +169,7 @@ export const MainLayout = () => {
         </main>
       </div>
 
-      {/* ── Мобила: нижний таббар ── */}
+      {/* ── Мобила: нижний таббар (только иконки) ── */}
       {isMobile && (
         <nav style={{
           position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
@@ -177,13 +184,20 @@ export const MainLayout = () => {
               {({ isActive }) => (
                 <div style={{
                   display: 'flex', flexDirection: 'column', alignItems: 'center',
-                  justifyContent: 'center', gap: 4, padding: '10px 0',
+                  justifyContent: 'center', gap: 3, padding: '10px 0',
                   cursor: 'pointer',
                 }}>
                   {icon(isActive)}
-                  <span style={{ fontSize: 10, fontWeight: 500, color: isActive ? '#6ee7b7' : '#475569' }}>
-                    {label}
-                  </span>
+                  {/* Подпись только для активного пункта */}
+                  {isActive && (
+                    <span style={{
+                      fontSize: 9, fontWeight: 600,
+                      color: '#6ee7b7',
+                      letterSpacing: '0.02em',
+                    }}>
+                      {label}
+                    </span>
+                  )}
                 </div>
               )}
             </NavLink>
