@@ -1,5 +1,16 @@
 [
   {
+    "name": "Push Up",
+    "tags": [
+      "chest",
+      "triceps",
+      "bodyweight"
+    ],
+    "description": "Базовое упражнение для развития грудных мышц и трицепсов.\n\nТехника выполнения:\n- Упрись руками в пол\n- Тело держи ровным\n- Опускайся до параллели\n\nСоветы:\n- Не прогибай поясницу\n- Держи корпус напряжённым",
+    "images": [],
+    "source_file": "Push Up.md"
+  },
+  {
     "name": "Bicep Curl",
     "tags": [
       "biceps",
@@ -12,17 +23,6 @@
       "images/bicep-curl-step.jpg"
     ],
     "source_file": "Bicep Curl.md"
-  },
-  {
-    "name": "Push Up",
-    "tags": [
-      "chest",
-      "triceps",
-      "bodyweight"
-    ],
-    "description": "Базовое упражнение для развития грудных мышц и трицепсов.\n\nТехника выполнения:\n- Упрись руками в пол\n- Тело держи ровным\n- Опускайся до параллели\n\nСоветы:\n- Не прогибай поясницу\n- Держи корпус напряжённым",
-    "images": [],
-    "source_file": "Push Up.md"
   },
   {
     "name": "Squat",

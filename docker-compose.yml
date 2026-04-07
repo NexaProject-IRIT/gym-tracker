@@ -39,6 +39,9 @@ services:
              python manage.py runserver 0.0.0.0:8000"
 
   frontend:
+    depends_on:
+      backend:
+        condition: service_started
     build: ./frontend
     container_name: gym_frontend
     ports:

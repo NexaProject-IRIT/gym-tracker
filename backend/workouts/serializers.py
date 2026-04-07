@@ -27,6 +27,7 @@ class WorkoutSerializer(serializers.ModelSerializer):
 
 
 class WorkoutListSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(source='uid')
     exercise_count = serializers.SerializerMethodField()
 
     class Meta:
@@ -53,9 +54,8 @@ class WorkoutCreateSerializer(serializers.ModelSerializer):
             exercise_id = ex_data.pop('exercise_id', None)
             custom_name = ex_data.pop('custom_name', None)
             is_custom = ex_data.pop('is_custom', False)
-
             WorkoutExercise.objects.create(
-                workout=workout,
+                workout=instance,
                 exercise_id=exercise_id,
                 custom_name=custom_name,
                 is_custom=is_custom,

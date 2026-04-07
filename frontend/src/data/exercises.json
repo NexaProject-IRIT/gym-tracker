@@ -12,7 +12,7 @@
       { "type": "sets", "label": "Подходы", "unit": "раз" }
     ],
     "images": {
-      "cover": "/placeholder-squat.jpg",
+      "cover": "/images/exercises/covers/maxresdefault.jpg",
       "technique": ["/placeholder-squat-tech1.jpg", "/placeholder-squat-tech2.jpg"],
       "muscleMap": "/placeholder-squat-map.jpg"
     }
