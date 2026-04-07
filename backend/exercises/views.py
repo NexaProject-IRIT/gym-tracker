@@ -34,12 +34,23 @@ class ExerciseViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def search(self, request):
-        q = request.query_params.get('q', '')
-        if not q:
+        """Search exercises by name — used for autocomplete in workout form."""
+        q = request.query_params.get('q', '').strip()
+        if not q or len(q) < 1:
             return Response([])
-        exercises = Exercise.objects.filter(name__icontains=q)[:50]
-        serializer = ExerciseListSerializer(exercises, many=True)
-        return Response(serializer.data)
+
+        exercises = Exercise.objects.filter(name__icontains=q).order_by('name')[:20]
+        data = []
+        for ex in exercises:
+            imgs = ex.images if isinstance(ex.images, list) else []
+            data.append({
+                'id': str(ex.id),
+                'name': ex.name,
+                'equipment': ex.equipment or '',
+                'targetMuscles': ex.target_muscles or [],
+                'tags': ex.tags or [],
+            })
+        return Response(data)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

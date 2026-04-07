@@ -5,11 +5,9 @@ import { WorkoutList } from './components/Workouts/WorkoutList';
 import { TimerComponent } from './components/Timer/TimerComponent';
 import { ExerciseGrid } from './components/KnowledgeBase/ExerciseGrid';
 import { ProfilePage } from './pages/ProfilePage';
-import { SettingsPage } from './pages/SettingsPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 
-// Если токена нет — редирект на /login
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const token = localStorage.getItem('token');
   return token ? <>{children}</> : <Navigate to="/login" replace />;
@@ -41,7 +39,7 @@ function App() {
             <Route path="timer" element={<TimerComponent />} />
             <Route path="knowledge" element={<ExerciseGrid />} />
             <Route path="profile" element={<ProfilePage />} />
-            <Route path="settings" element={<SettingsPage />} />
+            <Route path="settings" element={<Navigate to="/profile" replace />} />
           </Route>
         </Routes>
       </BrowserRouter>

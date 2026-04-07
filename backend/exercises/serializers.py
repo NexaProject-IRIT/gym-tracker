@@ -23,7 +23,7 @@ class ExerciseSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data['id'] = str(instance.uid)
+        data['id'] = str(instance.id)
         return data
 
 
@@ -32,18 +32,22 @@ class ExerciseListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Exercise
-        fields = ['id', 'name', 'targetMuscles', 'tags', 'images']
+        fields = ['id', 'name', 'equipment', 'targetMuscles', 'tags', 'images']
 
     def get_targetMuscles(self, obj):
         return obj.target_muscles if obj.target_muscles else []
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data['id'] = instance.id
-        if isinstance(data['images'], list) and data['images']:
-            data['images'] = {'cover': data['images'][0] if data['images'] else ''}
+        data['id'] = str(instance.id)
+        # images: if list, provide cover from first item
+        imgs = data.get('images', [])
+        if isinstance(imgs, list) and imgs:
+            data['images'] = {'cover': imgs[0], 'technique': imgs[1:], 'muscleMap': ''}
+        elif isinstance(imgs, dict):
+            pass  # already in correct format
         else:
-            data['images'] = {'cover': ''}
+            data['images'] = {'cover': '', 'technique': [], 'muscleMap': ''}
         return data
 
 

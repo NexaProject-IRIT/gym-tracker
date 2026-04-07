@@ -6,7 +6,6 @@ import { WORKOUT_TYPE_LABELS, WORKOUT_TYPE_COLORS } from '../../types/workout';
 import { WorkoutDetail } from './WorkoutDetail';
 import { WorkoutForm } from './WorkoutForm';
 
-// CSS переменные (повторяем из App для автономности)
 const CSS = `
   :root {
     --bg: #111318;
@@ -24,7 +23,6 @@ const CSS = `
   input[type=number] { -moz-appearance: textfield; }
 `;
 
-// SVG иконки
 const IconPlus = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
     <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
@@ -68,13 +66,6 @@ function formatDate(iso: string) {
     month: d.toLocaleDateString('ru-RU', { month: 'short' }).replace('.', ''),
     year: d.getFullYear().toString(),
   };
-}
-
-function formatExerciseSummary(exercises: Workout['exercises']): string {
-  if (exercises.length === 0) return 'Упражнения не добавлены';
-  const names = exercises.slice(0, 3).map(e => e.name);
-  const rest = exercises.length - 3;
-  return names.join(', ') + (rest > 0 ? ` +${rest}` : '');
 }
 
 const WorkoutMenu: React.FC<{
@@ -125,7 +116,6 @@ const WorkoutMenu: React.FC<{
   );
 };
 
-// Тип иконки по тренировке
 const typeIconPath: Record<WorkoutType, string> = {
   strength: 'M6.5 6.5h11M6.5 17.5h11M4 9.5v5M20 9.5v5M2 11v2M22 11v2',
   cardio: 'M3 12h4l3-8 4 16 3-8h4',
@@ -141,12 +131,18 @@ const WorkoutTypeIcon: React.FC<{ type: WorkoutType; color: string; size?: numbe
 );
 
 export const WorkoutList: React.FC = () => {
-  const { workouts, loading, error, fetchWorkouts, addWorkout, updateWorkout, deleteWorkout, repeatWorkout, addExercise, updateExercise, deleteExercise } = useWorkoutsApi();
+  const {
+    workouts, loading, error, fetchWorkouts, fetchWorkoutDetail,
+    addWorkout, updateWorkout, deleteWorkout, repeatWorkout,
+    addExercise, updateExercise, deleteExercise,
+  } = useWorkoutsApi();
   useEffect(() => { fetchWorkouts(); }, [fetchWorkouts]);
-  const [selectedWorkoutId, setSelectedWorkoutId] = useState<string | null>(null);
+
+  const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  const [loadingDetail, setLoadingDetail] = useState(false);
 
   useEffect(() => {
     const h = () => setIsMobile(window.innerWidth < 768);
@@ -154,20 +150,31 @@ export const WorkoutList: React.FC = () => {
     return () => window.removeEventListener('resize', h);
   }, []);
 
-  const selectedWorkout = workouts.find(w => w.id === selectedWorkoutId) ?? null;
+  const handleSelectWorkout = async (workoutId: string) => {
+    setLoadingDetail(true);
+    setOpenMenuId(null);
+    const detail = await fetchWorkoutDetail(workoutId);
+    if (detail) setSelectedWorkout(detail);
+    setLoadingDetail(false);
+  };
+
+  // Keep selectedWorkout in sync with workouts state
+  useEffect(() => {
+    if (selectedWorkout) {
+      const updated = workouts.find(w => w.id === selectedWorkout.id);
+      if (updated && updated.exercises.length > 0) {
+        setSelectedWorkout(updated);
+      }
+    }
+  }, [workouts, selectedWorkout?.id]);
 
   return (
     <>
       <style>{CSS}</style>
-
       <div style={{
-        minHeight: '100vh',
-        background: 'var(--bg)',
-        color: 'var(--text)',
-        display: 'flex',
-        flexDirection: 'column',
+        minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)',
+        display: 'flex', flexDirection: 'column',
       }}>
-
         {/* Header */}
         <div style={{ padding: '40px 32px 16px', maxWidth: 900, width: '100%', margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 4 }}>
@@ -206,16 +213,22 @@ export const WorkoutList: React.FC = () => {
           </div>
         )}
 
-        {/* Список */}
+        {/* Loading */}
+        {loading && (
+          <div style={{ textAlign: 'center', padding: 40, color: '#475569' }}>Загрузка...</div>
+        )}
+
+        {/* Error */}
+        {error && (
+          <div style={{ textAlign: 'center', padding: 20, color: '#f87171', fontSize: 13 }}>{error}</div>
+        )}
+
+        {/* List */}
         <div style={{
-          flex: 1,
-          padding: '0 32px',
-          paddingBottom: 100,
-          maxWidth: 900,
-          width: '100%',
-          margin: '0 auto',
+          flex: 1, padding: '0 32px', paddingBottom: 100,
+          maxWidth: 900, width: '100%', margin: '0 auto',
         }}>
-          {workouts.length === 0 ? (
+          {!loading && workouts.length === 0 ? (
             <div style={{ textAlign: 'center', paddingTop: 80 }}>
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style={{ margin: '0 auto 16px', display: 'block', opacity: 0.2 }}>
                 <path d="M6.5 6.5h11M6.5 17.5h11M4 9.5v5M20 9.5v5M2 11v2M22 11v2" stroke="#f1f5f9" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -224,21 +237,21 @@ export const WorkoutList: React.FC = () => {
               <p style={{ color: '#334155', fontSize: 13, margin: 0 }}>Нажмите «Новая тренировка», чтобы начать</p>
             </div>
           ) : (
-            // Сетка: на десктопе 2 колонки, на мобиле 1
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
               gap: 12,
             }}>
-              {[...workouts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((workout, idx) => {
+              {[...workouts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(workout => {
                 const c = WORKOUT_TYPE_COLORS[workout.type];
                 const d = formatDate(workout.date);
                 const isOpen = openMenuId === workout.id;
+                const exCount = (workout as any).exercise_count ?? workout.exercises?.length ?? 0;
 
                 return (
                   <div
                     key={workout.id}
-                    onClick={() => { setSelectedWorkoutId(workout.id); setOpenMenuId(null); }}
+                    onClick={() => handleSelectWorkout(workout.id)}
                     style={{
                       display: 'flex', alignItems: 'stretch', borderRadius: 16,
                       border: `1px solid ${c.border}`,
@@ -248,17 +261,14 @@ export const WorkoutList: React.FC = () => {
                     }}
                     onMouseEnter={e => {
                       (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-1px)';
-                      (e.currentTarget as HTMLDivElement).style.boxShadow = `0 8px 24px rgba(0,0,0,0.3)`;
+                      (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.3)';
                     }}
                     onMouseLeave={e => {
                       (e.currentTarget as HTMLDivElement).style.transform = 'none';
                       (e.currentTarget as HTMLDivElement).style.boxShadow = 'none';
                     }}
                   >
-                    {/* Цветная полоска */}
                     <div style={{ width: 4, borderRadius: '16px 0 0 16px', background: c.accent, flexShrink: 0 }} />
-
-                    {/* Дата */}
                     <div style={{
                       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                       padding: '16px 14px', minWidth: 52, flexShrink: 0,
@@ -267,11 +277,7 @@ export const WorkoutList: React.FC = () => {
                       <span style={{ fontSize: 11, color: '#64748b', marginTop: 2, textTransform: 'capitalize' }}>{d.month}</span>
                       <span style={{ fontSize: 10, color: '#334155', marginTop: 1 }}>{d.year}</span>
                     </div>
-
-                    {/* Разделитель */}
                     <div style={{ width: 1, margin: '12px 0', background: 'rgba(255,255,255,0.06)', flexShrink: 0 }} />
-
-                    {/* Контент */}
                     <div style={{ flex: 1, padding: '14px 12px', minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5 }}>
                         <WorkoutTypeIcon type={workout.type} color={c.accent} size={13} />
@@ -286,17 +292,12 @@ export const WorkoutList: React.FC = () => {
                       <p style={{ margin: '0 0 3px', fontSize: 14, fontWeight: 600, color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {workout.name}
                       </p>
-                      <p style={{ margin: 0, fontSize: 12, color: '#475569', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {formatExerciseSummary(workout.exercises)}
-                      </p>
-                      {workout.exercises.length > 0 && (
+                      {exCount > 0 && (
                         <p style={{ margin: '3px 0 0', fontSize: 11, color: '#334155' }}>
-                          {workout.exercises.length} упражн.
+                          {exCount} упражн.
                         </p>
                       )}
                     </div>
-
-                    {/* Три точки */}
                     <div
                       style={{ display: 'flex', alignItems: 'center', padding: '0 12px', position: 'relative', flexShrink: 0 }}
                       onClick={e => e.stopPropagation()}
@@ -316,7 +317,7 @@ export const WorkoutList: React.FC = () => {
                       </button>
                       {isOpen && (
                         <WorkoutMenu
-                          onEdit={() => { setSelectedWorkoutId(workout.id); setOpenMenuId(null); }}
+                          onEdit={() => handleSelectWorkout(workout.id)}
                           onRepeat={() => { repeatWorkout(workout.id); setOpenMenuId(null); }}
                           onDelete={() => { deleteWorkout(workout.id); setOpenMenuId(null); }}
                           onClose={() => setOpenMenuId(null)}
@@ -330,17 +331,16 @@ export const WorkoutList: React.FC = () => {
           )}
         </div>
 
-        {/* Кнопка "Новая тренировка" */}
+        {/* New workout button */}
         <div style={{
-            position: 'fixed',
-            bottom: isMobile ? 64 : 0,
-            left: isMobile ? 0 : 220,
-            right: 0,
-            padding: '12px 32px 20px',
-            background: 'linear-gradient(to top, var(--bg) 60%, transparent)',
-            zIndex: 30,
-          }}
-        >
+          position: 'fixed',
+          bottom: isMobile ? 64 : 0,
+          left: isMobile ? 0 : 220,
+          right: 0,
+          padding: '12px 32px 20px',
+          background: 'linear-gradient(to top, var(--bg) 60%, transparent)',
+          zIndex: 30,
+        }}>
           <div style={{ maxWidth: 900, margin: '0 auto' }}>
             <button
               onClick={() => setShowForm(true)}
@@ -367,13 +367,25 @@ export const WorkoutList: React.FC = () => {
           </div>
         </div>
 
-        {/* Панели */}
+        {/* Loading detail overlay */}
+        {loadingDetail && (
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 90,
+            background: 'rgba(17,19,24,0.8)', display: 'flex',
+            alignItems: 'center', justifyContent: 'center',
+            color: '#6ee7b7', fontSize: 16,
+          }}>
+            Загрузка...
+          </div>
+        )}
+
+        {/* Panels */}
         {selectedWorkout && (
           <WorkoutDetail
             workout={selectedWorkout}
-            onClose={() => setSelectedWorkoutId(null)}
+            onClose={() => setSelectedWorkout(null)}
             onUpdate={u => updateWorkout(selectedWorkout.id, u)}
-            onDelete={() => { deleteWorkout(selectedWorkout.id); setSelectedWorkoutId(null); }}
+            onDelete={() => { deleteWorkout(selectedWorkout.id); setSelectedWorkout(null); }}
             onRepeat={() => repeatWorkout(selectedWorkout.id)}
             onUpdateExercise={(exId, u) => updateExercise(selectedWorkout.id, exId, u)}
             onDeleteExercise={exId => deleteExercise(selectedWorkout.id, exId)}

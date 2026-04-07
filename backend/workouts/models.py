@@ -13,11 +13,12 @@ class Workout(models.Model):
     ]
 
     uid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='workouts')  # ← добавить
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='workouts')
     name = models.CharField(max_length=255)
     type = models.CharField(max_length=20, choices=WORKOUT_TYPES)
     date = models.DateTimeField()
     color = models.CharField(max_length=7, blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -40,6 +41,9 @@ class WorkoutExercise(models.Model):
     time = models.IntegerField(blank=True, null=True)
     distance = models.FloatField(blank=True, null=True)
     is_custom = models.BooleanField(default=False)
+    # Массив активных параметров упражнения: ['sets', 'reps', 'weight'] и т.д.
+    # Без этого поля фронтенд не знает, какие поля рендерить в карточке.
+    parameters = models.JSONField(default=list, blank=True)
 
     class Meta:
         db_table = 'workout_exercises'

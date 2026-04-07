@@ -14,25 +14,30 @@ def parse_md_file(file_path: Path) -> dict:
     with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
 
-    # Название: первый H1-заголовок
+    # Title: first H1 heading
     title_match = re.search(r"^#\s+(.+)$", content, re.MULTILINE)
     title = title_match.group(1).strip() if title_match else file_path.stem
 
-    # Теги: отдельная строка формата "#biceps #arms #dumbbell"
-    tag_lines = []
+    # Tags: lines like "#biceps #arms #dumbbell" (not headings "# Title")
+    tags = []
     for line in content.splitlines():
         stripped = line.strip()
-        if stripped.startswith("#") and not stripped.startswith("# "):
-            tag_lines.append(stripped)
+        # Tag line: starts with # but NOT "# " (heading)
+        if re.match(r"^#[A-Za-zА-Яа-я]", stripped):
+            tags.extend(re.findall(r"#([A-Za-zА-Яа-я0-9_-]+)", stripped))
 
-    tags = []
-    for line in tag_lines:
-        tags.extend(re.findall(r"#([A-Za-zА-Яа-я0-9_-]+)", line))
-
-    # Картинки: markdown-формат ![alt](path)
+    # Images: markdown format ![alt](path)
     images = re.findall(r"!\[.*?\]\((.*?)\)", content)
 
-    # Описание: секция ## Description
+    # Equipment section: ## Equipment
+    equip_match = re.search(
+        r"^##\s+Equipment\s*$\n(.*?)(?=^##\s+|\Z)",
+        content,
+        re.IGNORECASE | re.MULTILINE | re.DOTALL,
+    )
+    equipment = equip_match.group(1).strip() if equip_match else ""
+
+    # Description section: ## Description
     desc_match = re.search(
         r"^##\s+Description\s*$\n(.*?)(?=^##\s+|\Z)",
         content,
@@ -42,20 +47,20 @@ def parse_md_file(file_path: Path) -> dict:
     if desc_match:
         description = desc_match.group(1).strip()
     else:
+        # Fallback: everything that isn't title/tags/images
         lines = content.splitlines()
         cleaned_lines = []
         for line in lines:
             stripped = line.strip()
-
             if re.match(r"^#\s+.+$", stripped):
                 continue
-            if stripped.startswith("#") and not stripped.startswith("# "):
+            if re.match(r"^#[A-Za-zА-Яа-я]", stripped):
                 continue
             if re.match(r"^!\[.*?\]\(.*?\)$", stripped):
                 continue
-
+            if re.match(r"^##\s+", stripped):
+                continue
             cleaned_lines.append(line)
-
         description = "\n".join(cleaned_lines).strip()
 
     return {
@@ -63,6 +68,7 @@ def parse_md_file(file_path: Path) -> dict:
         "tags": tags,
         "description": description,
         "images": images,
+        "equipment": equipment,
         "source_file": file_path.name,
     }
 
@@ -71,13 +77,16 @@ def parse_knowledge_base(base_path: Path) -> list:
     exercises = []
 
     if not base_path.exists():
+        print(f"[md_parser] Knowledge base path not found: {base_path}")
         return exercises
 
     for root, _, files in os.walk(base_path):
-        for file_name in files:
+        for file_name in sorted(files):
             if file_name.lower().endswith(".md"):
                 file_path = Path(root) / file_name
-                exercises.append(parse_md_file(file_path))
+                parsed = parse_md_file(file_path)
+                if parsed["name"]:
+                    exercises.append(parsed)
 
     return exercises
 
@@ -88,5 +97,5 @@ def rebuild_exercises_json() -> Path:
     with open(OUTPUT_JSON_PATH, "w", encoding="utf-8") as f:
         json.dump(exercises, f, ensure_ascii=False, indent=2)
 
-    print(f"[md_parser] exercises.json обновлён. Упражнений: {len(exercises)}")
+    print(f"[md_parser] exercises.json updated. Exercises: {len(exercises)}")
     return OUTPUT_JSON_PATH

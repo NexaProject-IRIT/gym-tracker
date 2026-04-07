@@ -21,6 +21,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
+        validated_data.pop('password2')
         height = validated_data.pop('height', None)
         weight = validated_data.pop('weight', None)
         age = validated_data.pop('age', None)
@@ -32,15 +33,14 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
 
-        if height or weight or age:
-            profile = user.profile
-            if height:
-                profile.height = height
-            if weight:
-                profile.weight = weight
-            if age:
-                profile.age = age
-            profile.save()
+        profile = user.profile
+        if height is not None:
+            profile.height = height
+        if weight is not None:
+            profile.weight = weight
+        if age is not None:
+            profile.age = age
+        profile.save()
 
         return user
 
@@ -53,3 +53,26 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'username', 'height', 'weight', 'age')
+
+
+class ProfileUpdateSerializer(serializers.Serializer):
+    username = serializers.CharField(required=False)
+    height = serializers.FloatField(required=False, allow_null=True)
+    weight = serializers.FloatField(required=False, allow_null=True)
+    age = serializers.IntegerField(required=False, allow_null=True)
+
+    def update(self, user, validated_data):
+        if 'username' in validated_data:
+            user.username = validated_data['username']
+            user.save()
+
+        profile = user.profile
+        if 'height' in validated_data:
+            profile.height = validated_data['height']
+        if 'weight' in validated_data:
+            profile.weight = validated_data['weight']
+        if 'age' in validated_data:
+            profile.age = validated_data['age']
+        profile.save()
+
+        return user

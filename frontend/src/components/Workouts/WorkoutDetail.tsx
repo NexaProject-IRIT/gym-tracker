@@ -54,14 +54,14 @@ const IconPencil = () => (
 
 function formatExerciseLine(ex: WorkoutExercise): string {
   const parts: string[] = [];
-  if (ex.sets && ex.parameters.includes('sets')) parts.push(`${ex.sets} подх`);
-  if (ex.reps && ex.parameters.includes('reps')) parts.push(`× ${ex.reps} повт`);
-  if (ex.weight && ex.parameters.includes('weight')) parts.push(`× ${ex.weight} кг`);
-  if (ex.time && ex.parameters.includes('time')) {
+  if (ex.sets !== undefined && ex.sets !== null && ex.parameters.includes('sets')) parts.push(`${ex.sets} подх`);
+  if (ex.reps !== undefined && ex.reps !== null && ex.parameters.includes('reps')) parts.push(`× ${ex.reps} повт`);
+  if (ex.weight !== undefined && ex.weight !== null && ex.parameters.includes('weight')) parts.push(`× ${ex.weight} кг`);
+  if (ex.time !== undefined && ex.time !== null && ex.parameters.includes('time')) {
     const m = Math.floor(ex.time / 60), s = ex.time % 60;
     parts.push(m > 0 ? `${m} мин` : `${s} сек`);
   }
-  if (ex.distance && ex.parameters.includes('distance')) parts.push(`${ex.distance} км`);
+  if (ex.distance !== undefined && ex.distance !== null && ex.parameters.includes('distance')) parts.push(`${ex.distance} км`);
   return parts.join(' ');
 }
 

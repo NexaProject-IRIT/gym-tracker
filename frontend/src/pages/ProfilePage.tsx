@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface ProfileData {
   name: string;
@@ -7,12 +8,6 @@ interface ProfileData {
   height: string;
 }
 
-const statItems = [
-  { label: 'Тренировок', value: '0' },
-  { label: 'Этот месяц', value: '0' },
-  { label: 'Серия дней', value: '0' },
-];
-
 const FIELD_LABELS: Record<keyof ProfileData, string> = {
   name: 'Имя',
   age: 'Возраст',
@@ -20,36 +15,135 @@ const FIELD_LABELS: Record<keyof ProfileData, string> = {
   height: 'Рост (см)',
 };
 
+function getToken(): string {
+  return localStorage.getItem('token') ?? '';
+}
+
 export const ProfilePage = () => {
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState<ProfileData>(() => {
-    try {
-        const u = JSON.parse(localStorage.getItem('user') || '{}');
-        return {
-          name: u.username || '',
-          age: u.age?.toString() || '',
-          weight: u.weight?.toString() || '',
-          height: u.height?.toString() || '',
-      };
-    } catch { return { name: '', age: '', weight: '', height: '' }; }
-  });
+  const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [profile, setProfile] = useState<ProfileData>({ name: '', age: '', weight: '', height: '' });
   const [draft, setDraft] = useState<ProfileData>(profile);
+
+  // Загрузить профиль с API
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const res = await fetch('/auth/profile/', {
+          headers: { Authorization: `Token ${getToken()}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const p: ProfileData = {
+            name: data.username || '',
+            age: data.age?.toString() || '',
+            weight: data.weight?.toString() || '',
+            height: data.height?.toString() || '',
+          };
+          setProfile(p);
+          setDraft(p);
+          localStorage.setItem('user', JSON.stringify(data));
+        }
+      } catch {
+        // Fallback to localStorage
+        try {
+          const u = JSON.parse(localStorage.getItem('user') || '{}');
+          const p: ProfileData = {
+            name: u.username || '',
+            age: u.age?.toString() || '',
+            weight: u.weight?.toString() || '',
+            height: u.height?.toString() || '',
+          };
+          setProfile(p);
+          setDraft(p);
+        } catch {}
+      }
+    };
+    loadProfile();
+  }, []);
 
   const handleEdit = () => {
     setDraft(profile);
     setIsEditing(true);
   };
 
-  const handleSave = () => {
-    setProfile(draft);
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const body: Record<string, unknown> = {};
+      if (draft.name) body.username = draft.name;
+      if (draft.height) body.height = parseFloat(draft.height);
+      if (draft.weight) body.weight = parseFloat(draft.weight);
+      if (draft.age) body.age = parseInt(draft.age);
+
+      const res = await fetch('/auth/profile/', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Token ${getToken()}`,
+        },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const p: ProfileData = {
+          name: data.username || '',
+          age: data.age?.toString() || '',
+          weight: data.weight?.toString() || '',
+          height: data.height?.toString() || '',
+        };
+        setProfile(p);
+        setDraft(p);
+        localStorage.setItem('user', JSON.stringify(data));
+      }
+    } catch {}
+    setSaving(false);
     setIsEditing(false);
-    // TODO: сохранить в localStorage / отправить на API
   };
 
   const handleCancel = () => {
     setDraft(profile);
     setIsEditing(false);
   };
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const res = await fetch('/export/', {
+        headers: { Authorization: `Token ${getToken()}` },
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `workouts_export_${new Date().toISOString().slice(0, 10)}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } catch {}
+    setExporting(false);
+  };
+
+  const handleLogout = () => {
+    fetch('/auth/logout/', {
+      method: 'POST',
+      headers: { Authorization: `Token ${getToken()}` },
+    }).catch(() => {});
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
+
+  const statItems = [
+    { label: 'Тренировок', value: '—' },
+    { label: 'Этот месяц', value: '—' },
+    { label: 'Серия дней', value: '—' },
+  ];
 
   return (
     <div style={{
@@ -71,7 +165,7 @@ export const ProfilePage = () => {
         <h2 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 700 }}>
           {profile.name || 'Ваш профиль'}
         </h2>
-        <p style={{ margin: 0, color: '#475569', fontSize: 14 }}>Личные данные и статистика</p>
+        <p style={{ margin: 0, color: '#475569', fontSize: 14 }}>Личные данные и настройки</p>
       </div>
 
       {/* Статистика */}
@@ -95,7 +189,7 @@ export const ProfilePage = () => {
       <div style={{
         background: '#1a1d24',
         border: '1px solid rgba(255,255,255,0.07)',
-        borderRadius: 16, padding: 24,
+        borderRadius: 16, padding: 24, marginBottom: 16,
       }}>
         <div style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16,
@@ -141,13 +235,15 @@ export const ProfilePage = () => {
               </button>
               <button
                 onClick={handleSave}
+                disabled={saving}
                 style={{
                   padding: '6px 14px', borderRadius: 20, border: 'none',
                   background: 'linear-gradient(135deg, #6ee7b7, #34d399)',
                   color: '#052e16', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                  opacity: saving ? 0.6 : 1,
                 }}
               >
-                Сохранить
+                {saving ? 'Сохраняем...' : 'Сохранить'}
               </button>
             </div>
           )}
@@ -184,6 +280,60 @@ export const ProfilePage = () => {
             )}
           </div>
         ))}
+      </div>
+
+      {/* Экспорт тренировок */}
+      <div style={{
+        background: '#1a1d24',
+        border: '1px solid rgba(255,255,255,0.07)',
+        borderRadius: 16, padding: 24, marginBottom: 16,
+      }}>
+        <div style={{
+          color: '#334155', fontSize: 11, fontWeight: 600,
+          textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16,
+        }}>
+          Данные
+        </div>
+        <button
+          onClick={handleExport}
+          disabled={exporting}
+          style={{
+            width: '100%', padding: '14px', borderRadius: 12, border: 'none',
+            background: 'rgba(110,231,183,0.1)',
+            color: '#6ee7b7', fontWeight: 600, fontSize: 14, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            transition: 'background 0.15s',
+            opacity: exporting ? 0.6 : 1,
+          }}
+          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(110,231,183,0.18)')}
+          onMouseLeave={e => (e.currentTarget.style.background = 'rgba(110,231,183,0.1)')}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"
+              stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          {exporting ? 'Экспорт...' : 'Экспорт тренировок (.txt)'}
+        </button>
+      </div>
+
+      {/* Выход */}
+      <button
+        onClick={handleLogout}
+        style={{
+          width: '100%', padding: '14px', borderRadius: 12,
+          border: '1px solid rgba(248,113,113,0.3)',
+          background: 'rgba(248,113,113,0.08)',
+          color: '#f87171', fontWeight: 600, fontSize: 14, cursor: 'pointer',
+          transition: 'background 0.15s',
+        }}
+        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(248,113,113,0.15)')}
+        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(248,113,113,0.08)')}
+      >
+        Выйти из аккаунта
+      </button>
+
+      <div style={{ textAlign: 'center', marginTop: 32, color: '#1e293b', fontSize: 12 }}>
+        GymLog MVP v0.1
       </div>
     </div>
   );

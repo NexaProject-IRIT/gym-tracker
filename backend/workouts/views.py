@@ -22,6 +22,29 @@ WORKOUT_COLORS = {
 }
 
 
+def serialize_exercise(we: WorkoutExercise) -> dict:
+    """
+    Централизованная сериализация упражнения в dict для ответов API.
+    Вынесено в отдельную функцию, чтобы не дублировать логику в retrieve/create/update.
+    Ключевой момент: всегда включаем parameters — без него фронтенд
+    не знает какие поля (вес/повторы/время) отображать в карточке.
+    """
+    return {
+        "id": str(we.uid),
+        "exerciseId": we.exercise_id or "",
+        "customName": we.custom_name,
+        "sets": we.sets or 0,
+        "reps": we.reps or 0,
+        "weight": we.weight,
+        "time": we.time,
+        "distance": we.distance,
+        "isCustom": we.is_custom,
+        # parameters — список активных параметров: ['sets', 'reps', 'weight'] и т.д.
+        # Если поле пустое (старые записи до миграции), возвращаем [] а не None
+        "parameters": we.parameters if we.parameters else [],
+    }
+
+
 class IsOwnerOrReadOnly(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
@@ -31,6 +54,7 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
 
 class WorkoutViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
+    lookup_field = 'uid'
 
     def get_queryset(self):
         return Workout.objects.filter(user=self.request.user)
@@ -73,27 +97,13 @@ class WorkoutViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         workout = self.get_object()
-
-        exercises = []
-        for we in workout.exercises.all():
-            exercises.append({
-                "id": str(we.uid),
-                "exerciseId": we.exercise_id or "",
-                "customName": we.custom_name,
-                "sets": we.sets or 0,
-                "reps": we.reps or 0,
-                "weight": we.weight,
-                "time": we.time,
-                "distance": we.distance,
-                "isCustom": we.is_custom
-            })
-
         return Response({
             "id": str(workout.uid),
             "name": workout.name,
             "type": workout.type,
             "date": workout.date,
-            "exercises": exercises,
+            "notes": workout.notes or "",
+            "exercises": [serialize_exercise(we) for we in workout.exercises.all()],
             "color": workout.color or WORKOUT_COLORS.get(workout.type, WORKOUT_COLORS['custom'])
         })
 
@@ -103,26 +113,13 @@ class WorkoutViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer)
         workout = serializer.instance
 
-        exercises_response = []
-        for we in workout.exercises.all():
-            exercises_response.append({
-                "id": str(we.uid),
-                "exerciseId": we.exercise_id or "",
-                "customName": we.custom_name,
-                "sets": we.sets or 0,
-                "reps": we.reps or 0,
-                "weight": we.weight,
-                "time": we.time,
-                "distance": we.distance,
-                "isCustom": we.is_custom
-            })
-
         return Response({
             "id": str(workout.uid),
             "name": workout.name,
             "type": workout.type,
             "date": workout.date,
-            "exercises": exercises_response,
+            "notes": workout.notes or "",
+            "exercises": [serialize_exercise(we) for we in workout.exercises.all()],
             "color": workout.color or WORKOUT_COLORS.get(workout.type, WORKOUT_COLORS['custom'])
         }, status=status.HTTP_201_CREATED)
 
@@ -134,26 +131,13 @@ class WorkoutViewSet(viewsets.ModelViewSet):
         self.perform_update(serializer)
         workout = serializer.instance
 
-        exercises_response = []
-        for we in workout.exercises.all():
-            exercises_response.append({
-                "id": str(we.uid),
-                "exerciseId": we.exercise_id or "",
-                "customName": we.custom_name,
-                "sets": we.sets or 0,
-                "reps": we.reps or 0,
-                "weight": we.weight,
-                "time": we.time,
-                "distance": we.distance,
-                "isCustom": we.is_custom
-            })
-
         return Response({
             "id": str(workout.uid),
             "name": workout.name,
             "type": workout.type,
             "date": workout.date,
-            "exercises": exercises_response,
+            "notes": workout.notes or "",
+            "exercises": [serialize_exercise(we) for we in workout.exercises.all()],
             "color": workout.color or WORKOUT_COLORS.get(workout.type, WORKOUT_COLORS['custom'])
         })
 
@@ -228,7 +212,8 @@ class ExportWorkoutsView(APIView):
                     "weight": ex.weight,
                     "time": ex.time,
                     "distance": ex.distance,
-                    "isCustom": ex.is_custom
+                    "isCustom": ex.is_custom,
+                    "parameters": ex.parameters if ex.parameters else [],
                 })
 
             workouts_data.append({

@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
-from .serializers import RegisterSerializer, UserSerializer
+from .serializers import RegisterSerializer, UserSerializer, ProfileUpdateSerializer
 
 
 class RegisterView(generics.CreateAPIView):
@@ -62,3 +62,9 @@ class UserProfileView(APIView):
     def get(self, request):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
+
+    def put(self, request):
+        serializer = ProfileUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.update(request.user, serializer.validated_data)
+        return Response(UserSerializer(request.user).data)

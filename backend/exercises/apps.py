@@ -10,12 +10,12 @@ class ExercisesConfig(AppConfig):
         def run_sync():
             import time
             from .services.md_parser import rebuild_exercises_json
-            from .services.exercise_sync import sync_exercises_to_api
+            from .services.exercise_sync import sync_exercises_to_db
 
             time.sleep(5)
             print("[Exercises] Запуск автоматической синхронизации...")
             rebuild_exercises_json()
-            sync_exercises_to_api()
+            sync_exercises_to_db()
 
         thread = threading.Thread(target=run_sync)
         thread.daemon = True

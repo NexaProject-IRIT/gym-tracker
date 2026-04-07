@@ -13,6 +13,7 @@ interface AccountForm {
 interface BodyForm {
   height: string;
   weight: string;
+  age: string;
 }
 
 interface AccountErrors {
@@ -24,6 +25,7 @@ interface AccountErrors {
 interface BodyErrors {
   height?: string;
   weight?: string;
+  age?: string;
   api?: string;
 }
 
@@ -32,7 +34,7 @@ export const RegisterPage = () => {
   const [step, setStep] = useState<Step>('account');
 
   const [account, setAccount] = useState<AccountForm>({ login: '', password: '', confirmPassword: '' });
-  const [body, setBody] = useState<BodyForm>({ height: '', weight: '' });
+  const [body, setBody] = useState<BodyForm>({ height: '', weight: '', age: '' });
   const [accountErrors, setAccountErrors] = useState<AccountErrors>({});
   const [bodyErrors, setBodyErrors] = useState<BodyErrors>({});
   const [showPassword, setShowPassword] = useState(false);
@@ -55,12 +57,14 @@ export const RegisterPage = () => {
     const e: BodyErrors = {};
     const h = parseFloat(body.height);
     const w = parseFloat(body.weight);
+    const a = parseInt(body.age);
     if (!body.height) e.height = 'Введите рост';
     else if (isNaN(h) || h <= 0) e.height = 'Некорректное значение';
     else if (h < 50 || h > 280) e.height = 'Рост от 50 до 280 см';
     if (!body.weight) e.weight = 'Введите вес';
     else if (isNaN(w) || w <= 0) e.weight = 'Некорректное значение';
     else if (w < 20 || w > 500) e.weight = 'Вес от 20 до 500 кг';
+    if (body.age && (isNaN(a) || a < 10 || a > 120)) e.age = 'Возраст от 10 до 120 лет';
     setBodyErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -74,7 +78,7 @@ export const RegisterPage = () => {
     setLoading(true);
     setBodyErrors({});
     try {
-      const res = await fetch('http://localhost:8000/auth/register/', {
+      const res = await fetch('/auth/register/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -83,6 +87,7 @@ export const RegisterPage = () => {
           password2: account.confirmPassword,
           height: parseFloat(body.height),
           weight: parseFloat(body.weight),
+          age: body.age ? parseInt(body.age) : null,
         }),
       });
       const data = await res.json();
@@ -184,7 +189,7 @@ export const RegisterPage = () => {
                 value={account.password}
                 onChange={v => setAccount(f => ({ ...f, password: v }))}
                 error={accountErrors.password}
-                placeholder="Минимум 6 символов"
+                placeholder="Минимум 8 символов"
                 type={showPassword ? 'text' : 'password'}
                 rightEl={
                   <button onClick={() => setShowPassword(s => !s)}
@@ -228,6 +233,14 @@ export const RegisterPage = () => {
                 Эти данные помогут отслеживать прогресс и давать точные рекомендации.
               </p>
 
+              <Field
+                label="Возраст"
+                value={body.age}
+                onChange={v => setBody(f => ({ ...f, age: v }))}
+                error={bodyErrors.age}
+                placeholder="Например: 25"
+                type="number"
+              />
               <Field
                 label="Рост (см)"
                 value={body.height}
