@@ -79,7 +79,7 @@ export const ProfilePage = () => {
       if (draft.age) body.age = parseInt(draft.age);
 
       const res = await fetch('/auth/profile/', {
-        method: 'PUT',
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Token ${getToken()}`,
