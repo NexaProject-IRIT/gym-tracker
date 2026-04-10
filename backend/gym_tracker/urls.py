@@ -10,6 +10,7 @@ urlpatterns = [
     path('exercises/', include('exercises.urls')),
     path('workouts/', include('workouts.urls')),
     path('export/', ExportWorkoutsView.as_view(), name='export'),
+
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

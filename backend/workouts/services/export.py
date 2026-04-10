@@ -115,6 +115,7 @@ def generate_export_text(workouts_data: list[dict]) -> str:
         date = format_date(workout.get("date"))
         wtype = WORKOUT_TYPE_LABELS.get(str(workout.get("type")), str(workout.get("type")))
         exercises = workout.get("exercises") or []
+        notes = workout.get("notes") or ""
 
         lines = [f"{name} {date} {wtype}"]
 
@@ -126,6 +127,9 @@ def generate_export_text(workouts_data: list[dict]) -> str:
                 lines.append(f"{ex_name} {stats}")
             else:
                 lines.append(ex_name)
+
+        if notes:
+            lines.append(f"\nЗаметка: {notes}")
 
         blocks.append("\n".join(lines))
 

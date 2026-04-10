@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Exercise, ExerciseParameter
+from .models import Exercise, ExerciseParameter, Equipment
 
 
 class ExerciseParameterSerializer(serializers.ModelSerializer):
@@ -77,3 +77,24 @@ class ExerciseCreateSerializer(serializers.ModelSerializer):
             ExerciseParameter.objects.create(exercise=exercise, **param_data)
 
         return exercise
+
+class EquipmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Equipment
+        fields = ['id', 'uid', 'name', 'description', 'tags', 'image', 'source_file', 'created_at', 'updated_at']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['id'] = str(instance.uid)
+        return data
+
+
+class EquipmentListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Equipment
+        fields = ['id', 'name', 'tags', 'image']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['id'] = str(instance.uid)
+        return data

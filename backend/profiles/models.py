@@ -5,10 +5,20 @@ from django.dispatch import receiver
 
 
 class UserProfile(models.Model):
+    GOAL_CHOICES = [
+        ('lose_weight', 'Снижение веса'),
+        ('gain_muscle', 'Набор мышечной массы'),
+        ('recomposition', 'Рекомпозиция тела'),
+        ('improve_endurance', 'Улучшение выносливости'),
+        ('increase_strength', 'Увеличение силы'),
+        ('maintain', 'Поддержание формы'),
+    ]
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     height = models.FloatField(verbose_name='Рост (см)', null=True, blank=True)
     weight = models.FloatField(verbose_name='Вес (кг)', null=True, blank=True)
     age = models.IntegerField(verbose_name='Возраст', null=True, blank=True)
+    goal = models.CharField(verbose_name='Цель тренировок', max_length=50, choices=GOAL_CHOICES, default='maintain')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

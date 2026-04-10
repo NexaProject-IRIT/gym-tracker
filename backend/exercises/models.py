@@ -40,3 +40,21 @@ class ExerciseParameter(models.Model):
 
     def __str__(self):
         return f"{self.exercise.name} - {self.label}"
+
+class Equipment(models.Model):
+    uid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    name = models.CharField(verbose_name='Название снаряжения', max_length=255, db_index=True)
+    description = models.TextField(verbose_name='Описание', blank=True, null=True)
+    tags = models.JSONField(default=list, verbose_name='Теги')
+    image = models.CharField(verbose_name='URL изображения', max_length=500, blank=True, null=True)
+    source_file = models.CharField(verbose_name='Исходный файл', max_length=255, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'equipment'
+        verbose_name = 'Снаряжение'
+        verbose_name_plural = 'Снаряжение'
+
+    def __str__(self):
+        return self.name

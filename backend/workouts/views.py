@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -9,7 +10,7 @@ from .serializers import (
     WorkoutSerializer, WorkoutListSerializer,
     WorkoutCreateSerializer, WorkoutUpdateSerializer
 )
-import datetime
+from datetime import datetime
 from .services.export import generate_export_text
 
 
@@ -194,6 +195,21 @@ class WorkoutViewSet(viewsets.ModelViewSet):
 
         return Response(data)
 
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        user = request.user
+        now = timezone.now()
+        start_of_month = datetime(now.year, now.month, 1, tzinfo=now.tzinfo)
+        total = Workout.objects.filter(user=user).count()
+        this_month = Workout.objects.filter(user=user, date__gte=start_of_month, date__lte=now).count()
+        return Response({"total": total, "this_month": this_month})
+
+    @action(detail=False, methods=['delete'])
+    def clear(self, request):
+        user = request.user
+        deleted_count, _ = Workout.objects.filter(user=user).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class ExportWorkoutsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -220,7 +236,8 @@ class ExportWorkoutsView(APIView):
                 "name": workout.name,
                 "type": workout.type,
                 "date": workout.date.isoformat(),
-                "exercises": exercises_data
+                "exercises": exercises_data,
+                "notes": workout.notes
             })
 
         export_text = generate_export_text(workouts_data)
@@ -229,7 +246,6 @@ class ExportWorkoutsView(APIView):
             export_text = "Нет тренировок для экспорта"
 
         response = HttpResponse(export_text, content_type='text/plain; charset=utf-8')
-        response[
-            'Content-Disposition'] = f'attachment; filename="workouts_export_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}.txt"'
+        response['Content-Disposition'] = f'attachment; filename="workouts_export_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt"'
 
         return response

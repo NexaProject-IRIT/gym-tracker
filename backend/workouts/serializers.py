@@ -47,7 +47,7 @@ class WorkoutListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Workout
-        fields = ['id', 'name', 'type', 'date', 'color', 'exercise_count']
+        fields = ['id', 'name', 'type', 'date', 'color', 'exercise_count', 'notes']
 
     def get_exercise_count(self, obj):
         return obj.exercises.count()
