@@ -3,3 +3,4 @@ requests==2.32.3
 Django==4.2.11
 djangorestframework==3.14.0
 django-cors-headers==4.3.1
+python-frontmatter==1.1.0

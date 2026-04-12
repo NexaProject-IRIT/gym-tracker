@@ -3,13 +3,15 @@ import uuid
 
 
 class Exercise(models.Model):
-    uid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
-    name = models.CharField(max_length=255, db_index=True)
+    uid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    exercise_id = models.CharField(max_length=255, unique=True, null=True, blank=True)
+    name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     equipment = models.CharField(max_length=255, blank=True, null=True)
+    difficulty = models.CharField(max_length=50, blank=True, default="")
     target_muscles = models.JSONField(default=list)
     tags = models.JSONField(default=list)
-    images = models.JSONField(default=list)
+    images = models.JSONField(default=dict)
     source_file = models.CharField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

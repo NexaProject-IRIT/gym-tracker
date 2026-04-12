@@ -64,7 +64,7 @@ class ExerciseViewSet(viewsets.ModelViewSet):
         return Response(result_serializer.data, status=status.HTTP_201_CREATED)
 
 
-class EquipmentViewSet(viewsets.ModelViewSet):
+class EquipmentViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.AllowAny]
     queryset = Equipment.objects.all()
 

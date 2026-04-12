@@ -1,101 +1,118 @@
-import os
-import re
-import json
 from pathlib import Path
+
+import frontmatter
 from django.conf import settings
 
 
 BASE_DIR = Path(settings.BASE_DIR)
 KNOWLEDGE_BASE_PATH = BASE_DIR / "knowledge_base"
-OUTPUT_JSON_PATH = BASE_DIR / "exercises.json"
+EQUIPMENT_PATH = KNOWLEDGE_BASE_PATH / "equipment"
+EXERCISES_PATH = KNOWLEDGE_BASE_PATH / "exercises"
 
 
-def parse_md_file(file_path: Path) -> dict:
-    with open(file_path, "r", encoding="utf-8") as f:
-        content = f.read()
+def normalize_list(value):
+    if isinstance(value, list):
+        return value
+    return []
 
-    # Title: first H1 heading
-    title_match = re.search(r"^#\s+(.+)$", content, re.MULTILINE)
-    title = title_match.group(1).strip() if title_match else file_path.stem
 
-    # Tags: lines like "#biceps #arms #dumbbell" (not headings "# Title")
-    tags = []
-    for line in content.splitlines():
-        stripped = line.strip()
-        # Tag line: starts with # but NOT "# " (heading)
-        if re.match(r"^#[A-Za-zА-Яа-я]", stripped):
-            tags.extend(re.findall(r"#([A-Za-zА-Яа-я0-9_-]+)", stripped))
+def normalize_string(value):
+    if value is None:
+        return ""
+    return str(value).strip()
 
-    # Images: markdown format ![alt](path)
-    images = re.findall(r"!\[.*?\]\((.*?)\)", content)
 
-    # Equipment section: ## Equipment
-    equip_match = re.search(
-        r"^##\s+Equipment\s*$\n(.*?)(?=^##\s+|\Z)",
-        content,
-        re.IGNORECASE | re.MULTILINE | re.DOTALL,
-    )
-    equipment = equip_match.group(1).strip() if equip_match else ""
+def normalize_exercise_images(images):
+    if not isinstance(images, dict):
+        images = {}
 
-    # Description section: ## Description
-    desc_match = re.search(
-        r"^##\s+Description\s*$\n(.*?)(?=^##\s+|\Z)",
-        content,
-        re.IGNORECASE | re.MULTILINE | re.DOTALL,
-    )
-
-    if desc_match:
-        description = desc_match.group(1).strip()
-    else:
-        # Fallback: everything that isn't title/tags/images
-        lines = content.splitlines()
-        cleaned_lines = []
-        for line in lines:
-            stripped = line.strip()
-            if re.match(r"^#\s+.+$", stripped):
-                continue
-            if re.match(r"^#[A-Za-zА-Яа-я]", stripped):
-                continue
-            if re.match(r"^!\[.*?\]\(.*?\)$", stripped):
-                continue
-            if re.match(r"^##\s+", stripped):
-                continue
-            cleaned_lines.append(line)
-        description = "\n".join(cleaned_lines).strip()
+    technique = images.get("technique", [])
+    if not isinstance(technique, list):
+        technique = []
 
     return {
-        "name": title,
-        "tags": tags,
-        "description": description,
-        "images": images,
-        "equipment": equipment,
+        "cover": normalize_string(images.get("cover")),
+        "technique": technique,
+        "muscleMap": normalize_string(images.get("muscleMap")),
+    }
+
+
+def parse_equipment_file(file_path: Path) -> dict:
+    post = frontmatter.load(file_path)
+    meta = post.metadata or {}
+
+    return {
+        "type": normalize_string(meta.get("type")).lower(),
+        "name": normalize_string(meta.get("name")),
+        "tags": normalize_list(meta.get("tags")),
+        "description": normalize_string(meta.get("description")),
+        "image": normalize_string(meta.get("image")),
         "source_file": file_path.name,
     }
 
 
-def parse_knowledge_base(base_path: Path) -> list:
-    exercises = []
+def parse_exercise_file(file_path: Path) -> dict:
+    post = frontmatter.load(file_path)
+    meta = post.metadata or {}
 
-    if not base_path.exists():
-        print(f"[md_parser] Knowledge base path not found: {base_path}")
-        return exercises
+    target_muscles = meta.get("targetMuscles")
+    if target_muscles is None:
+        target_muscles = meta.get("target_muscles")
 
-    for root, _, files in os.walk(base_path):
-        for file_name in sorted(files):
-            if file_name.lower().endswith(".md"):
-                file_path = Path(root) / file_name
-                parsed = parse_md_file(file_path)
-                if parsed["name"]:
-                    exercises.append(parsed)
+    return {
+        "type": normalize_string(meta.get("type")).lower(),
+        "id": normalize_string(meta.get("id")),
+        "name": normalize_string(meta.get("name")),
+        "equipment": normalize_string(meta.get("equipment")),
+        "targetMuscles": normalize_list(target_muscles),
+        "tags": normalize_list(meta.get("tags")),
+        "difficulty": normalize_string(meta.get("difficulty")),
+        "parameters": normalize_list(meta.get("parameters")),
+        "images": normalize_exercise_images(meta.get("images")),
+        "description": normalize_string(meta.get("description")),
+        "source_file": file_path.name,
+    }
 
-    return exercises
+
+def parse_directory(directory: Path, parser_func, expected_type: str) -> list[dict]:
+    items = []
+
+    if not directory.exists():
+        print(f"[md_parser] Directory not found: {directory}")
+        return items
+
+    for file_path in sorted(directory.glob("*.md")):
+        try:
+            parsed = parser_func(file_path)
+
+            if parsed.get("type") != expected_type:
+                print(
+                    f"[md_parser] SKIP {file_path.name}: "
+                    f"expected '{expected_type}', got '{parsed.get('type')}'"
+                )
+                continue
+
+            if not parsed.get("name"):
+                print(f"[md_parser] SKIP {file_path.name}: empty name")
+                continue
+
+            items.append(parsed)
+
+        except Exception as e:
+            print(f"[md_parser] ERROR {file_path.name}: {e}")
+
+    return items
 
 
-def rebuild_exercises_json() -> Path:
-    exercises = parse_knowledge_base(KNOWLEDGE_BASE_PATH)
-
-    with open(OUTPUT_JSON_PATH, "w", encoding="utf-8") as f:
-        json.dump(exercises, f, ensure_ascii=False, indent=2)
-
-    print(f"[md_parser] exercises.json updated. Exercises: {len(exercises)}")
-    return OUTPUT_JSON_PATH
+def parse_knowledge_base():
+    equipment_list = parse_directory(
+        EQUIPMENT_PATH,
+        parse_equipment_file,
+        "equipment",
+    )
+    exercise_list = parse_directory(
+        EXERCISES_PATH,
+        parse_exercise_file,
+        "exercise",
+    )
+    return equipment_list, exercise_list
