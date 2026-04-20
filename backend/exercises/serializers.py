@@ -55,6 +55,7 @@ class ExerciseListSerializer(serializers.ModelSerializer):
             'id',
             'exerciseId',
             'name',
+            'description',
             'equipment',
             'targetMuscles',
             'tags',
