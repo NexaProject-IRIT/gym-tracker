@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:15
@@ -12,6 +10,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gym_user -d gym_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   backend:
     build: ./backend
@@ -19,20 +22,34 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       - DATABASE_URL=postgresql://gym_user:gym_password@db:5432/gym_db
+      - DB_NAME=gym_db
+      - DB_USER=gym_user
+      - DB_PASSWORD=gym_password
+      - DB_HOST=db
+      - DB_PORT=5432
     volumes:
-      - ./backend:/app # Это нужно, чтобы код обновлялся без перезагрузки контейнера
+      - ./backend:/app
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py collectstatic --noinput &&
+             python manage.py sync_knowledge_base &&
+             python manage.py runserver 0.0.0.0:8000"
 
   frontend:
+    depends_on:
+      backend:
+        condition: service_started
     build: ./frontend
     container_name: gym_frontend
     ports:
       - "5173:5173"
     volumes:
       - ./frontend:/app
-      - /app/node_modules # Изолируем зависимости контейнера
+      - /app/node_modules
 
 volumes:
   postgres_data:
