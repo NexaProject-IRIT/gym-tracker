@@ -1,0 +1,62 @@
+from django.db import models
+import uuid
+
+
+class Exercise(models.Model):
+    uid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    exercise_id = models.CharField(max_length=255, unique=True, null=True, blank=True)
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    equipment = models.CharField(max_length=255, blank=True, null=True)
+    difficulty = models.CharField(max_length=50, blank=True, default="")
+    target_muscles = models.JSONField(default=list)
+    tags = models.JSONField(default=list)
+    images = models.JSONField(default=dict)
+    source_file = models.CharField(max_length=255, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'exercises'
+
+    def __str__(self):
+        return self.name
+
+
+class ExerciseParameter(models.Model):
+    PARAMETER_TYPES = [
+        ('weight', 'Вес'),
+        ('reps', 'Повторения'),
+        ('sets', 'Подходы'),
+        ('time', 'Время'),
+        ('distance', 'Расстояние'),
+    ]
+
+    exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE, related_name='parameters')
+    type = models.CharField(max_length=20, choices=PARAMETER_TYPES)
+    label = models.CharField(max_length=100)
+    unit = models.CharField(max_length=50, blank=True)
+
+    class Meta:
+        db_table = 'exercise_parameters'
+
+    def __str__(self):
+        return f"{self.exercise.name} - {self.label}"
+
+class Equipment(models.Model):
+    uid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    name = models.CharField(verbose_name='Название снаряжения', max_length=255, db_index=True)
+    description = models.TextField(verbose_name='Описание', blank=True, null=True)
+    tags = models.JSONField(default=list, verbose_name='Теги')
+    image = models.CharField(verbose_name='URL изображения', max_length=500, blank=True, null=True)
+    source_file = models.CharField(verbose_name='Исходный файл', max_length=255, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'equipment'
+        verbose_name = 'Снаряжение'
+        verbose_name_plural = 'Снаряжение'
+
+    def __str__(self):
+        return self.name

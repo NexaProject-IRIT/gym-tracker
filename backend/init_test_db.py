@@ -3,9 +3,9 @@ import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.database.connection import SessionLocal, engine, Base
-from app.models.exercise import Exercise, ExerciseParameter
-from app.models.workout import Workout, WorkoutExercise
+from apps.database.connection import SessionLocal, engine, Base
+from apps.models.exercise import Exercise, ExerciseParameter
+from apps.models.workout import Workout, WorkoutExercise
 from datetime import datetime, timedelta
 import uuid
 import json

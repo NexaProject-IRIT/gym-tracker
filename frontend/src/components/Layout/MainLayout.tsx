@@ -39,21 +39,12 @@ const IconUser = ({ active }: { active: boolean }) => (
   </svg>
 );
 
-const IconSettings = ({ active }: { active: boolean }) => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-    <circle cx="12" cy="12" r="3" stroke={active ? '#6ee7b7' : '#64748b'} strokeWidth="1.8"/>
-    <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
-      stroke={active ? '#6ee7b7' : '#64748b'} strokeWidth="1.8" strokeLinecap="round"/>
-  </svg>
-);
-
 const NAV_ITEMS = [
   { to: '/',          label: 'Главная',      icon: (a: boolean) => <IconHome active={a} />,     end: true  },
   { to: '/workouts',  label: 'Тренировки',   icon: (a: boolean) => <IconDumbbell active={a} />, end: false },
-  { to: '/knowledge', label: 'База знаний',  icon: (a: boolean) => <IconBook active={a} />,     end: false },
+  { to: '/knowledge', label: 'База тренировок',  icon: (a: boolean) => <IconBook active={a} />,     end: false },
   { to: '/timer',     label: 'Таймер',       icon: (a: boolean) => <IconTimer active={a} />,    end: false },
   { to: '/profile',   label: 'Профиль',      icon: (a: boolean) => <IconUser active={a} />,     end: false },
-  { to: '/settings',  label: 'Настройки',    icon: (a: boolean) => <IconSettings active={a} />, end: false },
 ];
 
 const Logo = () => (
@@ -99,7 +90,7 @@ export const MainLayout = () => {
 
       <div style={{ display: 'flex', minHeight: '100vh', background: '#111318' }}>
 
-        {/* ── Десктоп: левый сайдбар ── */}
+        {/* Десктоп: левый сайдбар */}
         {!isMobile && (
           <aside style={{
             width: SIDEBAR_WIDTH,
@@ -163,13 +154,13 @@ export const MainLayout = () => {
           </aside>
         )}
 
-        {/* ── Основной контент ── */}
+        {/* Основной контент */}
         <main style={{ flex: 1, minWidth: 0, paddingBottom: isMobile ? 64 : 0 }}>
           <Outlet />
         </main>
       </div>
 
-      {/* ── Мобила: нижний таббар (только иконки) ── */}
+      {/* Мобила: нижний таббар */}
       {isMobile && (
         <nav style={{
           position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
@@ -188,7 +179,6 @@ export const MainLayout = () => {
                   cursor: 'pointer',
                 }}>
                   {icon(isActive)}
-                  {/* Подпись только для активного пункта */}
                   {isActive && (
                     <span style={{
                       fontSize: 9, fontWeight: 600,

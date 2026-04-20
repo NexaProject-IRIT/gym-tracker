@@ -54,14 +54,16 @@ const IconPencil = () => (
 
 function formatExerciseLine(ex: WorkoutExercise): string {
   const parts: string[] = [];
-  if (ex.sets && ex.parameters.includes('sets')) parts.push(`${ex.sets} подх`);
-  if (ex.reps && ex.parameters.includes('reps')) parts.push(`× ${ex.reps} повт`);
-  if (ex.weight && ex.parameters.includes('weight')) parts.push(`× ${ex.weight} кг`);
-  if (ex.time && ex.parameters.includes('time')) {
+  if (ex.sets !== undefined && ex.sets !== null && ex.parameters.includes('sets')) parts.push(`${ex.sets} подх`);
+  if (ex.reps !== undefined && ex.reps !== null && ex.parameters.includes('reps')) parts.push(`× ${ex.reps} повт`);
+  if (ex.weight !== undefined && ex.weight !== null && ex.parameters.includes('weight')) parts.push(`× ${ex.weight} кг`);
+  if (ex.time !== undefined && ex.time !== null && ex.parameters.includes('time')) {
     const m = Math.floor(ex.time / 60), s = ex.time % 60;
-    parts.push(m > 0 ? `${m} мин` : `${s} сек`);
-  }
-  if (ex.distance && ex.parameters.includes('distance')) parts.push(`${ex.distance} км`);
+    if (m > 0 && s > 0) parts.push(`${m} мин ${s} сек`);
+    else if (m > 0) parts.push(`${m} мин`);
+    else parts.push(`${s} сек`);
+  }  
+  if (ex.distance !== undefined && ex.distance !== null && ex.parameters.includes('distance')) parts.push(`${ex.distance} км`);
   return parts.join(' ');
 }
 
@@ -327,6 +329,7 @@ export const WorkoutDetail: React.FC<Props> = ({
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingExercise, setEditingExercise] = useState<WorkoutExercise | null>(null);
   const [showAddExercise, setShowAddExercise] = useState(false);
+  const [exerciseInfo, setExerciseInfo] = useState<WorkoutExercise | null>(null);
   const [showMenu, setShowMenu] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState(workout.name);
@@ -337,6 +340,17 @@ export const WorkoutDetail: React.FC<Props> = ({
 
   // ── Чекбоксы выполнения ──
   const [doneExercises, setDoneExercises] = useState<Set<string>>(new Set());
+
+  React.useEffect(() => {
+    setNameValue(workout.name);
+    setDateValue(workout.date.slice(0, 10));
+    setNoteValue(workout.notes ?? '');
+    setEditingName(false);
+    setEditingDate(false);
+    setIsEditingNote(false);
+    setDoneExercises(new Set());
+  }, [workout.id]);
+
   const toggleDone = (id: string) => {
     setDoneExercises(prev => {
       const next = new Set(prev);
@@ -641,8 +655,10 @@ export const WorkoutDetail: React.FC<Props> = ({
 
                 {!ex.isCustom && !isEditMode && (
                   <button
-                    onClick={e => { e.stopPropagation(); alert(`База знаний: ${ex.name}`); }}
-                    style={{
+                    onClick={e => {
+                      e.stopPropagation();
+                      setExerciseInfo(ex);
+                    }}                    style={{
                       width: 24, height: 24, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.1)',
                       background: 'none', color: '#475569', cursor: 'pointer', flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -716,6 +732,35 @@ export const WorkoutDetail: React.FC<Props> = ({
           onAdd={onAddExercise}
           onClose={() => setShowAddExercise(false)}
         />
+      )}
+
+      {exerciseInfo && (
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+          onClick={() => setExerciseInfo(null)}
+        >
+          <div
+            style={{ width: '100%', maxWidth: 480, background: '#1a1d24', borderRadius: 20, padding: 24, border: '1px solid rgba(255,255,255,0.1)', maxHeight: '85vh', overflowY: 'auto' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 style={{ color: '#f1f5f9', fontWeight: 700, fontSize: 18, margin: '0 0 8px' }}>{exerciseInfo.name}</h3>
+            <p style={{ color: '#64748b', fontSize: 13, margin: '0 0 16px' }}>Информация из базы тренировок</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
+              <div style={{ color: '#94a3b8', fontSize: 13 }}>Параметры: {exerciseInfo.parameters.map(p => PARAMETER_LABELS[p].label).join(', ')}</div>
+              {exerciseInfo.sets != null && <div style={{ color: '#94a3b8', fontSize: 13 }}>Подходы: {exerciseInfo.sets}</div>}
+              {exerciseInfo.reps != null && <div style={{ color: '#94a3b8', fontSize: 13 }}>Повторы: {exerciseInfo.reps}</div>}
+              {exerciseInfo.weight != null && <div style={{ color: '#94a3b8', fontSize: 13 }}>Вес: {exerciseInfo.weight} кг</div>}
+              {exerciseInfo.time != null && <div style={{ color: '#94a3b8', fontSize: 13 }}>Время: {exerciseInfo.time} сек</div>}
+              {exerciseInfo.distance != null && <div style={{ color: '#94a3b8', fontSize: 13 }}>Дистанция: {exerciseInfo.distance} км</div>}
+            </div>
+            <p style={{ color: '#475569', fontSize: 12, margin: '0 0 16px', lineHeight: 1.5 }}>
+              Детальная карточка упражнения доступна во вкладке «База тренировок».
+            </p>
+            <button onClick={() => setExerciseInfo(null)} style={{ width: '100%', padding: '10px', borderRadius: 10, border: 'none', background: 'rgba(110,231,183,0.15)', color: '#6ee7b7', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+              Закрыть
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

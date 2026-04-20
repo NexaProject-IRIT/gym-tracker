@@ -21,6 +21,7 @@ export interface Exercise {
   description: string;
   equipment: string;
   targetMuscles: string[];
+  difficulty?: string;
   tags: string[];
   parameters: ExerciseParameter[];
   images: {
@@ -40,6 +41,7 @@ export interface WorkoutExercise {
   name: string;             // Отображаемое имя
   sets?: number;
   reps?: number;
+  notes?: string;
   weight?: number;
   time?: number;            // В секундах
   distance?: number;        // В км

@@ -26,10 +26,23 @@ services:
         condition: service_healthy
     environment:
       - DATABASE_URL=postgresql://gym_user:gym_password@db:5432/gym_db
+      - DB_NAME=gym_db
+      - DB_USER=gym_user
+      - DB_PASSWORD=gym_password
+      - DB_HOST=db
+      - DB_PORT=5432
     volumes:
       - ./backend:/app
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py collectstatic --noinput &&
+             python manage.py sync_knowledge_base &&
+             python manage.py runserver 0.0.0.0:8000"
 
   frontend:
+    depends_on:
+      backend:
+        condition: service_started
     build: ./frontend
     container_name: gym_frontend
     ports:
