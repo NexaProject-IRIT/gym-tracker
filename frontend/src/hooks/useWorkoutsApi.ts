@@ -138,6 +138,10 @@ export const useWorkoutsApi = () => {
           type: workout.type,
           date: workout.date,
           color: workout.color,
+<<<<<<< HEAD
+=======
+          notes: workout.notes,
+>>>>>>> main
           exercises: workout.exercises.map(serializeExercise),
         }),
       });

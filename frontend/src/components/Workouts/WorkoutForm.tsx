@@ -4,7 +4,11 @@ import type { WorkoutType, WorkoutExercise, ParameterType } from '../../types/wo
 import { WORKOUT_TYPE_LABELS, WORKOUT_TYPE_COLORS, DEFAULT_PARAMS_FOR_TYPE, PARAMETER_LABELS } from '../../types/workout';
 
 interface Props {
+<<<<<<< HEAD
   onSave: (data: { name: string; type: WorkoutType; date: string; exercises: Omit<WorkoutExercise, 'id'>[] }) => void;
+=======
+  onSave: (data: { name: string; type: WorkoutType; date: string; notes: string; exercises: Omit<WorkoutExercise, 'id'>[] }) => void;
+>>>>>>> main
   onClose: () => void;
 }
 
@@ -91,6 +95,10 @@ export const WorkoutForm: React.FC<Props> = ({ onSave, onClose }) => {
   const [step, setStep] = useState<Step>('type');
   const [selectedType, setSelectedType] = useState<WorkoutType | null>(null);
   const [workoutName, setWorkoutName] = useState('');
+<<<<<<< HEAD
+=======
+  const [notes, setNotes] = useState('');
+>>>>>>> main
   const [exercises, setExercises] = useState<DraftExercise[]>([]);
   const [adding, setAdding] = useState(false);
 
@@ -189,7 +197,11 @@ export const WorkoutForm: React.FC<Props> = ({ onSave, onClose }) => {
   const handleSave = () => {
     if (!selectedType || !workoutName.trim()) return;
     onSave({
+<<<<<<< HEAD
       name: workoutName.trim(), type: selectedType, date: new Date().toISOString(),
+=======
+      name: workoutName.trim(), type: selectedType, date: new Date().toISOString(), notes: notes.trim(),
+>>>>>>> main
       exercises: exercises.map(e => ({
         name: e.name,
         exerciseId: e.exerciseId,

@@ -42,7 +42,11 @@ const IconUser = ({ active }: { active: boolean }) => (
 const NAV_ITEMS = [
   { to: '/',          label: 'Главная',      icon: (a: boolean) => <IconHome active={a} />,     end: true  },
   { to: '/workouts',  label: 'Тренировки',   icon: (a: boolean) => <IconDumbbell active={a} />, end: false },
+<<<<<<< HEAD
   { to: '/knowledge', label: 'База знаний',  icon: (a: boolean) => <IconBook active={a} />,     end: false },
+=======
+  { to: '/knowledge', label: 'База тренировок',  icon: (a: boolean) => <IconBook active={a} />,     end: false },
+>>>>>>> main
   { to: '/timer',     label: 'Таймер',       icon: (a: boolean) => <IconTimer active={a} />,    end: false },
   { to: '/profile',   label: 'Профиль',      icon: (a: boolean) => <IconUser active={a} />,     end: false },
 ];

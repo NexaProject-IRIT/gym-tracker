@@ -398,6 +398,10 @@ export const WorkoutList: React.FC = () => {
             onSave={data => {
               addWorkout({
                 name: data.name, type: data.type, date: data.date,
+<<<<<<< HEAD
+=======
+                notes: data.notes,
+>>>>>>> main
                 color: WORKOUT_TYPE_COLORS[data.type].accent,
                 exercises: data.exercises.map(e => ({ ...e, id: `ex_${Date.now()}_${Math.random().toString(36).slice(2, 5)}` })),
               });
