@@ -3,6 +3,7 @@
 import os
 import sys
 
+sys.setrecursionlimit(5000)
 
 def main():
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gym_tracker.settings')
