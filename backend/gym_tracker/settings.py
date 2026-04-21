@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'exercises',
     'workouts',
     'profiles',
+    'ai',
 ]
 
 MIDDLEWARE = [
@@ -112,3 +113,24 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8000',
 ]
+
+# ---- ИИ-тренер ----
+# Ключи/настройки GigaChat берутся из окружения. См. docker-compose.yml.
+# LLM_PROVIDER: 'gigachat' (дефолт) или 'mock' (заглушка без реального ключа).
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {'format': '[{levelname}] {name}: {message}', 'style': '{'},
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'loggers': {
+        'ai': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
+    },
+}

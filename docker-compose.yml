@@ -31,6 +31,11 @@ services:
       - DB_PASSWORD=gym_password
       - DB_HOST=db
       - DB_PORT=5432
+      - LLM_PROVIDER=gigachat
+      - GIGACHAT_AUTH_KEY=MDE5Y2I5ZGQtOWY2OS03NDdhLWIxMjAtMTVmOTRhMTE1MGYwOmQxMGU1NzNlLTlkYjMtNDBiYi1iMDIyLTQ5MjQyOWE2MDJiZQ==
+      - GIGACHAT_SCOPE=GIGACHAT_API_PERS
+      - GIGACHAT_MODEL=GigaChat
+      - GIGACHAT_VERIFY_SSL=false
     volumes:
       - ./backend:/app
     command: >

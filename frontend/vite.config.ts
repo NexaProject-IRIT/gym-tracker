@@ -12,6 +12,7 @@ export default defineConfig({
       '/workouts':  { target: 'http://backend:8000', changeOrigin: true },
       '/exercises': { target: 'http://backend:8000', changeOrigin: true },
       '/export':    { target: 'http://backend:8000', changeOrigin: true },
+      '/ai':        { target: 'http://backend:8000', changeOrigin: true },
     },
   },
 })
