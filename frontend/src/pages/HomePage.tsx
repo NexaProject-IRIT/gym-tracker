@@ -1,177 +1,308 @@
 import { useNavigate } from 'react-router-dom';
 
+const IconDumbbell = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6.5 6.5h11M6.5 17.5h11M4 9.5v5M20 9.5v5M2 11v2M22 11v2"/>
+  </svg>
+);
+
+const IconBook = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#63b3ed" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+  </svg>
+);
+
+const IconChart = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+  </svg>
+);
+
+const IconWorkouts = () => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6.5 6.5h11M6.5 17.5h11M4 9.5v5M20 9.5v5M2 11v2M22 11v2"/>
+  </svg>
+);
+
+// Иконки шагов «Как начать»
+const IconUser = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="8" r="4"/><path d="M4 20v-1a8 8 0 0116 0v1"/>
+  </svg>
+);
+const IconPlus = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 5v14M5 12h14"/>
+  </svg>
+);
+const IconTrend = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+  </svg>
+);
+
 const features = [
   {
-    icon: '🏋️',
+    icon: <IconDumbbell />,
     title: 'Тренировки',
-    desc: 'Ведите дневник, отслеживайте прогресс по весу и повторениям.',
+    desc: 'Ведите дневник, добавляйте упражнения из базы или свои, отслеживайте прогресс по весу и повторениям.',
     to: '/workouts',
     color: 'rgba(110,231,183,0.08)',
     border: 'rgba(110,231,183,0.2)',
+    accent: '#6ee7b7',
   },
   {
-    icon: '⏱️',
-    title: 'Таймер',
-    desc: 'Таймер отдыха между подходами и секундомер — всё как на iPhone.',
-    to: '/timer',
+    icon: <IconBook />,
+    title: 'База упражнений',
+    desc: 'Справочник упражнений с описанием техники, целевыми мышцами и фото. Фильтры по группам мышц.',
+    to: '/knowledge',
     color: 'rgba(99,179,237,0.08)',
     border: 'rgba(99,179,237,0.2)',
+    accent: '#63b3ed',
   },
   {
-    icon: '👤',
-    title: 'Профиль',
-    desc: 'Ваши личные данные, статистика и история тренировок.',
+    icon: <IconChart />,
+    title: 'Статистика',
+    desc: 'Количество тренировок, объём за месяц и динамика нагрузки — всё в профиле.',
     to: '/profile',
     color: 'rgba(196,181,253,0.08)',
     border: 'rgba(196,181,253,0.2)',
-  },
-  {
-    icon: '⚙️',
-    title: 'Настройки',
-    desc: 'Уведомления, единицы измерения и другие параметры.',
-    to: '/settings',
-    color: 'rgba(251,191,36,0.08)',
-    border: 'rgba(251,191,36,0.2)',
+    accent: '#c4b5fd',
   },
 ];
 
-const stats = [
-  { value: '0', label: 'тренировок' },
-  { value: '0', label: 'упражнений' },
-  { value: '0 кг', label: 'тоннаж' },
+const steps = [
+  { icon: <IconUser />, title: 'Создайте аккаунт', desc: 'Укажите параметры тела и выберите цель — похудение, набор мышц или выносливость.' },
+  { icon: <IconPlus />, title: 'Добавьте тренировку', desc: 'Выберите тип, добавьте упражнения из базы или создайте свои. Поддержка подходов, веса, времени.' },
+  { icon: <IconTrend />, title: 'Следите за прогрессом', desc: 'Смотрите статистику в профиле, экспортируйте историю тренировок.' },
 ];
 
 export const HomePage = () => {
   const navigate = useNavigate();
+  const isLoggedIn = !!localStorage.getItem('token');
 
   return (
     <div style={{
       minHeight: '100vh',
       background: '#111318',
       color: '#f1f5f9',
-      padding: '48px 24px 80px',
-      maxWidth: 720,
-      margin: '0 auto',
     }}>
 
       {/* Hero */}
-      <div style={{ marginBottom: 56, textAlign: 'center' }}>
+      <div style={{
+        padding: '80px 24px 72px',
+        maxWidth: 720,
+        margin: '0 auto',
+        textAlign: 'center',
+      }}>
         <div style={{
-          width: 64, height: 64, borderRadius: 18,
+          width: 72, height: 72, borderRadius: 20,
           background: 'rgba(110,231,183,0.12)',
           border: '1px solid rgba(110,231,183,0.25)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          margin: '0 auto 24px',
-          fontSize: 28,
+          margin: '0 auto 28px',
         }}>
-          💪
+          <IconWorkouts />
         </div>
 
         <h1 style={{
-          fontSize: 'clamp(28px, 5vw, 42px)',
+          fontSize: 'clamp(32px, 5vw, 48px)',
           fontWeight: 800,
-          margin: '0 0 16px',
-          lineHeight: 1.15,
+          margin: '0 0 18px',
+          lineHeight: 1.12,
           background: 'linear-gradient(135deg, #f1f5f9 0%, #6ee7b7 100%)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
         }}>
-          Добро пожаловать<br />в GymLog
+          Умный дневник<br />тренировок
         </h1>
 
         <p style={{
           color: '#64748b',
-          fontSize: 16,
-          lineHeight: 1.6,
-          maxWidth: 420,
-          margin: '0 auto 32px',
+          fontSize: 17,
+          lineHeight: 1.65,
+          maxWidth: 440,
+          margin: '0 auto 36px',
         }}>
-          Умный дневник тренировок с прогрессивной перегрузкой,
-          аналитикой и таймером отдыха.
+          Записывайте тренировки, отслеживайте прогресс и пользуйтесь базой упражнений — всё в одном месте.
         </p>
 
-        <button
-          onClick={() => navigate('/workouts')}
-          style={{
-            padding: '14px 32px',
-            borderRadius: 14,
-            background: 'linear-gradient(135deg, #6ee7b7, #34d399)',
-            border: 'none',
-            color: '#052e16',
-            fontWeight: 700,
-            fontSize: 15,
-            cursor: 'pointer',
-            transition: 'opacity 0.15s',
-          }}
-          onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
-          onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-        >
-          Начать тренировку →
-        </button>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => navigate(isLoggedIn ? '/workouts' : '/register')}
+            style={{
+              padding: '14px 32px', borderRadius: 14,
+              background: 'linear-gradient(135deg, #6ee7b7, #34d399)',
+              border: 'none', color: '#052e16',
+              fontWeight: 700, fontSize: 15, cursor: 'pointer',
+              transition: 'opacity 0.15s',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
+            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+          >
+            Начать →
+          </button>
+          <button
+            onClick={() => navigate('/workouts')}
+            style={{
+              padding: '14px 28px', borderRadius: 14,
+              background: 'transparent',
+              border: '1px solid rgba(255,255,255,0.12)',
+              color: '#94a3b8', fontWeight: 600, fontSize: 15, cursor: 'pointer',
+              transition: 'border-color 0.15s, color 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(110,231,183,0.4)'; e.currentTarget.style.color = '#6ee7b7'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = '#94a3b8'; }}
+          >
+            Открыть тренировки
+          </button>
+        </div>
       </div>
 
-      {/* Статистика */}
+      {/* Три основные функции */}
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: 12,
-        marginBottom: 48,
+        padding: '0 24px 72px',
+        maxWidth: 720, margin: '0 auto',
       }}>
-        {stats.map(({ value, label }) => (
-          <div key={label} style={{
-            background: '#1a1d24',
-            border: '1px solid rgba(255,255,255,0.07)',
-            borderRadius: 16,
-            padding: '20px 12px',
-            textAlign: 'center',
-          }}>
-            <div style={{ fontSize: 28, fontWeight: 700, color: '#6ee7b7' }}>{value}</div>
-            <div style={{ fontSize: 12, color: '#475569', marginTop: 4 }}>{label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Карточки разделов */}
-      <div>
         <div style={{
-          fontSize: 12, fontWeight: 600, color: '#334155',
-          textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16,
+          fontSize: 11, fontWeight: 700, color: '#334155',
+          textTransform: 'uppercase', letterSpacing: '0.1em',
+          textAlign: 'center', marginBottom: 32,
         }}>
-          Разделы
+          Что умеет GymLog
         </div>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-          gap: 12,
+          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+          gap: 14,
         }}>
-          {features.map(({ icon, title, desc, to, color, border }) => (
+          {features.map(({ icon, title, desc, to, color, border, accent }) => (
             <button
               key={to}
               onClick={() => navigate(to)}
               style={{
                 background: color,
                 border: `1px solid ${border}`,
-                borderRadius: 16,
-                padding: '20px',
+                borderRadius: 18,
+                padding: '22px 20px',
                 textAlign: 'left',
                 cursor: 'pointer',
-                transition: 'transform 0.15s',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 10,
+                transition: 'transform 0.15s, box-shadow 0.15s',
+                display: 'flex', flexDirection: 'column', gap: 14,
               }}
-              onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-2px)')}
-              onMouseLeave={e => (e.currentTarget.style.transform = 'translateY(0)')}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-3px)';
+                (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 8px 28px ${border}`;
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)';
+                (e.currentTarget as HTMLButtonElement).style.boxShadow = 'none';
+              }}
             >
-              <span style={{ fontSize: 28 }}>{icon}</span>
+              <div style={{
+                width: 44, height: 44, borderRadius: 12,
+                background: `${accent}18`,
+                border: `1px solid ${accent}30`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                {icon}
+              </div>
               <div>
-                <div style={{ fontSize: 15, fontWeight: 600, color: '#f1f5f9', marginBottom: 4 }}>{title}</div>
-                <div style={{ fontSize: 13, color: '#64748b', lineHeight: 1.5 }}>{desc}</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#f1f5f9', marginBottom: 6 }}>{title}</div>
+                <div style={{ fontSize: 13, color: '#64748b', lineHeight: 1.55 }}>{desc}</div>
               </div>
             </button>
           ))}
         </div>
       </div>
+
+      {/* Как начать — три шага */}
+      <div style={{
+        padding: '56px 24px 72px',
+        background: '#1a1d24',
+        borderTop: '1px solid rgba(255,255,255,0.05)',
+        borderBottom: '1px solid rgba(255,255,255,0.05)',
+      }}>
+        <div style={{ maxWidth: 720, margin: '0 auto' }}>
+          <div style={{
+            fontSize: 11, fontWeight: 700, color: '#334155',
+            textTransform: 'uppercase', letterSpacing: '0.1em',
+            textAlign: 'center', marginBottom: 8,
+          }}>
+            Как начать
+          </div>
+          <h2 style={{ textAlign: 'center', fontSize: 24, fontWeight: 800, color: '#f1f5f9', margin: '0 0 40px' }}>
+            Три шага до первой тренировки
+          </h2>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+            gap: 16,
+          }}>
+            {steps.map((step, i) => (
+              <div key={i} style={{
+                background: '#111318',
+                border: '1px solid rgba(255,255,255,0.07)',
+                borderRadius: 18, padding: '24px 20px',
+                position: 'relative',
+              }}>
+                <div style={{
+                  position: 'absolute', top: 20, right: 20,
+                  fontSize: 11, fontWeight: 800, color: '#1e293b',
+                }}>
+                  {String(i + 1).padStart(2, '0')}
+                </div>
+                <div style={{
+                  width: 40, height: 40, borderRadius: 12,
+                  background: 'rgba(110,231,183,0.1)',
+                  border: '1px solid rgba(110,231,183,0.2)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#6ee7b7', marginBottom: 16,
+                }}>
+                  {step.icon}
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9', marginBottom: 8 }}>{step.title}</div>
+                <div style={{ fontSize: 13, color: '#64748b', lineHeight: 1.55 }}>{step.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Промо-блок «Попробовать» */}
+      <div style={{
+        padding: '72px 24px 80px',
+        maxWidth: 720, margin: '0 auto',
+        textAlign: 'center',
+      }}>
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(110,231,183,0.08) 0%, rgba(52,211,153,0.04) 100%)',
+          border: '1px solid rgba(110,231,183,0.2)',
+          borderRadius: 24, padding: '48px 32px',
+        }}>
+          <h2 style={{ fontSize: 26, fontWeight: 800, color: '#f1f5f9', margin: '0 0 14px', lineHeight: 1.2 }}>
+            Начните уже сегодня
+          </h2>
+          <p style={{ color: '#64748b', fontSize: 15, lineHeight: 1.6, maxWidth: 380, margin: '0 auto 32px' }}>
+            Регистрация займёт меньше минуты. Первая тренировка — сразу после.
+          </p>
+          <button
+            onClick={() => navigate(isLoggedIn ? '/workouts' : '/register')}
+            style={{
+              padding: '14px 36px', borderRadius: 14,
+              background: 'linear-gradient(135deg, #6ee7b7, #34d399)',
+              border: 'none', color: '#052e16',
+              fontWeight: 700, fontSize: 15, cursor: 'pointer',
+              transition: 'opacity 0.15s',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
+            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+          >
+            Попробовать →
+          </button>
+        </div>
+      </div>
+
     </div>
   );
 };
