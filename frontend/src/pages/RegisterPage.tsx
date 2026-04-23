@@ -17,22 +17,21 @@ const IconEyeOff = () => (
 
 type Step = 'account' | 'body';
 
-// enum из бэка (profiles/models.py GOAL_CHOICES)
 type Goal =
-  | 'lose_weight'
-  | 'gain_muscle'
+  | 'weight_loss'
+  | 'muscle_gain'
   | 'recomposition'
-  | 'improve_endurance'
-  | 'increase_strength'
-  | 'maintain';
+  | 'endurance'
+  | 'strength'
+  | 'maintenance';
 
 const GOAL_OPTIONS: { value: Goal; label: string; icon: React.ReactNode }[] = [
-  { value: 'lose_weight', label: 'Похудение', icon: (
+  { value: 'weight_loss', label: 'Похудение', icon: (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 8v4l3 3"/>
     </svg>
   )},
-  { value: 'gain_muscle', label: 'Набор мышц', icon: (
+  { value: 'muscle_gain', label: 'Набор мышц', icon: (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M6.5 6.5h11M6.5 17.5h11M4 9.5v5M20 9.5v5M2 11v2M22 11v2"/>
     </svg>
@@ -42,31 +41,54 @@ const GOAL_OPTIONS: { value: Goal; label: string; icon: React.ReactNode }[] = [
       <path d="M17 1l4 4-4 4M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 01-4 4H3"/>
     </svg>
   )},
-  { value: 'improve_endurance', label: 'Выносливость', icon: (
+  { value: 'endurance', label: 'Выносливость', icon: (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
     </svg>
   )},
-  { value: 'increase_strength', label: 'Сила', icon: (
+  { value: 'strength', label: 'Сила', icon: (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
     </svg>
   )},
-  { value: 'maintain', label: 'Поддержание формы', icon: (
+  { value: 'maintenance', label: 'Поддержание формы', icon: (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="20 6 9 17 4 12"/>
     </svg>
   )},
 ];
 
-interface AccountForm { login: string; password: string; confirmPassword: string; }
-interface BodyForm { height: string; weight: string; age: string; goal: Goal | ''; }
-interface AccountErrors { login?: string; password?: string; confirmPassword?: string; }
-interface BodyErrors { height?: string; weight?: string; age?: string; goal?: string; api?: string; }
+interface AccountForm {
+  login: string;
+  password: string;
+  confirmPassword: string;
+}
+
+interface BodyForm {
+  height: string;
+  weight: string;
+  age: string;
+  goal: Goal | '';
+}
+
+interface AccountErrors {
+  login?: string;
+  password?: string;
+  confirmPassword?: string;
+}
+
+interface BodyErrors {
+  height?: string;
+  weight?: string;
+  age?: string;
+  goal?: string;
+  api?: string;
+}
 
 export const RegisterPage = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>('account');
+
   const [account, setAccount] = useState<AccountForm>({ login: '', password: '', confirmPassword: '' });
   const [body, setBody] = useState<BodyForm>({ height: '', weight: '', age: '', goal: '' });
   const [accountErrors, setAccountErrors] = useState<AccountErrors>({});
@@ -120,19 +142,12 @@ export const RegisterPage = () => {
           height: parseFloat(body.height),
           weight: parseFloat(body.weight),
           age: body.age ? parseInt(body.age) : null,
-          goal: body.goal || 'maintain',
+          goal: body.goal || null,
         }),
       });
       const data = await res.json();
       if (!res.ok) {
-        const msg =
-          data.username?.[0] ||
-          data.password?.[0] ||
-          data.password2?.[0] ||
-          data.goal?.[0] ||
-          data.non_field_errors?.[0] ||
-          data.detail ||
-          'Ошибка регистрации';
+        const msg = data.username?.[0] || data.password?.[0] || data.detail || 'Ошибка регистрации';
         setBodyErrors({ api: msg });
         return;
       }
@@ -153,29 +168,62 @@ export const RegisterPage = () => {
       padding: '24px',
     }}>
       <div style={{ width: '100%', maxWidth: 400 }}>
+
+        {/* Логотип */}
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <div style={{
             width: 56, height: 56, borderRadius: 16,
-            background: 'rgba(110,231,183,0.12)',
-            border: '1px solid rgba(110,231,183,0.3)',
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            marginBottom: 16,
+            background: 'rgba(110,231,183,0.12)', border: '1px solid rgba(110,231,183,0.2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px',
           }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path d="M6.5 6.5h11M6.5 17.5h11M4 9.5v5M20 9.5v5M2 11v2M22 11v2"
-                stroke="#6ee7b7" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                stroke="#6ee7b7" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
-          <h1 style={{ margin: '0 0 4px', fontSize: 24, fontWeight: 800, color: '#f1f5f9' }}>
-            {step === 'account' ? 'Создать аккаунт' : 'О себе'}
-          </h1>
-          <p style={{ margin: 0, color: '#64748b', fontSize: 13 }}>
-            Шаг {step === 'account' ? 1 : 2} из 2
-          </p>
+          <h1 style={{ color: '#f1f5f9', fontSize: 24, fontWeight: 800, margin: '0 0 6px' }}>GymLog</h1>
+          <p style={{ color: '#475569', fontSize: 14, margin: 0 }}>Создайте аккаунт</p>
         </div>
 
+        {/* Индикатор шагов */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
+          {(['account', 'body'] as Step[]).map((s, i) => (
+            <React.Fragment key={s}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+                <div style={{
+                  width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 12, fontWeight: 700,
+                  background: step === s || (s === 'account' && step === 'body')
+                    ? 'rgba(110,231,183,0.2)' : 'rgba(255,255,255,0.05)',
+                  border: `1.5px solid ${step === s || (s === 'account' && step === 'body') ? '#6ee7b7' : 'rgba(255,255,255,0.1)'}`,
+                  color: step === s || (s === 'account' && step === 'body') ? '#6ee7b7' : '#475569',
+                }}>
+                  {s === 'account' && step === 'body' ? (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                      <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  ) : i + 1}
+                </div>
+                <span style={{ fontSize: 12, fontWeight: 500, color: step === s ? '#f1f5f9' : '#475569' }}>
+                  {s === 'account' ? 'Аккаунт' : 'Параметры'}
+                </span>
+              </div>
+              {i === 0 && (
+                <div style={{
+                  height: 1, flex: 1,
+                  background: step === 'body' ? 'rgba(110,231,183,0.4)' : 'rgba(255,255,255,0.08)',
+                  transition: 'background 0.3s',
+                }} />
+              )}
+            </React.Fragment>
+          ))}
+        </div>
+
+        {/* Форма */}
         <div style={{ background: '#1a1d24', borderRadius: 20, border: '1px solid rgba(255,255,255,0.07)', padding: '28px' }}>
 
+          {/* Шаг 1: Аккаунт */}
           {step === 'account' && (
             <>
               <Field
@@ -189,7 +237,7 @@ export const RegisterPage = () => {
                 error={accountErrors.password} placeholder="Минимум 8 символов"
                 type={showPassword ? 'text' : 'password'}
                 rightEl={
-                  <button onClick={() => setShowPassword(s => !s)} type="button"
+                  <button onClick={() => setShowPassword(s => !s)}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569', padding: 0, fontSize: 16 }}>
                     {showPassword ? <IconEyeOff /> : <IconEye />}
                   </button>
@@ -201,7 +249,7 @@ export const RegisterPage = () => {
                 error={accountErrors.confirmPassword} placeholder="Повторите пароль"
                 type={showConfirm ? 'text' : 'password'}
                 rightEl={
-                  <button onClick={() => setShowConfirm(s => !s)} type="button"
+                  <button onClick={() => setShowConfirm(s => !s)}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569', padding: 0, fontSize: 16 }}>
                     {showConfirm ? <IconEyeOff /> : <IconEye />}
                   </button>
@@ -218,35 +266,40 @@ export const RegisterPage = () => {
             </>
           )}
 
+          {/* Шаг 2: Параметры тела */}
           {step === 'body' && (
             <>
               <p style={{ color: '#64748b', fontSize: 13, margin: '0 0 20px', lineHeight: 1.5 }}>
                 Эти данные помогут отслеживать прогресс и давать точные рекомендации.
               </p>
 
+              {/* Возраст — Задача 2.6: NumberInput */}
               <div style={{ marginBottom: 16 }}>
                 <label style={{ fontSize: 12, color: '#64748b', fontWeight: 500, display: 'block', marginBottom: 6 }}>Возраст</label>
                 <NumberInput value={body.age} onChange={v => setBody(f => ({ ...f, age: v }))} step={1} min={10} max={120} placeholder="Например: 25" />
                 {bodyErrors.age && <p style={{ margin: '4px 0 0', fontSize: 12, color: '#f87171' }}>{bodyErrors.age}</p>}
               </div>
 
+              {/* Рост — Задача 2.6: NumberInput */}
               <div style={{ marginBottom: 16 }}>
                 <label style={{ fontSize: 12, color: '#64748b', fontWeight: 500, display: 'block', marginBottom: 6 }}>Рост (см)</label>
                 <NumberInput value={body.height} onChange={v => setBody(f => ({ ...f, height: v }))} step={1} min={50} max={280} placeholder="Например: 175" />
                 {bodyErrors.height && <p style={{ margin: '4px 0 0', fontSize: 12, color: '#f87171' }}>{bodyErrors.height}</p>}
               </div>
 
+              {/* Вес — Задача 2.6: NumberInput */}
               <div style={{ marginBottom: 16 }}>
                 <label style={{ fontSize: 12, color: '#64748b', fontWeight: 500, display: 'block', marginBottom: 6 }}>Начальный вес (кг)</label>
                 <NumberInput value={body.weight} onChange={v => setBody(f => ({ ...f, weight: v }))} step={0.5} min={20} max={500} placeholder="Например: 75" />
                 {bodyErrors.weight && <p style={{ margin: '4px 0 0', fontSize: 12, color: '#f87171' }}>{bodyErrors.weight}</p>}
               </div>
 
+              {/* Цель — Задача 2.2: карточки */}
               <div style={{ marginBottom: 16 }}>
                 <label style={{ fontSize: 12, color: '#64748b', fontWeight: 500, display: 'block', marginBottom: 10 }}>Цель (необязательно)</label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   {GOAL_OPTIONS.map(opt => (
-                    <button type="button"
+                    <button
                       key={opt.value}
                       onClick={() => setBody(f => ({ ...f, goal: f.goal === opt.value ? '' : opt.value }))}
                       style={{
@@ -308,11 +361,18 @@ export const RegisterPage = () => {
 const Field = ({
   label, value, onChange, error, placeholder, type = 'text', rightEl
 }: {
-  label: string; value: string; onChange: (v: string) => void;
-  error?: string; placeholder?: string; type?: string; rightEl?: React.ReactNode;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  error?: string;
+  placeholder?: string;
+  type?: string;
+  rightEl?: React.ReactNode;
 }) => (
   <div style={{ marginBottom: 16 }}>
-    <label style={{ fontSize: 12, color: '#64748b', fontWeight: 500, display: 'block', marginBottom: 6 }}>{label}</label>
+    <label style={{ fontSize: 12, color: '#64748b', fontWeight: 500, display: 'block', marginBottom: 6 }}>
+      {label}
+    </label>
     <div style={{ position: 'relative' }}>
       <input
         type={type} value={value} onChange={e => onChange(e.target.value)}
@@ -323,6 +383,8 @@ const Field = ({
           border: `1px solid ${error ? 'rgba(248,113,113,0.5)' : 'rgba(255,255,255,0.08)'}`,
           fontSize: 14, outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.15s',
         }}
+        onFocus={e => (e.target.style.borderColor = error ? 'rgba(248,113,113,0.7)' : 'rgba(110,231,183,0.4)')}
+        onBlur={e => (e.target.style.borderColor = error ? 'rgba(248,113,113,0.5)' : 'rgba(255,255,255,0.08)')}
       />
       {rightEl && (
         <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)' }}>
