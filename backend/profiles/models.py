@@ -19,8 +19,8 @@ class UserProfile(models.Model):
     weight = models.FloatField(verbose_name='Вес (кг)', null=True, blank=True)
     age = models.IntegerField(verbose_name='Возраст', null=True, blank=True)
     goal = models.CharField(verbose_name='Цель тренировок', max_length=50, choices=GOAL_CHOICES, default='maintain')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateField(auto_now_add=True)
+    updated_at = models.DateField(auto_now=True)
 
     class Meta:
         db_table = 'user_profiles'
