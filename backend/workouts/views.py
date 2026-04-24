@@ -12,6 +12,7 @@ from .serializers import (
 )
 from datetime import datetime
 from .services.export import generate_export_text
+from rapidfuzz import fuzz, process
 
 
 WORKOUT_COLORS = {
@@ -78,11 +79,40 @@ class WorkoutViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         workout_type = request.query_params.get('type')
+        search = request.query_params.get('q')
+
         if workout_type:
             queryset = queryset.filter(type=workout_type)
+        if search and search.strip():
+            workouts_list = list(queryset)
+            if workouts_list:
+                workout_items = [(w.name, w) for w in workouts_list]
+                names_only = [name for name, _ in workout_items]
+                results = process.extract(
+                    search.strip(),
+                    names_only,
+                    scorer=fuzz.WRatio,
+                    limit=20,
+                    score_cutoff=60
+                )
+                matched_ids = []
+                for matched_name, score, index in results:
+                    matched_ids.append(workout_items[index][1].uid)
+                queryset = Workout.objects.filter(uid__in=matched_ids, user=request.user)
+                order = {uid: idx for idx, uid in enumerate(matched_ids)}
+                queryset = sorted(queryset, key=lambda x: order.get(x.uid, float('inf')))
+            else:
+                queryset = []
+        else:
+            queryset = queryset.order_by('-date')
+
         skip = int(request.query_params.get('skip', 0))
         limit = int(request.query_params.get('limit', 100))
-        queryset = queryset.order_by('-date')[skip:skip + limit]
+        if isinstance(queryset, list):
+            queryset = queryset[skip:skip + limit]
+        else:
+            queryset = queryset[skip:skip + limit]
+
         data = []
         for workout in queryset:
             data.append({
@@ -171,29 +201,40 @@ class WorkoutViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def search(self, request):
-        q = request.query_params.get('q', '')
+        q = request.query_params.get('q', '').strip()
         skip = int(request.query_params.get('skip', 0))
         limit = int(request.query_params.get('limit', 100))
 
-        if not q:
+        if not q or len(q) < 1:
             return Response([])
+        all_workouts = list(self.get_queryset())
 
-        workouts = self.get_queryset().filter(
-            Q(name__icontains=q) | Q(type__icontains=q)
-        ).order_by('-date')[skip:skip + limit]
-
-        data = []
-        for workout in workouts:
-            data.append({
-                'id': str(workout.uid),
-                'name': workout.name,
-                'type': workout.type,
-                'date': workout.date,
-                'color': workout.color or WORKOUT_COLORS.get(workout.type, WORKOUT_COLORS['custom']),
-                'exercise_count': workout.exercises.count()
+        if not all_workouts:
+            return Response([])
+        workout_items = [(w.name, w) for w in all_workouts]
+        names_only = [name for name, _ in workout_items]
+        results = process.extract(
+            q,
+            names_only,
+            scorer=fuzz.WRatio,
+            limit=20,
+            score_cutoff=60
+        )
+        workouts_data = []
+        for matched_name, score, index in results:
+            w = workout_items[index][1]
+            workouts_data.append({
+                'id': str(w.uid),
+                'name': w.name,
+                'type': w.type,
+                'date': w.date,
+                'color': w.color or WORKOUT_COLORS.get(w.type, WORKOUT_COLORS['custom']),
+                'exercise_count': w.exercises.count(),
+                'score': round(score, 2)
             })
+        workouts_data = workouts_data[skip:skip + limit]
 
-        return Response(data)
+        return Response(workouts_data)
 
     @action(detail=False, methods=['get'])
     def stats(self, request):
