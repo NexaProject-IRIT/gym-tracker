@@ -18,20 +18,20 @@ const IconEyeOff = () => (
 type Step = 'account' | 'body';
 
 type Goal =
-  | 'weight_loss'
-  | 'muscle_gain'
+  | 'lose_weight'
+  | 'gain_muscle'
   | 'recomposition'
-  | 'endurance'
-  | 'strength'
-  | 'maintenance';
+  | 'improve_endurance'
+  | 'increase_strength'
+  | 'maintain';
 
 const GOAL_OPTIONS: { value: Goal; label: string; icon: React.ReactNode }[] = [
-  { value: 'weight_loss', label: 'Похудение', icon: (
+  { value: 'lose_weight', label: 'Похудение', icon: (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 8v4l3 3"/>
     </svg>
   )},
-  { value: 'muscle_gain', label: 'Набор мышц', icon: (
+  { value: 'gain_muscle', label: 'Набор мышц', icon: (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M6.5 6.5h11M6.5 17.5h11M4 9.5v5M20 9.5v5M2 11v2M22 11v2"/>
     </svg>
@@ -41,17 +41,17 @@ const GOAL_OPTIONS: { value: Goal; label: string; icon: React.ReactNode }[] = [
       <path d="M17 1l4 4-4 4M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 01-4 4H3"/>
     </svg>
   )},
-  { value: 'endurance', label: 'Выносливость', icon: (
+  { value: 'improve_endurance', label: 'Выносливость', icon: (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
     </svg>
   )},
-  { value: 'strength', label: 'Сила', icon: (
+  { value: 'increase_strength', label: 'Сила', icon: (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
     </svg>
   )},
-  { value: 'maintenance', label: 'Поддержание формы', icon: (
+  { value: 'maintain', label: 'Поддержание формы', icon: (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="20 6 9 17 4 12"/>
     </svg>
