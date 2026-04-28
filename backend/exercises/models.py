@@ -13,8 +13,8 @@ class Exercise(models.Model):
     tags = models.JSONField(default=list)
     images = models.JSONField(default=dict)
     source_file = models.CharField(max_length=255, blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateField(auto_now_add=True)
+    updated_at = models.DateField(auto_now=True)
 
     class Meta:
         db_table = 'exercises'

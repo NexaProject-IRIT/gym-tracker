@@ -9,103 +9,8 @@ from .serializers import (
     ExerciseSerializer, ExerciseListSerializer,
     EquipmentSerializer, EquipmentListSerializer
 )
+from rapidfuzz import fuzz, process
 
-class ExerciseViewSet(viewsets.ModelViewSet):
-    permission_classes = [permissions.AllowAny]
-    queryset = Exercise.objects.all()
-
-    def get_serializer_class(self):
-        if self.action == 'list':
-            return ExerciseListSerializer
-        if self.action == 'create':
-            return ExerciseCreateSerializer
-        return ExerciseSerializer
-
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        muscle = request.query_params.get('muscle')
-        tag = request.query_params.get('tag')
-        skip = int(request.query_params.get('skip', 0))
-        limit = int(request.query_params.get('limit', 100))
-
-        if muscle:
-            queryset = queryset.filter(target_muscles__contains=[muscle])
-        if tag:
-            queryset = queryset.filter(tags__contains=[tag])
-
-        queryset = queryset.order_by('name')[skip:skip + limit]
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
-
-    @action(detail=False, methods=['get'])
-    def search(self, request):
-        q = request.query_params.get('q', '').strip()
-        if not q or len(q) < 1:
-            return Response([])
-
-        exercises = Exercise.objects.filter(name__icontains=q).order_by('name')[:20]
-        data = []
-        for ex in exercises:
-            imgs = ex.images if isinstance(ex.images, list) else []
-            data.append({
-                'id': str(ex.id),
-                'name': ex.name,
-                'equipment': ex.equipment or '',
-                'targetMuscles': ex.target_muscles or [],
-                'tags': ex.tags or [],
-            })
-        return Response(data)
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        exercise = serializer.save()
-        result_serializer = ExerciseSerializer(exercise)
-        return Response(result_serializer.data, status=status.HTTP_201_CREATED)
-
-
-class EquipmentViewSet(viewsets.ReadOnlyModelViewSet):
-    permission_classes = [permissions.AllowAny]
-    queryset = Equipment.objects.all()
-
-    def get_serializer_class(self):
-        if self.action == 'list':
-            return EquipmentListSerializer
-        return EquipmentSerializer
-
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        tag = request.query_params.get('tag')
-        if tag:
-            queryset = queryset.filter(tags__contains=[tag])
-        skip = int(request.query_params.get('skip', 0))
-        limit = int(request.query_params.get('limit', 100))
-
-        queryset = queryset.order_by('name')[skip:skip + limit]
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
-
-    def retrieve(self, request, *args, **kwargs):
-        equipment = self.get_object()
-        serializer = self.get_serializer(equipment)
-        return Response(serializer.data)
-
-    @action(detail=False, methods=['get'])
-    def search(self, request):
-        q = request.query_params.get('q', '').strip()
-        if not q or len(q) < 1:
-            return Response([])
-
-        equipment_list = Equipment.objects.filter(name__icontains=q).order_by('name')[:20]
-        serializer = self.get_serializer(equipment_list, many=True)
-        return Response(serializer.data)
-
-    @action(detail=True, methods=['get'])
-    def exercises(self, request, pk=None):
-        equipment = self.get_object()
-        exercises = Exercise.objects.filter(equipment__icontains=equipment.name)
-        serializer = ExerciseListSerializer(exercises, many=True)
-        return Response(serializer.data)
 
 class ExerciseListView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -126,13 +31,46 @@ class ExerciseListView(APIView):
             queryset = queryset.filter(target_muscles__contains=[muscle])
         if tag:
             queryset = queryset.filter(tags__contains=[tag])
-        if search:
-            queryset = queryset.filter(name__icontains=search)
+        if search and search.strip():
+            exercises_list = list(queryset)
+            if exercises_list:
+                exercise_items = [(ex.name, ex) for ex in exercises_list]
+                names_only = [name for name, _ in exercise_items]
 
-        queryset = queryset.order_by('name')[skip:skip + limit]
+                results = process.extract(
+                    search.strip(),
+                    names_only,
+                    scorer=fuzz.WRatio,
+                    limit=20,
+                    score_cutoff=60
+                )
+                exercises_data = []
+                for matched_name, score, index in results:
+                    ex = exercise_items[index][1]
+                    parameters = list(ex.parameters.values_list('type', flat=True))
+                    target_muscles = ex.target_muscles if ex.target_muscles else []
 
-        serializer = ExerciseListSerializer(queryset, many=True)
-        return Response(serializer.data)
+                    exercises_data.append({
+                        'id': str(ex.id),
+                        'exerciseId': ex.exercise_id,
+                        'name': ex.name,
+                        'equipment': ex.equipment or '',
+                        'targetMuscles': target_muscles,
+                        'tags': ex.tags or [],
+                        'parameters': parameters,
+                        'difficulty': ex.difficulty,
+                        'description': ex.description or '',
+                        'images': ex.images if isinstance(ex.images, dict) else {},
+                        'score': round(score, 2)
+                    })
+                exercises_data = exercises_data[skip:skip + limit]
+                return Response(exercises_data)
+            else:
+                return Response([])
+        else:
+            queryset = queryset.order_by('name')[skip:skip + limit]
+            serializer = ExerciseListSerializer(queryset, many=True)
+            return Response(serializer.data)
 
     def post(self, request):
         serializer = ExerciseSerializer(data=request.data)
@@ -189,10 +127,36 @@ class EquipmentListView(APIView):
 
         if tag:
             queryset = queryset.filter(tags__contains=[tag])
-        if search:
-            queryset = queryset.filter(name__icontains=search)
+        if search and search.strip():
+            equipment_list = list(queryset)
+            if equipment_list:
+                equipment_items = [(eq.name, eq) for eq in equipment_list]
+                names_only = [name for name, _ in equipment_items]
 
-        queryset = queryset.order_by('name')[skip:skip + limit]
+                results = process.extract(
+                    search.strip(),
+                    names_only,
+                    scorer=fuzz.WRatio,
+                    limit=20,
+                    score_cutoff=60
+                )
+
+                matched_ids = []
+                for matched_name, score, index in results:
+                    matched_ids.append(equipment_items[index][1].id)
+
+                queryset = Equipment.objects.filter(id__in=matched_ids)
+                order = {id: idx for idx, id in enumerate(matched_ids)}
+                queryset = sorted(queryset, key=lambda x: order.get(x.id, float('inf')))
+            else:
+                queryset = []
+        else:
+            queryset = queryset.order_by('name')
+
+        if isinstance(queryset, list):
+            queryset = queryset[skip:skip + limit]
+        else:
+            queryset = queryset[skip:skip + limit]
 
         serializer = EquipmentListSerializer(queryset, many=True)
         return Response(serializer.data)
