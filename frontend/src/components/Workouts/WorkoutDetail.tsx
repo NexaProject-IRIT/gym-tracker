@@ -362,12 +362,24 @@ export const WorkoutDetail: React.FC<Props> = ({
     () => new Set(workout.exercises.filter(e => e.isDone).map(e => e.id))
   );
   const toggleDone = (id: string) => {
+    const isDone = !doneExercises.has(id);
     setDoneExercises(prev => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      const isDone = next.has(id);
-      onUpdateExercise(id, { isDone });
+      isDone ? next.add(id) : next.delete(id);
       return next;
+    });
+    const token = localStorage.getItem('token') ?? '';
+    fetch(`/workouts/${workout.id}/exercises/${id}/done/`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Token ${token}` },
+      body: JSON.stringify({ isDone }),
+    }).catch(() => {
+      // откатываем если запрос упал
+      setDoneExercises(prev => {
+        const next = new Set(prev);
+        isDone ? next.delete(id) : next.add(id);
+        return next;
+      });
     });
   };
 

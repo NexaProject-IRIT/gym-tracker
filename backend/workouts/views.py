@@ -150,6 +150,16 @@ class WorkoutViewSet(viewsets.ModelViewSet):
         workout.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @action(detail=True, methods=['patch'], url_path=r'exercises/(?P<ex_uid>[^/.]+)/done')
+    def exercise_done(self, request, pk=None, ex_uid=None):
+        workout = self.get_object()
+        exercise = workout.exercises.filter(uid=ex_uid).first()
+        if not exercise:
+            return Response({'error': 'Exercise not found'}, status=status.HTTP_404_NOT_FOUND)
+        exercise.is_done = request.data.get('isDone', not exercise.is_done)
+        exercise.save(update_fields=['is_done'])
+        return Response({'isDone': exercise.is_done})
+
     @action(detail=False, methods=['get'])
     def recent(self, request):
         limit = int(request.query_params.get('limit', 5))
