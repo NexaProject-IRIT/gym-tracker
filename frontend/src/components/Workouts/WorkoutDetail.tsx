@@ -358,11 +358,15 @@ export const WorkoutDetail: React.FC<Props> = ({
   };
 
   // ── Чекбоксы выполнения ──
-  const [doneExercises, setDoneExercises] = useState<Set<string>>(new Set());
+  const [doneExercises, setDoneExercises] = useState<Set<string>>(
+    () => new Set(workout.exercises.filter(e => e.isDone).map(e => e.id))
+  );
   const toggleDone = (id: string) => {
     setDoneExercises(prev => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
+      const isDone = next.has(id);
+      onUpdateExercise(id, { isDone });
       return next;
     });
   };

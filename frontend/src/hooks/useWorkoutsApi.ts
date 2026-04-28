@@ -33,6 +33,7 @@ function serializeExercise(e: WorkoutExercise) {
     time: e.time ?? null,
     distance: e.distance ?? null,
     isCustom: e.isCustom,
+    isDone: e.isDone ?? false,
     parameters: e.parameters ?? [],
   };
 }
@@ -69,9 +70,9 @@ function normalizeWorkout(raw: any): Workout {
       ...e,
       id: e.id?.toString() ?? generateExId(),
       name: e.customName || e.exerciseId || 'Упражнение',
-      // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: inferParameters гарантирует непустой массив
       parameters: inferParameters(e),
       isCustom: e.isCustom ?? true,
+      isDone: e.isDone ?? false,
     })),
   };
 }

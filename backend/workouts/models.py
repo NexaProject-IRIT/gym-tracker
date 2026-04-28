@@ -44,6 +44,7 @@ class WorkoutExercise(models.Model):
     # Массив активных параметров упражнения: ['sets', 'reps', 'weight'] и т.д.
     # Без этого поля фронтенд не знает, какие поля рендерить в карточке.
     parameters = models.JSONField(default=list, blank=True)
+    is_done = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'workout_exercises'

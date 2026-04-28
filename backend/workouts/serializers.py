@@ -6,8 +6,7 @@ class WorkoutExerciseSerializer(serializers.ModelSerializer):
     exerciseId = serializers.CharField(source='exercise_id', required=False, allow_null=True, allow_blank=True)
     customName = serializers.CharField(source='custom_name', required=False, allow_null=True, allow_blank=True)
     isCustom = serializers.BooleanField(source='is_custom', required=False, default=False)
-    # parameters — массив строк: ['sets', 'reps', 'weight', 'time', 'distance']
-    # Без него фронтенд не знает, какие поля показывать в карточке упражнения
+    isDone = serializers.BooleanField(source='is_done', required=False, default=False)
     parameters = serializers.ListField(
         child=serializers.CharField(),
         required=False,
@@ -17,7 +16,7 @@ class WorkoutExerciseSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkoutExercise
         fields = ['id', 'exerciseId', 'customName', 'sets', 'reps',
-                  'weight', 'time', 'distance', 'isCustom', 'parameters']
+                  'weight', 'time', 'distance', 'isCustom', 'isDone', 'parameters']
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -68,13 +67,14 @@ class WorkoutCreateSerializer(serializers.ModelSerializer):
             exercise_id = ex_data.pop('exercise_id', None)
             custom_name = ex_data.pop('custom_name', None)
             is_custom = ex_data.pop('is_custom', False)
-            # parameters приходит как обычное поле — просто передаём в create
+            is_done = ex_data.pop('is_done', False)
             parameters = ex_data.pop('parameters', [])
             WorkoutExercise.objects.create(
                 workout=workout,
                 exercise_id=exercise_id or '',
                 custom_name=custom_name or '',
                 is_custom=is_custom,
+                is_done=is_done,
                 parameters=parameters,
                 **ex_data
             )
@@ -102,12 +102,14 @@ class WorkoutUpdateSerializer(serializers.ModelSerializer):
                 exercise_id = ex_data.pop('exercise_id', None)
                 custom_name = ex_data.pop('custom_name', None)
                 is_custom = ex_data.pop('is_custom', False)
+                is_done = ex_data.pop('is_done', False)
                 parameters = ex_data.pop('parameters', [])
                 WorkoutExercise.objects.create(
                     workout=instance,
                     exercise_id=exercise_id or '',
                     custom_name=custom_name or '',
                     is_custom=is_custom,
+                    is_done=is_done,
                     parameters=parameters,
                     **ex_data
                 )

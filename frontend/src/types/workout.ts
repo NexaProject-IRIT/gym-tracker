@@ -45,8 +45,9 @@ export interface WorkoutExercise {
   weight?: number;
   time?: number;            // В секундах
   distance?: number;        // В км
-  isCustom: boolean;        // Флаг кастомного упражнения (п. 32) [cite: 32, 58]
-  parameters: ParameterType[]; // Выбранные пользователем параметры [cite: 32, 58]
+  isCustom: boolean;
+  isDone?: boolean;
+  parameters: ParameterType[];
   note?: string;
 }
 

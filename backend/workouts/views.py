@@ -40,8 +40,7 @@ def serialize_exercise(we: WorkoutExercise) -> dict:
         "time": we.time,
         "distance": we.distance,
         "isCustom": we.is_custom,
-        # parameters — список активных параметров: ['sets', 'reps', 'weight'] и т.д.
-        # Если поле пустое (старые записи до миграции), возвращаем [] а не None
+        "isDone": we.is_done,
         "parameters": we.parameters if we.parameters else [],
     }
 
