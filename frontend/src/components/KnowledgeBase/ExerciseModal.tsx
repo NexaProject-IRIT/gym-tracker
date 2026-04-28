@@ -11,9 +11,10 @@ const DIFFICULTY_LABELS: Record<string, string> = {
 interface Props {
   exercise: Exercise | null;
   onClose: () => void;
+  zIndex?: number;
 }
 
-export const ExerciseModal = ({ exercise, onClose }: Props) => {
+export const ExerciseModal = ({ exercise, onClose, zIndex = 50 }: Props) => {
   const [techniqueIdx, setTechniqueIdx] = useState(0);
 
   if (!exercise) return null;
@@ -30,7 +31,8 @@ export const ExerciseModal = ({ exercise, onClose }: Props) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+      className="fixed inset-0 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+      style={{ zIndex }}
       onClick={onClose}
     >
       <div

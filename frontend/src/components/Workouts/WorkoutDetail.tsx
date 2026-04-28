@@ -1,7 +1,8 @@
 // src/components/Workouts/WorkoutDetail.tsx
 import React, { useState } from 'react';
-import type { Workout, WorkoutExercise, WorkoutType, ParameterType } from '../../types/workout';
+import type { Workout, WorkoutExercise, WorkoutType, ParameterType, Exercise } from '../../types/workout';
 import { WORKOUT_TYPE_LABELS, WORKOUT_TYPE_COLORS, DEFAULT_PARAMS_FOR_TYPE, PARAMETER_LABELS } from '../../types/workout';
+import { ExerciseModal } from '../KnowledgeBase/ExerciseModal';
 
 interface Props {
   workout: Workout;
@@ -335,14 +336,13 @@ export const WorkoutDetail: React.FC<Props> = ({
   const [noteValue, setNoteValue] = useState(workout.notes ?? '');
   const [isEditingNote, setIsEditingNote] = useState(false);
 
-  // ── Модалка деталей упражнения (задача 1.7) ──
-  const [infoExercise, setInfoExercise] = useState<{ name: string; description?: string; equipment?: string; difficulty?: string; targetMuscles?: string[]; images?: { cover?: string; technique?: string } } | null>(null);
+  // ── Модалка деталей упражнения ──
+  const [infoExercise, setInfoExercise] = useState<Exercise | null>(null);
   const [infoLoading, setInfoLoading] = useState(false);
 
   const openExerciseInfo = async (ex: WorkoutExercise) => {
     if (!ex.exerciseId) return;
     setInfoLoading(true);
-    setInfoExercise({ name: ex.name });
     try {
       const token = localStorage.getItem('token') ?? '';
       const res = await fetch(`/exercises/?exercise_id=${ex.exerciseId}`, {
@@ -351,7 +351,7 @@ export const WorkoutDetail: React.FC<Props> = ({
       if (res.ok) {
         const data = await res.json();
         const detail = Array.isArray(data) ? data[0] : data;
-        if (detail) setInfoExercise(detail);
+        if (detail) setInfoExercise(detail as Exercise);
       }
     } catch {}
     setInfoLoading(false);
@@ -740,76 +740,22 @@ export const WorkoutDetail: React.FC<Props> = ({
         />
       )}
 
-      {/* Модалка деталей упражнения — задача 1.7 */}
-      {infoExercise && (
-        <div
-          style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
-          onClick={() => setInfoExercise(null)}
-        >
-          <div
-            style={{ background: '#1a1d24', borderRadius: 24, border: '1px solid rgba(255,255,255,0.1)', width: '100%', maxWidth: 520, maxHeight: '85vh', overflowY: 'auto', position: 'relative' }}
-            onClick={e => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setInfoExercise(null)}
-              style={{ position: 'absolute', top: 14, right: 14, width: 32, height: 32, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-            </button>
-
-            {infoExercise.images?.cover && (
-              <div style={{ aspectRatio: '16/9', background: '#0a0b0e', borderRadius: '24px 24px 0 0', overflow: 'hidden' }}>
-                <img src={infoExercise.images.cover} alt={infoExercise.name} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }} />
-              </div>
-            )}
-
-            <div style={{ padding: 24 }}>
-              {infoLoading ? (
-                <div style={{ textAlign: 'center', padding: '20px 0', color: '#475569', fontSize: 13 }}>Загрузка...</div>
-              ) : (
-                <>
-                  <h3 style={{ color: '#f1f5f9', fontSize: 20, fontWeight: 800, margin: '0 0 10px', lineHeight: 1.2 }}>{infoExercise.name}</h3>
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 18 }}>
-                    {infoExercise.difficulty && (
-                      <span style={{ padding: '3px 10px', borderRadius: 8, background: 'rgba(110,231,183,0.1)', color: '#6ee7b7', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{infoExercise.difficulty}</span>
-                    )}
-                    {infoExercise.equipment && (
-                      <span style={{ padding: '3px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', color: '#94a3b8', fontSize: 11, fontWeight: 600 }}>{infoExercise.equipment}</span>
-                    )}
-                  </div>
-
-                  {infoExercise.description && (
-                    <div style={{ marginBottom: 18 }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Описание</div>
-                      <p style={{ color: '#94a3b8', fontSize: 13, lineHeight: 1.6, margin: 0 }}>{infoExercise.description}</p>
-                    </div>
-                  )}
-
-                  {infoExercise.targetMuscles && infoExercise.targetMuscles.length > 0 && (
-                    <div>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Целевые мышцы</div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                        {infoExercise.targetMuscles.map(m => (
-                          <span key={m} style={{ padding: '4px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', color: '#f1f5f9', fontSize: 12 }}>{m}</span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {infoExercise.images?.technique && (
-                    <div style={{ marginTop: 20 }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Техника</div>
-                      <div style={{ borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.07)' }}>
-                        <img src={infoExercise.images.technique} alt="Техника" style={{ width: '100%', height: 'auto', display: 'block' }} />
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
+      {/* Спиннер загрузки деталей упражнения */}
+      {infoLoading && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ animation: 'spin 1s linear infinite' }}>
+              <circle cx="12" cy="12" r="10" stroke="rgba(110,231,183,0.2)" strokeWidth="2"/>
+              <path d="M12 2a10 10 0 0 1 10 10" stroke="#6ee7b7" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            <span style={{ color: '#64748b', fontSize: 13, fontWeight: 500 }}>Загрузка...</span>
           </div>
         </div>
       )}
+
+      {/* Полноценная модалка упражнения из базы знаний */}
+      <ExerciseModal exercise={infoExercise} onClose={() => setInfoExercise(null)} zIndex={300} />
     </div>
   );
 };
