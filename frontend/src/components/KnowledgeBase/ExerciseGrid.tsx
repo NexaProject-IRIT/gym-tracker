@@ -60,7 +60,7 @@ export const ExerciseGrid = () => {
   // ─── Загрузка тренажёров (один раз) ──────────────────────────────────────
   const fetchEquipment = async () => {
     try {
-      const res = await fetch(`/equipment/`, { headers: authHeaders() });
+      const res = await fetch(`/exercises/equipment/`, { headers: authHeaders() });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setEquipment(Array.isArray(data) ? data : []);
