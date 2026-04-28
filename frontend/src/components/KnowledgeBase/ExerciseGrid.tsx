@@ -13,8 +13,6 @@ interface Equipment {
   image: string | null;
 }
 
-const API_BASE = 'http://localhost:8000/api';
-
 const authHeaders = () => ({
   Authorization: `Token ${localStorage.getItem('token') ?? ''}`,
 });
@@ -37,7 +35,7 @@ export const ExerciseGrid = () => {
     setLoading(true);
     try {
       // Если есть поисковый запрос — идём на /exercises/search/, иначе на /exercises/
-      const url = query.trim() ? `${API_BASE}/exercises/search/` : `${API_BASE}/exercises/`;
+      const url = query.trim() ? `/exercises/search/` : `/exercises/`;
       const params = new URLSearchParams();
 
       if (query.trim()) params.append('q', query.trim());
@@ -62,7 +60,7 @@ export const ExerciseGrid = () => {
   // ─── Загрузка тренажёров (один раз) ──────────────────────────────────────
   const fetchEquipment = async () => {
     try {
-      const res = await fetch(`${API_BASE}/equipment/`, { headers: authHeaders() });
+      const res = await fetch(`/equipment/`, { headers: authHeaders() });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setEquipment(Array.isArray(data) ? data : []);
