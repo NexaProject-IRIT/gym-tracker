@@ -22,11 +22,14 @@ class ExerciseListView(APIView):
         tag = request.query_params.get('tag')
         search = request.query_params.get('q')
         exercise_id = request.query_params.get('exercise_id')
+        equipment = request.query_params.get('equipment')
         skip = int(request.query_params.get('skip', 0))
         limit = int(request.query_params.get('limit', 100))
 
         if exercise_id:
             queryset = queryset.filter(exercise_id=exercise_id)
+        if equipment:
+            queryset = queryset.filter(equipment__icontains=equipment)
         if muscle:
             queryset = queryset.filter(target_muscles__contains=[muscle])
         if tag:
