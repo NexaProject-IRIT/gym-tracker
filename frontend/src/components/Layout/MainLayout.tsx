@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { AiChatProvider } from '../../contexts/AiChatContext';
+import { FloatingTimer, FLOATING_PILL_HEIGHT, FLOATING_PILL_BOTTOM_MOBILE, FLOATING_PILL_BOTTOM_DESKTOP } from '../Timer/FloatingTimer';
 
 const SIDEBAR_WIDTH = 220;
 
@@ -22,14 +23,6 @@ const IconBook = ({ active }: { active: boolean }) => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
     <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 4.5A2.5 2.5 0 0 1 6.5 7H20v13H6.5A2.5 2.5 0 0 1 4 17.5V4.5z"
       stroke={active ? '#6ee7b7' : '#64748b'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
-);
-
-const IconTimer = ({ active }: { active: boolean }) => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-    <circle cx="12" cy="13" r="8" stroke={active ? '#6ee7b7' : '#64748b'} strokeWidth="1.8"/>
-    <path d="M12 9v4l2.5 2.5" stroke={active ? '#6ee7b7' : '#64748b'} strokeWidth="1.8" strokeLinecap="round"/>
-    <path d="M9.5 3h5M12 3v2" stroke={active ? '#6ee7b7' : '#64748b'} strokeWidth="1.8" strokeLinecap="round"/>
   </svg>
 );
 
@@ -55,7 +48,6 @@ const NAV_ITEMS = [
   { to: '/workouts',  label: 'Тренировки',      icon: (a: boolean) => <IconDumbbell active={a} />, end: false },
   { to: '/knowledge', label: 'База тренировок', icon: (a: boolean) => <IconBook active={a} />,     end: false },
   { to: '/ai',        label: 'ИИ-тренер',       icon: (a: boolean) => <IconAi active={a} />,       end: false },
-  { to: '/timer',     label: 'Таймер',          icon: (a: boolean) => <IconTimer active={a} />,    end: false },
   { to: '/profile',   label: 'Профиль',         icon: (a: boolean) => <IconUser active={a} />,     end: false },
 ];
 
@@ -170,7 +162,8 @@ export const MainLayout = () => {
           )}
 
           {/* Основной контент */}
-          <main style={{ flex: 1, minWidth: 0, paddingBottom: isMobile ? 64 : 0 }}>
+          {/* mobile: 64px nav + 52px timer bar + 16px gap; desktop: 52px timer bar + 4px gap */}
+          <main style={{ flex: 1, minWidth: 0, paddingBottom: isMobile ? 132 : 56 }}>
             <Outlet />
           </main>
         </div>
@@ -209,6 +202,8 @@ export const MainLayout = () => {
             ))}
           </nav>
         )}
+
+        <FloatingTimer isMobile={isMobile} />
       </AiChatProvider>
     </>
   );

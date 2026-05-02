@@ -92,7 +92,7 @@ export const WorkoutForm: React.FC<Props> = ({ onSave, onClose }) => {
   const [step, setStep] = useState<Step>('type');
   const [selectedType, setSelectedType] = useState<WorkoutType | null>(null);
   const [workoutName, setWorkoutName] = useState('');
-  const [notes, setNotes] = useState('');
+  const [notes] = useState('');
   const [exercises, setExercises] = useState<DraftExercise[]>([]);
   const [adding, setAdding] = useState(false);
 

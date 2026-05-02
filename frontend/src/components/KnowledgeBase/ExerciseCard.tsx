@@ -1,4 +1,3 @@
-import React from 'react';
 import type { Exercise } from '../../types/workout';
 
 interface Props {
