@@ -27,7 +27,7 @@ class ExerciseListView(APIView):
         limit = int(request.query_params.get('limit', 100))
 
         if exercise_id:
-            queryset = queryset.filter(id=exercise_id)
+            queryset = queryset.filter(exercise_id=exercise_id)
         if equipment:
             queryset = queryset.filter(equipment__icontains=equipment)
         if muscle:

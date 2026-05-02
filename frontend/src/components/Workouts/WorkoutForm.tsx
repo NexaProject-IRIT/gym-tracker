@@ -21,6 +21,7 @@ interface DraftExercise {
 
 interface ExerciseSuggestion {
   id: string;
+  exerciseId?: string;
   name: string;
   equipment: string;
   targetMuscles: string[];
@@ -141,7 +142,7 @@ export const WorkoutForm: React.FC<Props> = ({ onSave, onClose }) => {
 
   const selectSuggestion = (s: ExerciseSuggestion) => {
     setNewName(s.name);
-    setNewExerciseId(s.id);
+    setNewExerciseId(s.exerciseId ?? s.id);
     setNewIsCustom(false);
     setShowSuggestions(false);
     setSuggestions([]);
