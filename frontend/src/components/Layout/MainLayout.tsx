@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
+import { AiChatProvider } from '../../contexts/AiChatContext';
 
 const SIDEBAR_WIDTH = 220;
 
@@ -39,12 +40,23 @@ const IconUser = ({ active }: { active: boolean }) => (
   </svg>
 );
 
+const IconAi = ({ active }: { active: boolean }) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+    <path d="M4 5.5A2.5 2.5 0 016.5 3h11A2.5 2.5 0 0120 5.5v8A2.5 2.5 0 0117.5 16H13l-4 4v-4H6.5A2.5 2.5 0 014 13.5v-8z"
+      stroke={active ? '#6ee7b7' : '#64748b'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    <circle cx="9" cy="9.5" r="1" fill={active ? '#6ee7b7' : '#64748b'}/>
+    <circle cx="12" cy="9.5" r="1" fill={active ? '#6ee7b7' : '#64748b'}/>
+    <circle cx="15" cy="9.5" r="1" fill={active ? '#6ee7b7' : '#64748b'}/>
+  </svg>
+);
+
 const NAV_ITEMS = [
-  { to: '/',          label: 'Главная',      icon: (a: boolean) => <IconHome active={a} />,     end: true  },
-  { to: '/workouts',  label: 'Тренировки',   icon: (a: boolean) => <IconDumbbell active={a} />, end: false },
-  { to: '/knowledge', label: 'База тренировок',  icon: (a: boolean) => <IconBook active={a} />,     end: false },
-  { to: '/timer',     label: 'Таймер',       icon: (a: boolean) => <IconTimer active={a} />,    end: false },
-  { to: '/profile',   label: 'Профиль',      icon: (a: boolean) => <IconUser active={a} />,     end: false },
+  { to: '/',          label: 'Главная',         icon: (a: boolean) => <IconHome active={a} />,     end: true  },
+  { to: '/workouts',  label: 'Тренировки',      icon: (a: boolean) => <IconDumbbell active={a} />, end: false },
+  { to: '/knowledge', label: 'База тренировок', icon: (a: boolean) => <IconBook active={a} />,     end: false },
+  { to: '/ai',        label: 'ИИ-тренер',       icon: (a: boolean) => <IconAi active={a} />,       end: false },
+  { to: '/timer',     label: 'Таймер',          icon: (a: boolean) => <IconTimer active={a} />,    end: false },
+  { to: '/profile',   label: 'Профиль',         icon: (a: boolean) => <IconUser active={a} />,     end: false },
 ];
 
 const Logo = () => (
@@ -88,112 +100,116 @@ export const MainLayout = () => {
         .nav-link { text-decoration: none; display: block; }
       `}</style>
 
-      <div style={{ display: 'flex', minHeight: '100vh', background: '#111318' }}>
+      {/* AiChatProvider живёт здесь — выше всех вкладок.
+          Стейт чата (messages, sending) НЕ сбрасывается при навигации. */}
+      <AiChatProvider>
+        <div style={{ display: 'flex', minHeight: '100vh', background: '#111318' }}>
 
-        {/* Десктоп: левый сайдбар */}
-        {!isMobile && (
-          <aside style={{
-            width: SIDEBAR_WIDTH,
-            minWidth: SIDEBAR_WIDTH,
-            flexShrink: 0,
-            background: '#1a1d24',
-            borderRight: '1px solid rgba(255,255,255,0.07)',
-            display: 'flex',
-            flexDirection: 'column',
-            padding: '28px 0 24px',
-            position: 'sticky',
-            top: 0,
-            height: '100vh',
-            zIndex: 10,
-            alignSelf: 'flex-start',
-          }}>
-            <div style={{ padding: '0 18px 28px' }}>
-              <Logo />
-            </div>
-
-            <nav style={{ flex: 1, padding: '0 10px' }}>
-              <div style={{
-                color: '#334155', fontSize: 10, fontWeight: 600,
-                letterSpacing: '0.08em', textTransform: 'uppercase',
-                padding: '0 8px', marginBottom: 6,
-              }}>
-                Меню
+          {/* Десктоп: левый сайдбар */}
+          {!isMobile && (
+            <aside style={{
+              width: SIDEBAR_WIDTH,
+              minWidth: SIDEBAR_WIDTH,
+              flexShrink: 0,
+              background: '#1a1d24',
+              borderRight: '1px solid rgba(255,255,255,0.07)',
+              display: 'flex',
+              flexDirection: 'column',
+              padding: '28px 0 24px',
+              position: 'sticky',
+              top: 0,
+              height: '100vh',
+              zIndex: 10,
+              alignSelf: 'flex-start',
+            }}>
+              <div style={{ padding: '0 18px 28px' }}>
+                <Logo />
               </div>
 
-              {NAV_ITEMS.map(({ to, label, icon, end }) => (
-                <NavLink key={to} to={to} end={end} className="nav-link">
-                  {({ isActive }) => (
-                    <div style={{
-                      display: 'flex', alignItems: 'center', gap: 10,
-                      padding: '10px 12px', borderRadius: 10,
-                      background: isActive ? 'rgba(110,231,183,0.1)' : 'transparent',
-                      marginBottom: 2, transition: 'background 0.15s',
-                      cursor: 'pointer',
-                    }}>
-                      {icon(isActive)}
+              <nav style={{ flex: 1, padding: '0 10px' }}>
+                <div style={{
+                  color: '#334155', fontSize: 10, fontWeight: 600,
+                  letterSpacing: '0.08em', textTransform: 'uppercase',
+                  padding: '0 8px', marginBottom: 6,
+                }}>
+                  Меню
+                </div>
+
+                {NAV_ITEMS.map(({ to, label, icon, end }) => (
+                  <NavLink key={to} to={to} end={end} className="nav-link">
+                    {({ isActive }) => (
+                      <div style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '10px 12px', borderRadius: 10,
+                        background: isActive ? 'rgba(110,231,183,0.1)' : 'transparent',
+                        marginBottom: 2, transition: 'background 0.15s',
+                        cursor: 'pointer',
+                      }}>
+                        {icon(isActive)}
+                        <span style={{
+                          fontSize: 14,
+                          fontWeight: isActive ? 600 : 400,
+                          color: isActive ? '#6ee7b7' : '#94a3b8',
+                        }}>
+                          {label}
+                        </span>
+                        {isActive && (
+                          <div style={{
+                            marginLeft: 'auto', width: 6, height: 6,
+                            borderRadius: '50%', background: '#6ee7b7',
+                          }} />
+                        )}
+                      </div>
+                    )}
+                  </NavLink>
+                ))}
+              </nav>
+
+              <div style={{ padding: '0 18px', color: '#334155', fontSize: 11 }}>MVP v0.1</div>
+            </aside>
+          )}
+
+          {/* Основной контент */}
+          <main style={{ flex: 1, minWidth: 0, paddingBottom: isMobile ? 64 : 0 }}>
+            <Outlet />
+          </main>
+        </div>
+
+        {/* Мобила: нижний таббар */}
+        {isMobile && (
+          <nav style={{
+            position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
+            background: 'rgba(17,19,24,0.97)',
+            backdropFilter: 'blur(20px)',
+            borderTop: '1px solid rgba(255,255,255,0.07)',
+            paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+            display: 'flex',
+          }}>
+            {NAV_ITEMS.map(({ to, label, icon, end }) => (
+              <NavLink key={to} to={to} end={end} className="nav-link" style={{ flex: 1 }}>
+                {({ isActive }) => (
+                  <div style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center',
+                    justifyContent: 'center', gap: 3, padding: '10px 0',
+                    cursor: 'pointer',
+                  }}>
+                    {icon(isActive)}
+                    {isActive && (
                       <span style={{
-                        fontSize: 14,
-                        fontWeight: isActive ? 600 : 400,
-                        color: isActive ? '#6ee7b7' : '#94a3b8',
+                        fontSize: 9, fontWeight: 600,
+                        color: '#6ee7b7',
+                        letterSpacing: '0.02em',
                       }}>
                         {label}
                       </span>
-                      {isActive && (
-                        <div style={{
-                          marginLeft: 'auto', width: 6, height: 6,
-                          borderRadius: '50%', background: '#6ee7b7',
-                        }} />
-                      )}
-                    </div>
-                  )}
-                </NavLink>
-              ))}
-            </nav>
-
-            <div style={{ padding: '0 18px', color: '#334155', fontSize: 11 }}>MVP v0.1</div>
-          </aside>
+                    )}
+                  </div>
+                )}
+              </NavLink>
+            ))}
+          </nav>
         )}
-
-        {/* Основной контент */}
-        <main style={{ flex: 1, minWidth: 0, paddingBottom: isMobile ? 64 : 0 }}>
-          <Outlet />
-        </main>
-      </div>
-
-      {/* Мобила: нижний таббар */}
-      {isMobile && (
-        <nav style={{
-          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
-          background: 'rgba(17,19,24,0.97)',
-          backdropFilter: 'blur(20px)',
-          borderTop: '1px solid rgba(255,255,255,0.07)',
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-          display: 'flex',
-        }}>
-          {NAV_ITEMS.map(({ to, label, icon, end }) => (
-            <NavLink key={to} to={to} end={end} className="nav-link" style={{ flex: 1 }}>
-              {({ isActive }) => (
-                <div style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center',
-                  justifyContent: 'center', gap: 3, padding: '10px 0',
-                  cursor: 'pointer',
-                }}>
-                  {icon(isActive)}
-                  {isActive && (
-                    <span style={{
-                      fontSize: 9, fontWeight: 600,
-                      color: '#6ee7b7',
-                      letterSpacing: '0.02em',
-                    }}>
-                      {label}
-                    </span>
-                  )}
-                </div>
-              )}
-            </NavLink>
-          ))}
-        </nav>
-      )}
+      </AiChatProvider>
     </>
   );
 };

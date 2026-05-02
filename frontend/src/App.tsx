@@ -7,6 +7,7 @@ import { ExerciseGrid } from './components/KnowledgeBase/ExerciseGrid';
 import { ProfilePage } from './pages/ProfilePage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { AiChatPage } from './pages/AiChatPage';
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const token = localStorage.getItem('token');
@@ -38,6 +39,7 @@ function App() {
             <Route path="workouts" element={<WorkoutList />} />
             <Route path="timer" element={<TimerComponent />} />
             <Route path="knowledge" element={<ExerciseGrid />} />
+            <Route path="ai" element={<AiChatPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="settings" element={<Navigate to="/profile" replace />} />
           </Route>

@@ -10,6 +10,7 @@ urlpatterns = [
     path('exercises/', include('exercises.urls')),
     path('workouts/', include('workouts.urls')),
     path('export/', ExportWorkoutsView.as_view(), name='export'),
+    path('ai/', include('ai.urls')),
 ]
 
 if settings.DEBUG:
