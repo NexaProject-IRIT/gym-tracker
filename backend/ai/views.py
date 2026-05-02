@@ -11,7 +11,8 @@ from .models import ChatMessage
 from .serializers import ChatMessageSerializer, ChatRequestSerializer
 from .services.context_builder import build_messages_for_llm
 from .services.gigachat import get_llm_client, LLMError
-from .services.workout_parser import extract_workout_suggestion
+from .services.workout_parser import extract_workout_suggestion, extract_workout_imports
+from .services.import_detector import looks_like_workout_import, build_import_messages
 
 
 logger = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ RATE_LIMIT_WINDOW_SECONDS = 60
 # Убираем <user-data>...</user-data> и другие служебные теги.
 # Делаем это ДО extract_workout_suggestion, чтобы не ломать парсинг <workout>.
 _CLEANUP_TAGS_RE = re.compile(
-    r'<(?!/?workout\b)[a-zA-Z][a-zA-Z0-9_-]*(?:\s[^>]*)?>.*?</[a-zA-Z][a-zA-Z0-9_-]*>',
+    r'<(?!/?workout\b)(?!/?import\b)[a-zA-Z][a-zA-Z0-9_-]*(?:\s[^>]*)?>.*?</[a-zA-Z][a-zA-Z0-9_-]*>',
     re.DOTALL | re.IGNORECASE,
 )
 
@@ -84,12 +85,18 @@ class ChatView(APIView):
             content=user_message_text,
         )
 
-        history_qs = ChatMessage.objects.filter(user=request.user).exclude(pk=user_msg.pk)
-        llm_messages = build_messages_for_llm(request.user, history_qs, user_message_text)
+        # Детектируем: это журнал тренировок для импорта или обычный вопрос?
+        is_import = looks_like_workout_import(user_message_text)
+
+        if is_import:
+            llm_messages = build_import_messages(user_message_text)
+        else:
+            history_qs = ChatMessage.objects.filter(user=request.user).exclude(pk=user_msg.pk)
+            llm_messages = build_messages_for_llm(request.user, history_qs, user_message_text)
 
         client = get_llm_client()
         try:
-            raw_reply = client.chat(llm_messages)
+            raw_reply = client.chat(llm_messages, max_tokens=3000 if is_import else 1024)
         except LLMError as e:
             logger.exception('LLM error for user %s', request.user.username)
             fallback_text = (
@@ -116,19 +123,40 @@ class ChatView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-        # Очищаем XML-артефакты из ответа модели, оставляем <workout>.
+        # Очищаем XML-артефакты из ответа модели, оставляем <workout> и <import>.
         raw_reply = _clean_llm_response(raw_reply)
 
+        # Сначала вырезаем <workout>, потом <import> из оставшегося текста.
         visible_text, workout_suggestion = extract_workout_suggestion(raw_reply)
+        visible_text, workout_imports = extract_workout_imports(visible_text)
 
-        if not visible_text and workout_suggestion:
-            visible_text = 'Вот тренировка, которую я составил. Можешь добавить её одним кликом.'
+        if not visible_text:
+            if workout_imports:
+                n = len(workout_imports)
+                if n == 1:
+                    label = '1 тренировку'
+                elif n in (2, 3, 4):
+                    label = f'{n} тренировки'
+                else:
+                    label = f'{n} тренировок'
+                visible_text = f'Распознал {label}. Нажми кнопку ниже, чтобы добавить их в журнал.'
+            elif workout_suggestion:
+                visible_text = 'Вот тренировка, которую я составил. Можешь добавить её одним кликом.'
+
+        # Если импорт-режим сработал, но модель не вернула <import>-блок —
+        # дать понятную ошибку вместо пустого сообщения.
+        if is_import and not workout_imports and not visible_text:
+            visible_text = (
+                'Не смог распарсить журнал тренировок — попробуй отправить данные '
+                'меньшими блоками (по 3–4 тренировки за раз).'
+            )
 
         assistant_msg = ChatMessage.objects.create(
             user=request.user,
             role='assistant',
             content=visible_text,
             workout_suggestion=workout_suggestion,
+            workout_imports=workout_imports,
         )
 
         return Response(

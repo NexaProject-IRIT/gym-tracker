@@ -25,12 +25,14 @@ export const AiChatPage = () => {
     sendMessage,
     clearHistory,
     addWorkoutFromSuggestion,
+    addWorkoutsFromImport,
     setError,
   } = useAiChatContext();
 
   const [input, setInput] = useState('');
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [addingWorkoutForId, setAddingWorkoutForId] = useState<string | null>(null);
+  const [importingForId, setImportingForId] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -72,6 +74,15 @@ export const AiChatPage = () => {
     }
   };
 
+  const handleImportWorkouts = async (messageId: string) => {
+    setImportingForId(messageId);
+    const count = await addWorkoutsFromImport(messageId);
+    setImportingForId(null);
+    if (count > 0) {
+      setTimeout(() => navigate('/workouts'), 1200);
+    }
+  };
+
   const handleClear = async () => {
     setShowClearConfirm(false);
     await clearHistory();
@@ -99,8 +110,18 @@ export const AiChatPage = () => {
           display: flex;
           flex-direction: column;
           background: #111318;
-          /* overflow: hidden важен — иначе браузер на iOS скроллит весь контейнер */
           overflow: hidden;
+        }
+
+        /* На мобиле нижний таббар — 64px position:fixed.
+           main добавляет paddingBottom: 64px, поэтому без этой поправки
+           ai-chat-root (100dvh) + padding (64px) > viewport → браузер добавляет скролл,
+           шапка уезжает вверх, а поле ввода уходит под таббар. */
+        @media (max-width: 767px) {
+          .ai-chat-root {
+            height: calc(100dvh - 64px);
+            min-height: 0;
+          }
         }
 
         /* Область сообщений — растягивается на всё доступное пространство */
@@ -255,6 +276,8 @@ export const AiChatPage = () => {
               message={msg}
               onAddWorkout={handleAddWorkout}
               addingWorkout={addingWorkoutForId === msg.id}
+              onImportWorkouts={handleImportWorkouts}
+              importingWorkouts={importingForId === msg.id}
             />
           ))}
 

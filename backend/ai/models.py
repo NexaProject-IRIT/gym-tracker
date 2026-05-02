@@ -21,6 +21,8 @@ class ChatMessage(models.Model):
     # Если в ответе ассистента был <workout>...</workout> — сохраняем распарсенный JSON,
     # чтобы фронт при перезагрузке страницы опять увидел кнопку «Добавить тренировку».
     workout_suggestion = models.JSONField(blank=True, null=True)
+    # Массив тренировок для массового импорта из журнала пользователя
+    workout_imports = models.JSONField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

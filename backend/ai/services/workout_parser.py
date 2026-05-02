@@ -13,6 +13,7 @@
 import re
 import json
 import logging
+from datetime import date as date_cls
 from typing import Optional
 
 
@@ -20,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 WORKOUT_BLOCK_RE = re.compile(r'<workout>(.*?)</workout>', re.DOTALL | re.IGNORECASE)
+IMPORT_BLOCK_RE  = re.compile(r'<import>(.*?)</import>',   re.DOTALL | re.IGNORECASE)
 
 ALLOWED_WORKOUT_TYPES = {'strength', 'cardio', 'flexibility', 'functional', 'custom'}
 ALLOWED_EXERCISE_KEYS = {'name', 'sets', 'reps', 'weight', 'time', 'distance'}
@@ -120,3 +122,76 @@ def extract_workout_suggestion(raw_response: str) -> tuple[str, Optional[dict]]:
         return visible_text, None
 
     return visible_text, workout
+
+
+def _validate_import_workout(raw: dict, today_str: str) -> Optional[dict]:
+    """Нормализует одну тренировку из массива импорта."""
+    if not isinstance(raw, dict):
+        return None
+
+    name = str(raw.get('name', '')).strip() or 'Тренировка'
+
+    wtype = raw.get('type', 'custom')
+    if wtype not in ALLOWED_WORKOUT_TYPES:
+        wtype = 'custom'
+
+    raw_date = raw.get('date', '')
+    if raw_date:
+        try:
+            # Принимаем только ISO-формат YYYY-MM-DD — именно такой просим у модели
+            date_cls.fromisoformat(str(raw_date))
+            workout_date = str(raw_date)
+        except ValueError:
+            workout_date = today_str
+    else:
+        workout_date = today_str
+
+    exercises_raw = raw.get('exercises', [])
+    if not isinstance(exercises_raw, list):
+        exercises_raw = []
+
+    exercises = [ex for item in exercises_raw if (ex := _clean_exercise(item))]
+
+    return {
+        'name': name[:255],
+        'type': wtype,
+        'date': workout_date,
+        'exercises': exercises,
+    }
+
+
+def extract_workout_imports(raw_response: str) -> tuple[str, Optional[list]]:
+    """
+    Ищет <import>[...массив тренировок...]</import> в ответе LLM.
+    Возвращает (видимый текст без блока, список тренировок или None).
+    """
+    if not raw_response:
+        return '', None
+
+    match = IMPORT_BLOCK_RE.search(raw_response)
+    if not match:
+        return raw_response.strip(), None
+
+    today_str = date_cls.today().isoformat()
+    json_text = match.group(1).strip()
+
+    try:
+        parsed = json.loads(json_text)
+    except json.JSONDecodeError as e:
+        logger.warning('Не смог распарсить <import>-JSON: %s; ошибка: %s', json_text[:200], e)
+        return raw_response.strip(), None
+
+    if not isinstance(parsed, list):
+        logger.warning('<import>-блок не является массивом, игнорирую')
+        return raw_response.strip(), None
+
+    validated = [w for item in parsed if (w := _validate_import_workout(item, today_str))]
+
+    visible_text = IMPORT_BLOCK_RE.sub('', raw_response).strip()
+    visible_text = re.sub(r'\n{3,}', '\n\n', visible_text)
+
+    if not validated:
+        logger.warning('Ни одна тренировка из <import>-блока не прошла валидацию')
+        return visible_text, None
+
+    return visible_text, validated

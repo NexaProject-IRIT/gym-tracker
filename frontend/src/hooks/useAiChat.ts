@@ -18,14 +18,29 @@ export interface WorkoutSuggestion {
   }>;
 }
 
+export interface WorkoutImportEntry {
+  name: string;
+  type: 'strength' | 'cardio' | 'flexibility' | 'functional' | 'custom';
+  date: string; // YYYY-MM-DD
+  exercises: Array<{
+    name: string;
+    sets?: number;
+    reps?: number;
+    weight?: number;
+    time?: number;
+    distance?: number;
+  }>;
+}
+
 export interface ChatMessage {
   id: string;
   role: ChatRole;
   content: string;
   workout_suggestion: WorkoutSuggestion | null;
+  workout_imports: WorkoutImportEntry[] | null;
   created_at: string;
-  // Локальный флаг: тренировка уже добавлена в /workouts/, кнопка скрыта.
   workoutAdded?: boolean;
+  workoutsImported?: boolean;
 }
 
 function getToken(): string {
@@ -39,16 +54,12 @@ function authHeaders(): HeadersInit {
   };
 }
 
-// Нужно чтобы упражнения с временем/расстоянием (кардио/планка) корректно
-// передавались на бэк: там parameters управляет тем, какие поля рендерятся
-// в карточке упражнения. Если их не выставить — поля «уезжают» в ноль
-// и пропадают при следующем открытии тренировки.
-function inferParameters(ex: WorkoutSuggestion['exercises'][number]): string[] {
+function inferParameters(ex: { sets?: number; reps?: number; weight?: number; time?: number; distance?: number }): string[] {
   const params: string[] = [];
-  if (ex.sets != null) params.push('sets');
-  if (ex.reps != null) params.push('reps');
-  if (ex.weight != null) params.push('weight');
-  if (ex.time != null) params.push('time');
+  if (ex.sets != null)     params.push('sets');
+  if (ex.reps != null)     params.push('reps');
+  if (ex.weight != null)   params.push('weight');
+  if (ex.time != null)     params.push('time');
   if (ex.distance != null) params.push('distance');
   return params.length ? params : ['sets', 'reps'];
 }
@@ -58,7 +69,6 @@ export const useAiChat = () => {
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Защита от двойного клика «отправить» при быстрых нажатиях.
   const sendingRef = useRef(false);
 
   const loadHistory = useCallback(async () => {
@@ -84,14 +94,13 @@ export const useAiChat = () => {
     setSending(true);
     setError(null);
 
-    // Оптимистично показываем сообщение пользователя сразу, не дожидаясь бэка.
-    // Временный id с префиксом tmp_ — потом заменим на реальный после ответа.
     const tempId = `tmp_${Date.now()}`;
     const optimisticUserMsg: ChatMessage = {
       id: tempId,
       role: 'user',
       content: trimmed,
       workout_suggestion: null,
+      workout_imports: null,
       created_at: new Date().toISOString(),
     };
     setMessages(prev => [...prev, optimisticUserMsg]);
@@ -104,32 +113,25 @@ export const useAiChat = () => {
       });
 
       if (!res.ok) {
-        // Читаем как текст и пробуем распарсить — иначе упрёмся в HTML 500.
         const body = await res.text();
         let reason = `Ошибка ${res.status}`;
         try {
           const parsed = JSON.parse(body);
           reason = parsed.error || reason;
-        } catch { /* не JSON, оставляем дефолт */ }
+        } catch { /* не JSON */ }
         throw new Error(reason);
       }
 
       const data = await res.json();
-      // Заменяем оптимистичное сообщение на то, которое вернул бэк (с реальным id),
-      // и добавляем ответ ассистента.
       setMessages(prev => {
         const withoutTemp = prev.filter(m => m.id !== tempId);
         return [...withoutTemp, data.user_message, data.assistant_message];
       });
 
-      // Если бэк прислал error вместе с fallback-сообщением ассистента —
-      // покажем пользователю предупреждение, но чат не блокируем.
       if (data.error) {
         setError(data.error);
       }
     } catch (e) {
-      // При падении запроса — откатываем оптимистичное сообщение
-      // и показываем ошибку поверх формы.
       setMessages(prev => prev.filter(m => m.id !== tempId));
       setError(e instanceof Error ? e.message : 'Не удалось отправить сообщение');
     } finally {
@@ -183,8 +185,6 @@ export const useAiChat = () => {
       });
       if (!res.ok) throw new Error(`Ошибка ${res.status}`);
       const created = await res.json();
-      // Помечаем сообщение как «добавлено», чтобы кнопка сменилась на чекмарк
-      // и пользователь не клацнул второй раз.
       setMessages(prev => prev.map(m => m.id === messageId ? { ...m, workoutAdded: true } : m));
       return created.id;
     } catch (e) {
@@ -193,7 +193,26 @@ export const useAiChat = () => {
     }
   }, [messages]);
 
-  // Грузим историю один раз при маунте.
+  const addWorkoutsFromImport = useCallback(async (messageId: string): Promise<number> => {
+    const msg = messages.find(m => m.id === messageId);
+    if (!msg?.workout_imports?.length) return 0;
+
+    try {
+      const res = await fetch(`${BASE}/workouts/bulk-import/`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ workouts: msg.workout_imports }),
+      });
+      if (!res.ok) throw new Error(`Ошибка ${res.status}`);
+      const data = await res.json();
+      setMessages(prev => prev.map(m => m.id === messageId ? { ...m, workoutsImported: true } : m));
+      return data.count ?? 0;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Не удалось импортировать тренировки');
+      return 0;
+    }
+  }, [messages]);
+
   useEffect(() => {
     void loadHistory();
   }, [loadHistory]);
@@ -206,6 +225,7 @@ export const useAiChat = () => {
     sendMessage,
     clearHistory,
     addWorkoutFromSuggestion,
+    addWorkoutsFromImport,
     setError,
   };
 };

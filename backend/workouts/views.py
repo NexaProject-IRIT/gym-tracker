@@ -1,3 +1,4 @@
+from datetime import datetime, date as date_cls
 from django.utils import timezone
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
@@ -10,7 +11,6 @@ from .serializers import (
     WorkoutSerializer, WorkoutListSerializer,
     WorkoutCreateSerializer, WorkoutUpdateSerializer
 )
-from datetime import datetime
 from .services.export import generate_export_text
 
 
@@ -218,6 +218,79 @@ class WorkoutViewSet(viewsets.ModelViewSet):
         user = request.user
         deleted_count, _ = Workout.objects.filter(user=user).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class BulkImportView(APIView):
+    """
+    POST /workouts/bulk-import/
+    Создаёт несколько тренировок из распарсенного ИИ журнала пользователя.
+    Вход: { "workouts": [{name, type, date, exercises: [{name, sets?, reps?, weight?, time?, distance?}]}] }
+    Выход: { "created": [{id, name, date}], "count": N }
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        workouts_data = request.data.get('workouts', [])
+        if not isinstance(workouts_data, list):
+            return Response({'error': 'workouts must be a list'}, status=status.HTTP_400_BAD_REQUEST)
+
+        created = []
+        for workout_data in workouts_data:
+            name = str(workout_data.get('name', 'Тренировка')).strip()[:255] or 'Тренировка'
+            wtype = workout_data.get('type', 'custom')
+            if wtype not in WORKOUT_COLORS:
+                wtype = 'custom'
+
+            raw_date = workout_data.get('date', '')
+            try:
+                workout_date = datetime.strptime(str(raw_date), '%Y-%m-%d').date()
+            except (ValueError, TypeError):
+                workout_date = date_cls.today()
+
+            workout = Workout.objects.create(
+                user=request.user,
+                name=name,
+                type=wtype,
+                date=workout_date,
+                color=WORKOUT_COLORS.get(wtype, WORKOUT_COLORS['custom']),
+            )
+
+            for ex_data in workout_data.get('exercises', []):
+                ex_name = str(ex_data.get('name', '')).strip()[:255]
+                if not ex_name:
+                    continue
+
+                params = []
+                sets_val  = ex_data.get('sets')
+                reps_val  = ex_data.get('reps')
+                weight_val = ex_data.get('weight')
+                time_val  = ex_data.get('time')
+                dist_val  = ex_data.get('distance')
+
+                if sets_val   is not None: params.append('sets')
+                if reps_val   is not None: params.append('reps')
+                if weight_val is not None: params.append('weight')
+                if time_val   is not None: params.append('time')
+                if dist_val   is not None: params.append('distance')
+                if not params:
+                    params = ['sets', 'reps']
+
+                WorkoutExercise.objects.create(
+                    workout=workout,
+                    custom_name=ex_name,
+                    exercise_id='',
+                    is_custom=True,
+                    sets=int(sets_val) if sets_val is not None else 0,
+                    reps=int(reps_val) if reps_val is not None else 0,
+                    weight=float(weight_val) if weight_val is not None else None,
+                    time=int(time_val) if time_val is not None else None,
+                    distance=float(dist_val) if dist_val is not None else None,
+                    parameters=params,
+                )
+
+            created.append({'id': str(workout.uid), 'name': workout.name, 'date': str(workout.date)})
+
+        return Response({'created': created, 'count': len(created)}, status=status.HTTP_201_CREATED)
 
 
 class ExportWorkoutsView(APIView):

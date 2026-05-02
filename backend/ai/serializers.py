@@ -8,10 +8,10 @@ class ChatMessageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ChatMessage
-        fields = ('id', 'role', 'content', 'workout_suggestion', 'created_at')
+        fields = ('id', 'role', 'content', 'workout_suggestion', 'workout_imports', 'created_at')
         read_only_fields = fields
 
 
 class ChatRequestSerializer(serializers.Serializer):
     """Вход для POST /ai/chat/ — одно сообщение от пользователя."""
-    message = serializers.CharField(max_length=2000, allow_blank=False)
+    message = serializers.CharField(max_length=15000, allow_blank=False)

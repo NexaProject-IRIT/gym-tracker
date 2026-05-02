@@ -1,162 +1,173 @@
-import type { ReactNode } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import type { Components } from 'react-markdown';
 import type { ChatMessage } from '../../hooks/useAiChat';
 import { WorkoutSuggestionCard } from './WorkoutSuggestionCard';
+import { WorkoutImportCard } from './WorkoutImportCard';
 
 interface Props {
   message: ChatMessage;
   onAddWorkout: (messageId: string) => void;
   addingWorkout: boolean;
+  onImportWorkouts: (messageId: string) => void;
+  importingWorkouts: boolean;
 }
 
-// ─── Inline-парсер: **жирный**, *курсив*, `код` ──────────────────────────────
-// Разбиваем строку по маркерам, оборачиваем в нужные теги.
-const parseInline = (text: string): ReactNode[] => {
-  const INLINE_RE = /(\*\*[^*\n]+\*\*|\*[^*\n]+\*|`[^`\n]+`)/g;
-  const parts = text.split(INLINE_RE);
-  return parts.map((part, i) => {
-    if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={i} style={{ fontWeight: 700, color: '#f1f5f9' }}>{part.slice(2, -2)}</strong>;
-    }
-    if (part.startsWith('*') && part.endsWith('*')) {
-      return <em key={i} style={{ fontStyle: 'italic' }}>{part.slice(1, -1)}</em>;
-    }
-    if (part.startsWith('`') && part.endsWith('`')) {
+// Кастомные компоненты для стилизации под тёмную тему
+const MD_COMPONENTS: Components = {
+  p: ({ children }) => (
+    <p style={{ margin: '0 0 8px', color: '#cbd5e1', lineHeight: 1.65, wordBreak: 'break-word' }}>
+      {children}
+    </p>
+  ),
+  h1: ({ children }) => (
+    <h1 style={{ fontSize: 18, fontWeight: 700, color: '#f1f5f9', margin: '16px 0 6px', lineHeight: 1.3 }}>
+      {children}
+    </h1>
+  ),
+  h2: ({ children }) => (
+    <h2 style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9', margin: '14px 0 5px', lineHeight: 1.3 }}>
+      {children}
+    </h2>
+  ),
+  h3: ({ children }) => (
+    <h3 style={{ fontSize: 15, fontWeight: 700, color: '#f1f5f9', margin: '12px 0 4px', lineHeight: 1.3 }}>
+      {children}
+    </h3>
+  ),
+  h4: ({ children }) => (
+    <h4 style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', margin: '10px 0 4px', lineHeight: 1.3 }}>
+      {children}
+    </h4>
+  ),
+  h5: ({ children }) => (
+    <h5 style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0', margin: '8px 0 3px', lineHeight: 1.3 }}>
+      {children}
+    </h5>
+  ),
+  h6: ({ children }) => (
+    <h6 style={{ fontSize: 13, fontWeight: 600, color: '#94a3b8', margin: '8px 0 3px', lineHeight: 1.3 }}>
+      {children}
+    </h6>
+  ),
+  ul: ({ children }) => (
+    <ul style={{ margin: '6px 0', paddingLeft: 20, color: '#cbd5e1' }}>
+      {children}
+    </ul>
+  ),
+  ol: ({ children }) => (
+    <ol style={{ margin: '6px 0', paddingLeft: 22, color: '#cbd5e1' }}>
+      {children}
+    </ol>
+  ),
+  li: ({ children }) => (
+    <li style={{ marginBottom: 4, lineHeight: 1.6 }}>
+      {children}
+    </li>
+  ),
+  strong: ({ children }) => (
+    <strong style={{ fontWeight: 700, color: '#f1f5f9' }}>
+      {children}
+    </strong>
+  ),
+  em: ({ children }) => (
+    <em style={{ fontStyle: 'italic', color: '#e2e8f0' }}>
+      {children}
+    </em>
+  ),
+  code: ({ children, className }) => {
+    const isBlock = !!className;
+    if (isBlock) {
       return (
-        <code key={i} style={{
+        <code style={{
+          display: 'block',
           fontFamily: 'monospace',
-          fontSize: '0.9em',
-          background: 'rgba(110,231,183,0.1)',
+          fontSize: 13,
+          background: 'rgba(0,0,0,0.3)',
           color: '#6ee7b7',
-          padding: '1px 5px',
-          borderRadius: 4,
+          padding: '10px 14px',
+          borderRadius: 8,
+          overflowX: 'auto',
+          lineHeight: 1.6,
+          whiteSpace: 'pre',
         }}>
-          {part.slice(1, -1)}
+          {children}
         </code>
       );
     }
-    return part;
-  });
-};
-
-// ─── Блочный парсер ───────────────────────────────────────────────────────────
-// Обрабатываем построчно: заголовки, списки, горизонтальные разделители, параграфы.
-const renderMarkdown = (text: string): ReactNode => {
-  const lines = text.split('\n');
-  const elements: ReactNode[] = [];
-  let i = 0;
-  let key = 0;
-
-  while (i < lines.length) {
-    const line = lines[i];
-
-    // --- Горизонтальный разделитель ---
-    if (/^---+$/.test(line.trim())) {
-      elements.push(
-        <hr key={key++} style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.08)', margin: '8px 0' }} />
-      );
-      i++;
-      continue;
-    }
-
-    // --- Заголовки ### ## # ---
-    const headingMatch = line.match(/^(#{1,3})\s+(.*)/);
-    if (headingMatch) {
-      const level = headingMatch[1].length;
-      const content = headingMatch[2];
-      const sizes: Record<number, { fontSize: string; mt: number }> = {
-        1: { fontSize: '17px', mt: 16 },
-        2: { fontSize: '15px', mt: 12 },
-        3: { fontSize: '14px', mt: 10 },
-      };
-      const { fontSize, mt } = sizes[level] || sizes[3];
-      elements.push(
-        <div key={key++} style={{
-          fontSize,
-          fontWeight: 700,
-          color: '#f1f5f9',
-          marginTop: i > 0 ? mt : 0,
-          marginBottom: 4,
-          lineHeight: 1.3,
-        }}>
-          {parseInline(content)}
-        </div>
-      );
-      i++;
-      continue;
-    }
-
-    // --- Список: строки начинающиеся с "- " или "• " ---
-    if (/^[-•]\s/.test(line)) {
-      const items: ReactNode[] = [];
-      while (i < lines.length && /^[-•]\s/.test(lines[i])) {
-        const itemText = lines[i].replace(/^[-•]\s/, '');
-        items.push(
-          <li key={i} style={{
-            color: '#cbd5e1',
-            lineHeight: 1.55,
-            marginBottom: 3,
-            paddingLeft: 4,
-          }}>
-            {parseInline(itemText)}
-          </li>
-        );
-        i++;
-      }
-      elements.push(
-        <ul key={key++} style={{
-          margin: '6px 0',
-          paddingLeft: 18,
-          listStyleType: 'disc',
-        }}>
-          {items}
-        </ul>
-      );
-      continue;
-    }
-
-    // --- Нумерованный список: "1. " "2. " и т.п. ---
-    if (/^\d+\.\s/.test(line)) {
-      const items: ReactNode[] = [];
-      while (i < lines.length && /^\d+\.\s/.test(lines[i])) {
-        const itemText = lines[i].replace(/^\d+\.\s/, '');
-        items.push(
-          <li key={i} style={{ color: '#cbd5e1', lineHeight: 1.55, marginBottom: 3, paddingLeft: 4 }}>
-            {parseInline(itemText)}
-          </li>
-        );
-        i++;
-      }
-      elements.push(
-        <ol key={key++} style={{ margin: '6px 0', paddingLeft: 20 }}>
-          {items}
-        </ol>
-      );
-      continue;
-    }
-
-    // --- Пустая строка → небольшой отступ ---
-    if (line.trim() === '') {
-      // Несколько пустых строк схлопываем в один отступ
-      if (elements.length > 0) {
-        elements.push(<div key={key++} style={{ height: 8 }} />);
-      }
-      i++;
-      continue;
-    }
-
-    // --- Обычный параграф ---
-    elements.push(
-      <p key={key++} style={{ margin: 0, color: '#cbd5e1', lineHeight: 1.6, wordBreak: 'break-word' }}>
-        {parseInline(line)}
-      </p>
+    return (
+      <code style={{
+        fontFamily: 'monospace',
+        fontSize: '0.88em',
+        background: 'rgba(110,231,183,0.1)',
+        color: '#6ee7b7',
+        padding: '2px 6px',
+        borderRadius: 4,
+      }}>
+        {children}
+      </code>
     );
-    i++;
-  }
-
-  return <>{elements}</>;
+  },
+  pre: ({ children }) => (
+    <pre style={{
+      margin: '8px 0',
+      borderRadius: 8,
+      overflow: 'hidden',
+      background: 'rgba(0,0,0,0.3)',
+      border: '1px solid rgba(255,255,255,0.06)',
+    }}>
+      {children}
+    </pre>
+  ),
+  blockquote: ({ children }) => (
+    <blockquote style={{
+      margin: '8px 0',
+      paddingLeft: 12,
+      borderLeft: '3px solid rgba(110,231,183,0.4)',
+      color: '#94a3b8',
+      fontStyle: 'italic',
+    }}>
+      {children}
+    </blockquote>
+  ),
+  hr: () => (
+    <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.08)', margin: '10px 0' }} />
+  ),
+  table: ({ children }) => (
+    <div style={{ overflowX: 'auto', margin: '8px 0' }}>
+      <table style={{
+        borderCollapse: 'collapse',
+        width: '100%',
+        fontSize: 13,
+        color: '#cbd5e1',
+      }}>
+        {children}
+      </table>
+    </div>
+  ),
+  th: ({ children }) => (
+    <th style={{
+      padding: '7px 12px',
+      background: 'rgba(255,255,255,0.05)',
+      borderBottom: '1px solid rgba(255,255,255,0.1)',
+      textAlign: 'left',
+      fontWeight: 600,
+      color: '#e2e8f0',
+      whiteSpace: 'nowrap',
+    }}>
+      {children}
+    </th>
+  ),
+  td: ({ children }) => (
+    <td style={{
+      padding: '6px 12px',
+      borderBottom: '1px solid rgba(255,255,255,0.05)',
+    }}>
+      {children}
+    </td>
+  ),
 };
 
-// ─── Аватар бота ─────────────────────────────────────────────────────────────
 const BotAvatar = () => (
   <div style={{
     width: 32, height: 32, borderRadius: 10, flexShrink: 0,
@@ -171,8 +182,7 @@ const BotAvatar = () => (
   </div>
 );
 
-// ─── Компонент ───────────────────────────────────────────────────────────────
-export const MessageBubble = ({ message, onAddWorkout, addingWorkout }: Props) => {
+export const MessageBubble = ({ message, onAddWorkout, addingWorkout, onImportWorkouts, importingWorkouts }: Props) => {
   const isUser = message.role === 'user';
 
   if (isUser) {
@@ -195,7 +205,6 @@ export const MessageBubble = ({ message, onAddWorkout, addingWorkout }: Props) =
     );
   }
 
-  // ─── Ответ ассистента ───────────────────────────────────────────────────
   return (
     <div style={{ display: 'flex', gap: 10, marginBottom: 14, alignItems: 'flex-start' }}>
       <BotAvatar />
@@ -208,7 +217,13 @@ export const MessageBubble = ({ message, onAddWorkout, addingWorkout }: Props) =
         borderRadius: '4px 16px 16px 16px',
         fontSize: 14,
       }}>
-        {message.content && renderMarkdown(message.content)}
+        {message.content && (
+          <div style={{ lineHeight: 1.65 }}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={MD_COMPONENTS}>
+              {message.content}
+            </ReactMarkdown>
+          </div>
+        )}
 
         {message.workout_suggestion && (
           <WorkoutSuggestionCard
@@ -216,6 +231,15 @@ export const MessageBubble = ({ message, onAddWorkout, addingWorkout }: Props) =
             onAdd={() => onAddWorkout(message.id)}
             added={!!message.workoutAdded}
             loading={addingWorkout}
+          />
+        )}
+
+        {message.workout_imports && message.workout_imports.length > 0 && (
+          <WorkoutImportCard
+            imports={message.workout_imports}
+            onImport={() => onImportWorkouts(message.id)}
+            imported={!!message.workoutsImported}
+            loading={importingWorkouts}
           />
         )}
       </div>
