@@ -5,6 +5,7 @@ import type { Workout, WorkoutType } from '../../types/workout';
 import { WORKOUT_TYPE_LABELS, WORKOUT_TYPE_COLORS } from '../../types/workout';
 import { WorkoutDetail } from './WorkoutDetail';
 import { WorkoutForm } from './WorkoutForm';
+import { FLOATING_PILL_HEIGHT, FLOATING_PILL_BOTTOM_MOBILE, FLOATING_PILL_BOTTOM_DESKTOP } from '../Timer/FloatingTimer';
 
 const CSS = `
   :root {
@@ -225,7 +226,10 @@ export const WorkoutList: React.FC = () => {
 
         {/* List */}
         <div style={{
-          flex: 1, padding: '0 32px', paddingBottom: 100,
+          flex: 1, padding: '0 32px',
+          paddingBottom: isMobile
+            ? FLOATING_PILL_BOTTOM_MOBILE + FLOATING_PILL_HEIGHT + 100
+            : FLOATING_PILL_BOTTOM_DESKTOP + FLOATING_PILL_HEIGHT + 100,
           maxWidth: 900, width: '100%', margin: '0 auto',
         }}>
           {!loading && workouts.length === 0 ? (
@@ -331,10 +335,12 @@ export const WorkoutList: React.FC = () => {
           )}
         </div>
 
-        {/* New workout button */}
+        {/* New workout button — positioned above the floating pill */}
         <div style={{
           position: 'fixed',
-          bottom: isMobile ? 64 : 0,
+          bottom: isMobile
+            ? FLOATING_PILL_BOTTOM_MOBILE + FLOATING_PILL_HEIGHT + 12
+            : FLOATING_PILL_BOTTOM_DESKTOP + FLOATING_PILL_HEIGHT + 12,
           left: isMobile ? 0 : 220,
           right: 0,
           padding: '12px 32px 20px',

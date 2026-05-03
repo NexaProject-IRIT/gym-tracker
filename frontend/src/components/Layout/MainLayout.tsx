@@ -162,8 +162,14 @@ export const MainLayout = () => {
           )}
 
           {/* Основной контент */}
-          {/* mobile: 64px nav + 52px timer bar + 16px gap; desktop: 52px timer bar + 4px gap */}
-          <main style={{ flex: 1, minWidth: 0, paddingBottom: isMobile ? 132 : 56 }}>
+          <main style={{
+            flex: 1, minWidth: 0,
+            // mobile: 64px nav + pill_bottom(80) + pill_height(48) + 16px gap
+            // desktop: pill_bottom(24) + pill_height(48) + 16px gap
+            paddingBottom: isMobile
+              ? 64 + FLOATING_PILL_BOTTOM_MOBILE + FLOATING_PILL_HEIGHT + 16
+              : FLOATING_PILL_BOTTOM_DESKTOP + FLOATING_PILL_HEIGHT + 16,
+          }}>
             <Outlet />
           </main>
         </div>

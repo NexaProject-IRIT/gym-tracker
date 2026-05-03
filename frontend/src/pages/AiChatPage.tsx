@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAiChatContext } from '../contexts/AiChatContext';
 import { MessageBubble } from '../components/AiChat/MessageBubble';
 import { TypingIndicator } from '../components/AiChat/TypingIndicator';
+import { FLOATING_PILL_HEIGHT, FLOATING_PILL_BOTTOM_MOBILE, FLOATING_PILL_BOTTOM_DESKTOP } from '../components/Timer/FloatingTimer';
 
 const MAX_MESSAGE_LENGTH = 2000;
 
@@ -90,6 +91,14 @@ export const AiChatPage = () => {
 
   const isEmpty = !loading && messages.length === 0;
 
+  // ai-chat-root height must leave a gap below the input bar for the floating pill:
+  //   mobile: 64px nav + pill_bottom(80) + pill_height(48) = 192px total from viewport bottom
+  //           root height = 100dvh - 64px_nav - (pill_bottom + pill_height - 64px overlap) = 100dvh - 128px
+  //   desktop: pill_bottom(24) + pill_height(48) + 16px gap = 88px
+  const NAV_HEIGHT = 64;
+  const mobileRootOffset = NAV_HEIGHT + FLOATING_PILL_HEIGHT + 16; // 128px
+  const desktopRootOffset = FLOATING_PILL_BOTTOM_DESKTOP + FLOATING_PILL_HEIGHT + 16; // 88px
+
   return (
     <>
       <style>{`
@@ -97,15 +106,8 @@ export const AiChatPage = () => {
         .ai-send-btn:hover:not(:disabled) { background: #86efac !important; }
         .ai-prompt-chip:hover { background: rgba(110,231,183,0.12) !important; border-color: rgba(110,231,183,0.35) !important; }
 
-        /*
-         * Ключевой фикс мобилки:
-         * - 100dvh = dynamic viewport height, учитывает адресную строку браузера
-         * - min-height: -webkit-fill-available = fallback для Safari iOS
-         * Без этого контейнер вылезает за экран и поле ввода оказывается
-         * под адресной строкой браузера.
-         */
         .ai-chat-root {
-          height: 100dvh;
+          height: calc(100dvh - ${desktopRootOffset}px);
           min-height: -webkit-fill-available;
           display: flex;
           flex-direction: column;
@@ -113,41 +115,32 @@ export const AiChatPage = () => {
           overflow: hidden;
         }
 
-        /* На мобиле нижний таббар — 64px position:fixed.
-           main добавляет paddingBottom: 64px, поэтому без этой поправки
-           ai-chat-root (100dvh) + padding (64px) > viewport → браузер добавляет скролл,
-           шапка уезжает вверх, а поле ввода уходит под таббар. */
         @media (max-width: 767px) {
           .ai-chat-root {
-            height: calc(100dvh - 64px);
+            height: calc(100dvh - ${mobileRootOffset}px);
             min-height: 0;
           }
         }
 
-        /* Область сообщений — растягивается на всё доступное пространство */
         .ai-messages-area {
           flex: 1;
           overflow-y: auto;
-          padding: 20px 16px;
+          padding: 20px 16px 8px;
           display: flex;
           flex-direction: column;
-          /* Отступ снизу под нижний таббар на мобиле (64px) */
-          padding-bottom: 8px;
         }
 
-        /* Поле ввода — прилипает к низу, никуда не уходит */
         .ai-input-bar {
           flex-shrink: 0;
-          padding: 12px 12px;
+          padding: 12px;
           border-top: 1px solid rgba(255,255,255,0.06);
           background: #1a1d24;
-          /* safe-area-inset-bottom — для iPhone с чёлкой */
           padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
         }
 
         @media (min-width: 768px) {
-          .ai-messages-area { padding: 24px; }
-          .ai-input-bar { padding: 16px; padding-bottom: 16px; }
+          .ai-messages-area { padding: 24px 24px 8px; }
+          .ai-input-bar { padding: 16px; }
         }
       `}</style>
 
