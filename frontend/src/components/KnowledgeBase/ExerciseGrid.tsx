@@ -94,6 +94,19 @@ export const ExerciseGrid = () => {
     fetchEquipment();
   }, []);
 
+  // Загрузка полного списка упражнений один раз — только для подсчёта количества по тренажёрам
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/exercises/', { headers: authHeaders() });
+        if (res.ok) {
+          const data = await res.json();
+          setAllExercises(Array.isArray(data) ? data : []);
+        }
+      } catch {}
+    })();
+  }, []);
+
   // ─── Обработчик клика по тренажёру ───────────────────────────────────────
   const handleEquipmentClick = (name: string) => {
     // Переключаемся на вкладку "Все упражнения" и фильтруем по тренажёру
@@ -156,7 +169,7 @@ export const ExerciseGrid = () => {
 
       {/* ─── Вкладка: Тренажёры ─────────────────────────────────────── */}
       {activeTab === 'equipment' && (() => {
-        const countByEquipment = exercises.reduce<Record<string, number>>((acc, ex) => {
+        const countByEquipment = allExercises.reduce<Record<string, number>>((acc, ex) => {
           if (ex.equipment) acc[ex.equipment] = (acc[ex.equipment] ?? 0) + 1;
           return acc;
         }, {});
@@ -165,7 +178,8 @@ export const ExerciseGrid = () => {
             <div style={{ fontSize: 11, fontWeight: 600, color: '#475569', letterSpacing: '1.5px', textTransform: 'uppercase', padding: '4px 16px 8px' }}>
               Оборудование
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, padding: '0 16px 16px' }}>
+            <style>{`@media (min-width: 640px) { .eq-grid { grid-template-columns: repeat(3, 1fr) !important; } } @media (min-width: 1024px) { .eq-grid { grid-template-columns: repeat(4, 1fr) !important; } }`}</style>
+            <div className="eq-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, padding: '0 16px 16px' }}>
               {equipment.length === 0 ? (
                 <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#475569', padding: '48px 0' }}>
                   Тренажёры не загружены

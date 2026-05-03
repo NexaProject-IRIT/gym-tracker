@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef } from 'react';
 
 interface Props {
   equipment: { id: string; name: string; image: string | null };
@@ -21,41 +21,67 @@ const IconDumbbell = () => (
 );
 
 export const EquipmentCard = ({ equipment, onClick, exerciseCount }: Props) => {
-  const [hovered, setHovered] = useState(false);
-  const [pressed, setPressed] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
 
-  const category = getCategory(equipment.name);
+  const onEnter = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.currentTarget.style.transform = 'scale(1.02)';
+    e.currentTarget.style.borderColor = 'rgba(110,231,183,0.25)';
+    e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.4)';
+    if (imgRef.current) imgRef.current.style.filter = 'brightness(0.9)';
+  };
+  const onLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.currentTarget.style.transform = 'scale(1)';
+    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
+    e.currentTarget.style.boxShadow = 'none';
+    if (imgRef.current) imgRef.current.style.filter = 'brightness(0.75)';
+  };
+  const onDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.currentTarget.style.transform = 'scale(0.97)';
+  };
+  const onUp = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.currentTarget.style.transform = 'scale(1.02)';
+  };
+  const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    (e.currentTarget as HTMLDivElement).style.transform = 'scale(0.97)';
+    if (imgRef.current) imgRef.current.style.filter = 'brightness(0.9)';
+  };
+  const onTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    const el = e.currentTarget as HTMLDivElement;
+    el.style.transform = 'scale(1)';
+    el.style.borderColor = 'rgba(255,255,255,0.06)';
+    el.style.boxShadow = 'none';
+    if (imgRef.current) imgRef.current.style.filter = 'brightness(0.75)';
+  };
 
   return (
     <div
       onClick={() => onClick(equipment.name)}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => { setHovered(false); setPressed(false); }}
-      onMouseDown={() => setPressed(true)}
-      onMouseUp={() => setPressed(false)}
-      onTouchStart={() => setPressed(true)}
-      onTouchEnd={() => setPressed(false)}
+      onMouseEnter={onEnter}
+      onMouseLeave={onLeave}
+      onMouseDown={onDown}
+      onMouseUp={onUp}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
       style={{
         borderRadius: 16,
         overflow: 'hidden',
         cursor: 'pointer',
         position: 'relative',
-        border: `1px solid ${hovered ? 'rgba(110,231,183,0.25)' : 'rgba(255,255,255,0.06)'}`,
-        transform: pressed ? 'scale(0.97)' : hovered ? 'scale(1.02)' : 'scale(1)',
-        boxShadow: hovered ? '0 8px 32px rgba(0,0,0,0.4)' : 'none',
-        transition: 'transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease',
+        border: '1px solid rgba(255,255,255,0.06)',
+        transition: 'transform 150ms ease, border-color 150ms ease, box-shadow 150ms ease',
       }}
     >
       {/* Image + overlays */}
       <div style={{ aspectRatio: '4 / 3', width: '100%', position: 'relative', background: '#0d0f13' }}>
         {equipment.image ? (
           <img
+            ref={imgRef}
             src={equipment.image}
             alt={equipment.name}
             style={{
               width: '100%', height: '100%', objectFit: 'cover', display: 'block',
-              filter: `brightness(${hovered ? 0.9 : 0.75})`,
-              transition: 'filter 200ms ease',
+              filter: 'brightness(0.75)',
+              transition: 'filter 150ms ease',
             }}
           />
         ) : (
@@ -79,7 +105,7 @@ export const EquipmentCard = ({ equipment, onClick, exerciseCount }: Props) => {
           fontSize: 11, fontWeight: 600, color: '#6ee7b7',
           pointerEvents: 'none',
         }}>
-          {category}
+          {getCategory(equipment.name)}
         </div>
 
         {/* Bottom text overlay */}
