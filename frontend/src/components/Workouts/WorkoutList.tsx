@@ -1,11 +1,10 @@
 // src/components/Workouts/WorkoutList.tsx
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useWorkoutsApi } from '../../hooks/useWorkoutsApi';
 import type { Workout, WorkoutType } from '../../types/workout';
 import { WORKOUT_TYPE_LABELS, WORKOUT_TYPE_COLORS } from '../../types/workout';
-import { WorkoutDetail } from './WorkoutDetail';
 import { WorkoutForm } from './WorkoutForm';
-import { FLOATING_PILL_HEIGHT, FLOATING_PILL_BOTTOM_MOBILE, FLOATING_PILL_BOTTOM_DESKTOP } from '../Timer/FloatingTimer';
 
 const CSS = `
   :root {
@@ -73,15 +72,7 @@ const WorkoutMenu: React.FC<{
   onEdit: () => void;
   onRepeat: () => void;
   onDelete: () => void;
-  onClose: () => void;
-}> = ({ onEdit, onRepeat, onDelete, onClose }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) onClose(); };
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
-  }, [onClose]);
-
+}> = ({ onEdit, onRepeat, onDelete }) => {
   const items = [
     { icon: <IconEdit />, label: 'Открыть', action: onEdit, color: '#94a3b8' },
     { icon: <IconRepeat />, label: 'Повторить', action: onRepeat, color: '#94a3b8' },
@@ -89,11 +80,11 @@ const WorkoutMenu: React.FC<{
   ];
 
   return (
-    <div ref={ref} style={{
-      position: 'absolute', right: 0, top: 40, width: 180, zIndex: 100,
+    <div style={{
+      position: 'absolute', right: 0, top: 40, width: 180, zIndex: 10,
       background: '#1e2330', borderRadius: 14, overflow: 'hidden',
       border: '1px solid rgba(255,255,255,0.1)',
-      boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+      boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
     }}>
       {items.map((item, i) => (
         <button
@@ -132,18 +123,16 @@ const WorkoutTypeIcon: React.FC<{ type: WorkoutType; color: string; size?: numbe
 );
 
 export const WorkoutList: React.FC = () => {
+  const navigate = useNavigate();
   const {
-    workouts, loading, error, fetchWorkouts, fetchWorkoutDetail,
-    addWorkout, updateWorkout, deleteWorkout, repeatWorkout,
-    addExercise, updateExercise, deleteExercise,
+    workouts, loading, error, fetchWorkouts,
+    addWorkout, deleteWorkout, repeatWorkout,
   } = useWorkoutsApi();
   useEffect(() => { fetchWorkouts(); }, [fetchWorkouts]);
 
-  const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
-  const [loadingDetail, setLoadingDetail] = useState(false);
 
   useEffect(() => {
     const h = () => setIsMobile(window.innerWidth < 768);
@@ -151,23 +140,10 @@ export const WorkoutList: React.FC = () => {
     return () => window.removeEventListener('resize', h);
   }, []);
 
-  const handleSelectWorkout = async (workoutId: string) => {
-    setLoadingDetail(true);
+  const handleSelectWorkout = (workoutId: string) => {
     setOpenMenuId(null);
-    const detail = await fetchWorkoutDetail(workoutId);
-    if (detail) setSelectedWorkout(detail);
-    setLoadingDetail(false);
+    navigate(`/workouts/${workoutId}`);
   };
-
-  // Keep selectedWorkout in sync with workouts state
-  useEffect(() => {
-    if (selectedWorkout) {
-      const updated = workouts.find(w => w.id === selectedWorkout.id);
-      if (updated && updated.exercises.length > 0) {
-        setSelectedWorkout(updated);
-      }
-    }
-  }, [workouts, selectedWorkout?.id]);
 
   return (
     <>
@@ -224,12 +200,17 @@ export const WorkoutList: React.FC = () => {
           <div style={{ textAlign: 'center', padding: 20, color: '#f87171', fontSize: 13 }}>{error}</div>
         )}
 
+        {/* Overlay to close menu and block card clicks */}
+        {openMenuId !== null && (
+          <div
+            style={{ position: 'fixed', inset: 0, zIndex: 49 }}
+            onClick={() => setOpenMenuId(null)}
+          />
+        )}
+
         {/* List */}
         <div style={{
-          flex: 1, padding: '0 32px',
-          paddingBottom: isMobile
-            ? FLOATING_PILL_BOTTOM_MOBILE + FLOATING_PILL_HEIGHT + 100
-            : FLOATING_PILL_BOTTOM_DESKTOP + FLOATING_PILL_HEIGHT + 100,
+          flex: 1, padding: '0 32px', paddingBottom: 100,
           maxWidth: 900, width: '100%', margin: '0 auto',
         }}>
           {!loading && workouts.length === 0 ? (
@@ -261,14 +242,12 @@ export const WorkoutList: React.FC = () => {
                       border: `1px solid ${c.border}`,
                       background: `linear-gradient(135deg, ${c.bg} 0%, rgba(26,29,36,0.8) 100%)`,
                       cursor: 'pointer', overflow: 'visible', position: 'relative',
-                      transition: 'transform 0.15s, box-shadow 0.15s',
+                      transition: 'box-shadow 0.15s',
                     }}
                     onMouseEnter={e => {
-                      (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-1px)';
                       (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.3)';
                     }}
                     onMouseLeave={e => {
-                      (e.currentTarget as HTMLDivElement).style.transform = 'none';
                       (e.currentTarget as HTMLDivElement).style.boxShadow = 'none';
                     }}
                   >
@@ -303,7 +282,7 @@ export const WorkoutList: React.FC = () => {
                       )}
                     </div>
                     <div
-                      style={{ display: 'flex', alignItems: 'center', padding: '0 12px', position: 'relative', flexShrink: 0 }}
+                      style={{ display: 'flex', alignItems: 'center', padding: '0 12px', position: 'relative', flexShrink: 0, zIndex: isOpen ? 51 : 'auto' }}
                       onClick={e => e.stopPropagation()}
                     >
                       <button
@@ -324,7 +303,6 @@ export const WorkoutList: React.FC = () => {
                           onEdit={() => handleSelectWorkout(workout.id)}
                           onRepeat={() => { repeatWorkout(workout.id); setOpenMenuId(null); }}
                           onDelete={() => { deleteWorkout(workout.id); setOpenMenuId(null); }}
-                          onClose={() => setOpenMenuId(null)}
                         />
                       )}
                     </div>
@@ -335,15 +313,13 @@ export const WorkoutList: React.FC = () => {
           )}
         </div>
 
-        {/* New workout button — positioned above the floating pill */}
+        {/* New workout button */}
         <div style={{
           position: 'fixed',
-          bottom: isMobile
-            ? FLOATING_PILL_BOTTOM_MOBILE + FLOATING_PILL_HEIGHT + 12
-            : FLOATING_PILL_BOTTOM_DESKTOP + FLOATING_PILL_HEIGHT + 12,
+          bottom: isMobile ? 64 : 0,
           left: isMobile ? 0 : 220,
           right: 0,
-          padding: '12px 32px 20px',
+          padding: '12px 32px 0',
           background: 'linear-gradient(to top, var(--bg) 60%, transparent)',
           zIndex: 30,
         }}>
@@ -372,32 +348,6 @@ export const WorkoutList: React.FC = () => {
             </button>
           </div>
         </div>
-
-        {/* Loading detail overlay */}
-        {loadingDetail && (
-          <div style={{
-            position: 'fixed', inset: 0, zIndex: 90,
-            background: 'rgba(17,19,24,0.8)', display: 'flex',
-            alignItems: 'center', justifyContent: 'center',
-            color: '#6ee7b7', fontSize: 16,
-          }}>
-            Загрузка...
-          </div>
-        )}
-
-        {/* Panels */}
-        {selectedWorkout && (
-          <WorkoutDetail
-            workout={selectedWorkout}
-            onClose={() => setSelectedWorkout(null)}
-            onUpdate={u => updateWorkout(selectedWorkout.id, u)}
-            onDelete={() => { deleteWorkout(selectedWorkout.id); setSelectedWorkout(null); }}
-            onRepeat={() => repeatWorkout(selectedWorkout.id)}
-            onUpdateExercise={(exId, u) => updateExercise(selectedWorkout.id, exId, u)}
-            onDeleteExercise={exId => deleteExercise(selectedWorkout.id, exId)}
-            onAddExercise={ex => addExercise(selectedWorkout.id, ex)}
-          />
-        )}
 
         {showForm && (
           <WorkoutForm

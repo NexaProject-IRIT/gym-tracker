@@ -388,17 +388,18 @@ export const WorkoutDetail: React.FC<Props> = ({
 
   return (
     <div style={{
-      position: 'fixed', inset: 0, zIndex: 100,
       background: '#111318',
-      display: 'flex', flexDirection: 'column',
-      overflowY: 'auto',
+      color: '#f1f5f9',
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
     }}>
       {/* Шапка */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '20px 24px 16px', position: 'sticky', top: 0,
         background: 'rgba(17,19,24,0.95)', backdropFilter: 'blur(16px)',
-        borderBottom: '1px solid rgba(255,255,255,0.06)', zIndex: 10,
+        borderBottom: '1px solid rgba(255,255,255,0.06)', zIndex: 95,
       }}>
         <button onClick={onClose} style={{
           display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none',
@@ -442,7 +443,7 @@ export const WorkoutDetail: React.FC<Props> = ({
                   >
                     {[
                       { icon: <IconEdit2 />, label: 'Редактировать', action: () => { setIsEditMode(true); setShowMenu(false); }, color: '#94a3b8' },
-                      { icon: <IconRepeat2 />, label: 'Повторить', action: () => { onRepeat(); onClose(); }, color: '#94a3b8' },
+                      { icon: <IconRepeat2 />, label: 'Повторить', action: () => { onRepeat(); setShowMenu(false); }, color: '#94a3b8' },
                       { icon: <IconTrash2 />, label: 'Удалить', action: () => { onDelete(); onClose(); }, color: '#f87171' },
                     ].map((item, i, arr) => (
                       <button key={i} onClick={item.action} style={{
@@ -715,30 +716,8 @@ export const WorkoutDetail: React.FC<Props> = ({
         )}
       </div>
 
-      {/* Кнопка внизу */}
-      {!isEditMode && (
-        <div style={{
-          position: 'fixed', bottom: 0, left: 0, right: 0,
-          padding: '12px 24px 28px',
-          background: 'linear-gradient(to top, #111318 50%, transparent)',
-          zIndex: 20,
-        }}>
-          <div style={{ maxWidth: 720, margin: '0 auto' }}>
-            <button
-              onClick={() => { onRepeat(); onClose(); }}
-              style={{
-                width: '100%', padding: '14px', borderRadius: 14, border: 'none', cursor: 'pointer',
-                background: `linear-gradient(135deg, ${c.accent}, ${c.accent}cc)`,
-                color: '#0a0a0a', fontWeight: 700, fontSize: 14,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                boxShadow: `0 4px 20px ${c.accent}33`,
-              }}
-            >
-              <IconRepeat2 /> Повторить тренировку
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Bottom spacer so content scrolls above the floating timer pill */}
+      <div style={{ height: 160, flexShrink: 0 }} />
 
       {editingExercise && (
         <ExerciseEditModal

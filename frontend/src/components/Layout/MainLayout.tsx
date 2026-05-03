@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { AiChatProvider } from '../../contexts/AiChatContext';
-import { FloatingTimer, FLOATING_PILL_HEIGHT, FLOATING_PILL_BOTTOM_MOBILE, FLOATING_PILL_BOTTOM_DESKTOP } from '../Timer/FloatingTimer';
+import { FloatingTimer } from '../Timer/FloatingTimer';
 
 const SIDEBAR_WIDTH = 220;
 
@@ -162,14 +162,7 @@ export const MainLayout = () => {
           )}
 
           {/* Основной контент */}
-          <main style={{
-            flex: 1, minWidth: 0,
-            // mobile: 64px nav + pill_bottom(80) + pill_height(48) + 16px gap
-            // desktop: pill_bottom(24) + pill_height(48) + 16px gap
-            paddingBottom: isMobile
-              ? 64 + FLOATING_PILL_BOTTOM_MOBILE + FLOATING_PILL_HEIGHT + 16
-              : FLOATING_PILL_BOTTOM_DESKTOP + FLOATING_PILL_HEIGHT + 16,
-          }}>
+          <main style={{ flex: 1, minWidth: 0, paddingBottom: isMobile ? 56 : 0 }}>
             <Outlet />
           </main>
         </div>

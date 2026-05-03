@@ -7,6 +7,7 @@ import { ProfilePage } from './pages/ProfilePage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { AiChatPage } from './pages/AiChatPage';
+import { WorkoutDetailPage } from './pages/WorkoutDetailPage';
 import { TimerProvider } from './contexts/TimerContext';
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
@@ -38,6 +39,7 @@ function App() {
             }>
               <Route index element={<HomePage />} />
               <Route path="workouts" element={<WorkoutList />} />
+              <Route path="workouts/:id" element={<WorkoutDetailPage />} />
               <Route path="knowledge" element={<ExerciseGrid />} />
               <Route path="ai" element={<AiChatPage />} />
               <Route path="profile" element={<ProfilePage />} />

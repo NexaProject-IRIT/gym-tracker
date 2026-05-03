@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAiChatContext } from '../contexts/AiChatContext';
 import { MessageBubble } from '../components/AiChat/MessageBubble';
 import { TypingIndicator } from '../components/AiChat/TypingIndicator';
-import { FLOATING_PILL_HEIGHT, FLOATING_PILL_BOTTOM_MOBILE, FLOATING_PILL_BOTTOM_DESKTOP } from '../components/Timer/FloatingTimer';
 
 const MAX_MESSAGE_LENGTH = 2000;
 
@@ -91,14 +90,6 @@ export const AiChatPage = () => {
 
   const isEmpty = !loading && messages.length === 0;
 
-  // ai-chat-root height must leave a gap below the input bar for the floating pill:
-  //   mobile: 64px nav + pill_bottom(80) + pill_height(48) = 192px total from viewport bottom
-  //           root height = 100dvh - 64px_nav - (pill_bottom + pill_height - 64px overlap) = 100dvh - 128px
-  //   desktop: pill_bottom(24) + pill_height(48) + 16px gap = 88px
-  const NAV_HEIGHT = 64;
-  const mobileRootOffset = NAV_HEIGHT + FLOATING_PILL_HEIGHT + 16; // 128px
-  const desktopRootOffset = FLOATING_PILL_BOTTOM_DESKTOP + FLOATING_PILL_HEIGHT + 16; // 88px
-
   return (
     <>
       <style>{`
@@ -107,7 +98,7 @@ export const AiChatPage = () => {
         .ai-prompt-chip:hover { background: rgba(110,231,183,0.12) !important; border-color: rgba(110,231,183,0.35) !important; }
 
         .ai-chat-root {
-          height: calc(100dvh - ${desktopRootOffset}px);
+          height: 100dvh;
           min-height: -webkit-fill-available;
           display: flex;
           flex-direction: column;
@@ -117,7 +108,7 @@ export const AiChatPage = () => {
 
         @media (max-width: 767px) {
           .ai-chat-root {
-            height: calc(100dvh - ${mobileRootOffset}px);
+            height: calc(100dvh - 56px);
             min-height: 0;
           }
         }
@@ -135,7 +126,7 @@ export const AiChatPage = () => {
           padding: 12px;
           border-top: 1px solid rgba(255,255,255,0.06);
           background: #1a1d24;
-          padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+          padding-bottom: env(safe-area-inset-bottom, 0px);
         }
 
         @media (min-width: 768px) {

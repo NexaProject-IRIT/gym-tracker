@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useTimer } from '../../contexts/TimerContext';
 import { Stopwatch } from './Stopwatch';
 import { Countdown } from './Countdown';
@@ -46,6 +47,9 @@ const PauseIcon = () => (
 );
 
 export const FloatingTimer: React.FC<{ isMobile: boolean }> = ({ isMobile }) => {
+  const location = useLocation();
+  const isWorkoutDetail = /^\/workouts\/.+/.test(location.pathname);
+
   const [expanded, setExpanded] = useState(false);
   const {
     activeTab, setActiveTab,
@@ -62,6 +66,9 @@ export const FloatingTimer: React.FC<{ isMobile: boolean }> = ({ isMobile }) => 
       clearTmFinished();
     }
   }, [tmFinished, clearTmFinished]);
+
+  // All hooks above — safe to return early now
+  if (!isWorkoutDetail) return null;
 
   const isRunning = activeTab === 'stopwatch' ? isSwRunning : isTmRunning;
 
