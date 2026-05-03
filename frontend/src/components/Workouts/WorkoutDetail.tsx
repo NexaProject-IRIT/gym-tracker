@@ -53,17 +53,17 @@ const IconPencil = () => (
   </svg>
 );
 
-function formatExerciseLine(ex: WorkoutExercise): string {
-  const parts: string[] = [];
-  if (ex.sets !== undefined && ex.sets !== null && ex.parameters.includes('sets')) parts.push(`${ex.sets} подх`);
-  if (ex.reps !== undefined && ex.reps !== null && ex.parameters.includes('reps')) parts.push(`× ${ex.reps} повт`);
-  if (ex.weight !== undefined && ex.weight !== null && ex.parameters.includes('weight')) parts.push(`× ${ex.weight} кг`);
-  if (ex.time !== undefined && ex.time !== null && ex.parameters.includes('time')) {
+function buildParamChips(ex: WorkoutExercise): string[] {
+  const chips: string[] = [];
+  if (ex.parameters.includes('sets') && ex.sets != null && ex.sets > 0) chips.push(`${ex.sets} подх`);
+  if (ex.parameters.includes('reps') && ex.reps != null && ex.reps > 0) chips.push(`${ex.reps} повт`);
+  if (ex.parameters.includes('weight') && ex.weight != null && ex.weight > 0) chips.push(`${ex.weight} кг`);
+  if (ex.parameters.includes('time') && ex.time != null && ex.time > 0) {
     const m = Math.floor(ex.time / 60), s = ex.time % 60;
-    parts.push(m > 0 ? `${m} мин` : `${s} сек`);
+    chips.push(m > 0 ? `${m} мин` : `${s} сек`);
   }
-  if (ex.distance !== undefined && ex.distance !== null && ex.parameters.includes('distance')) parts.push(`${ex.distance} км`);
-  return parts.join(' ');
+  if (ex.parameters.includes('distance') && ex.distance != null && ex.distance > 0) chips.push(`${ex.distance} км`);
+  return chips;
 }
 
 const ExerciseEditModal: React.FC<{
@@ -358,28 +358,26 @@ export const WorkoutDetail: React.FC<Props> = ({
   };
 
   // ── Чекбоксы выполнения ──
-  const [doneExercises, setDoneExercises] = useState<Set<string>>(
-    () => new Set(workout.exercises.filter(e => e.isDone).map(e => e.id))
-  );
-  const toggleDone = (id: string) => {
-    const isDone = !doneExercises.has(id);
+  // Keys are index-based ("exercise_0", "exercise_1", …) so they survive backend
+  // round-trips that reassign database PKs on every PUT.
+  const storageKey = `workout_completed_${workout.id}`;
+  const [doneExercises, setDoneExercises] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) return new Set(JSON.parse(saved));
+      return new Set(
+        workout.exercises
+          .map((e, i) => (e.isDone ? `exercise_${i}` : null))
+          .filter(Boolean) as string[]
+      );
+    } catch { return new Set(); }
+  });
+  const toggleDone = (key: string) => {
     setDoneExercises(prev => {
       const next = new Set(prev);
-      isDone ? next.add(id) : next.delete(id);
+      if (next.has(key)) { next.delete(key); } else { next.add(key); }
+      localStorage.setItem(storageKey, JSON.stringify([...next]));
       return next;
-    });
-    const token = localStorage.getItem('token') ?? '';
-    fetch(`/workouts/${workout.id}/exercises/${id}/done/`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Authorization: `Token ${token}` },
-      body: JSON.stringify({ isDone }),
-    }).catch(() => {
-      // откатываем если запрос упал
-      setDoneExercises(prev => {
-        const next = new Set(prev);
-        isDone ? next.delete(id) : next.add(id);
-        return next;
-      });
     });
   };
 
@@ -616,7 +614,8 @@ export const WorkoutDetail: React.FC<Props> = ({
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {workout.exercises.map((ex, idx) => {
-            const isDone = doneExercises.has(ex.id);
+            const doneKey = `exercise_${idx}`;
+            const isDone = doneExercises.has(doneKey);
             return (
               <div
                 key={ex.id}
@@ -629,9 +628,9 @@ export const WorkoutDetail: React.FC<Props> = ({
                   border: `1px solid ${isDone
                     ? 'rgba(110,231,183,0.15)'
                     : isEditMode ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)'}`,
+                  borderLeft: isDone ? '2px solid rgba(110,231,183,0.35)' : undefined,
                   cursor: isEditMode ? 'pointer' : 'default',
-                  transition: 'background 0.15s, border-color 0.15s, opacity 0.15s',
-                  opacity: isDone ? 0.6 : 1,
+                  transition: 'background 0.15s, border-color 0.15s',
                 }}
                 onClick={() => isEditMode && setEditingExercise(ex)}
                 onMouseEnter={e => isEditMode && ((e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.07)')}
@@ -640,7 +639,7 @@ export const WorkoutDetail: React.FC<Props> = ({
                 {/* Чекбокс — только в режиме просмотра */}
                 {!isEditMode && (
                   <button
-                    onClick={e => { e.stopPropagation(); toggleDone(ex.id); }}
+                    onClick={e => { e.stopPropagation(); toggleDone(doneKey); }}
                     style={{
                       width: 22, height: 22, borderRadius: 6, flexShrink: 0,
                       border: `1.5px solid ${isDone ? '#6ee7b7' : 'rgba(255,255,255,0.15)'}`,
@@ -658,24 +657,34 @@ export const WorkoutDetail: React.FC<Props> = ({
                   </button>
                 )}
 
-                <span style={{ fontSize: 11, color: '#334155', width: 20, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{idx + 1}</span>
+                <span style={{ fontSize: 13, fontWeight: 500, color: '#475569', minWidth: 20, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{idx + 1}</span>
 
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ flex: 1, minWidth: 0, opacity: isDone ? 0.55 : 1, transition: 'opacity 0.15s' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                     <span style={{
-                      color: isDone ? '#475569' : '#f1f5f9',
-                      fontSize: 14, fontWeight: 500,
+                      color: '#f1f5f9',
+                      fontSize: 15, fontWeight: 600,
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      textDecoration: isDone ? 'line-through' : 'none',
-                      transition: 'color 0.15s',
                     }}>
                       {ex.name}
                     </span>
-                    {ex.isCustom && <span style={{ fontSize: 10, color: '#334155', flexShrink: 0 }}>кастом</span>}
+                    {ex.isCustom && (
+                      <span style={{
+                        fontSize: 11, color: '#6ee7b7', fontWeight: 500, flexShrink: 0,
+                        background: 'rgba(110,231,183,0.1)', borderRadius: 4, padding: '2px 6px',
+                      }}>кастом</span>
+                    )}
                   </div>
-                  <div style={{ color: isDone ? '#334155' : '#475569', fontSize: 12, marginTop: 2, transition: 'color 0.15s' }}>
-                    {formatExerciseLine(ex)}
-                  </div>
+                  {buildParamChips(ex).length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+                      {buildParamChips(ex).map(chip => (
+                        <span key={chip} style={{
+                          background: 'rgba(255,255,255,0.07)', borderRadius: 6,
+                          padding: '3px 8px', fontSize: 12, fontWeight: 500, color: '#cbd5e1',
+                        }}>{chip}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {!ex.isCustom && !isEditMode && (

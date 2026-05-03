@@ -19,6 +19,7 @@ const authHeaders = () => ({
 
 export const ExerciseGrid = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [allExercises, setAllExercises] = useState<Exercise[]>([]); // unfiltered, for counts
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'all' | 'equipment'>('all');
@@ -101,37 +102,33 @@ export const ExerciseGrid = () => {
   };
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto text-slate-200">
-      <header className="mb-8">
-        <h1 className="text-3xl font-black mb-6 text-white tracking-tight uppercase">
+    <div style={{ background: '#111318', minHeight: '100vh', color: '#f1f5f9' }}>
+      {/* Sticky header: title + tabs + search + tags */}
+      <div style={{
+        position: 'sticky', top: 0, zIndex: 10,
+        background: 'rgba(17,19,24,0.97)', backdropFilter: 'blur(8px)',
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        padding: '16px 16px 0',
+      }}>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#f1f5f9', margin: '0 0 14px', letterSpacing: '-0.01em' }}>
           База тренировок
         </h1>
 
         {/* Вкладки */}
-        <div className="flex gap-2 mb-6">
-          <button
-            onClick={() => {
-              setActiveTab('all');
-              setSelectedEquipment(null);
-            }}
-            className={`px-5 py-2 rounded-xl text-sm font-bold transition-all ${
-              activeTab === 'all'
-                ? 'bg-[#6ee7b7] text-[#111318]'
-                : 'bg-white/5 text-slate-400 hover:bg-white/10'
-            }`}
-          >
-            Все упражнения
-          </button>
-          <button
-            onClick={() => setActiveTab('equipment')}
-            className={`px-5 py-2 rounded-xl text-sm font-bold transition-all ${
-              activeTab === 'equipment'
-                ? 'bg-[#6ee7b7] text-[#111318]'
-                : 'bg-white/5 text-slate-400 hover:bg-white/10'
-            }`}
-          >
-            Тренажёры
-          </button>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+          {([['all', 'Все упражнения'], ['equipment', 'Тренажёры']] as const).map(([tab, label]) => (
+            <button
+              key={tab}
+              onClick={() => { setActiveTab(tab); if (tab === 'all') setSelectedEquipment(null); }}
+              style={{
+                padding: '7px 16px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                fontSize: 13, fontWeight: 700,
+                background: activeTab === tab ? '#6ee7b7' : 'rgba(255,255,255,0.05)',
+                color: activeTab === tab ? '#064e3b' : '#64748b',
+                transition: 'all 0.15s',
+              }}
+            >{label}</button>
+          ))}
         </div>
 
         {/* Поиск и теги — только на вкладке "Все упражнения" */}
@@ -139,16 +136,15 @@ export const ExerciseGrid = () => {
           <>
             <SearchBar value={search} onChange={setSearch} />
             <TagFilter selectedTag={selectedTag} onSelect={setSelectedTag} />
-            {/* Показываем активный фильтр по тренажёру если есть */}
             {selectedEquipment && (
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-xs text-slate-500">Тренажёр:</span>
-                <span className="px-3 py-1 bg-[#6ee7b7]/10 text-[#6ee7b7] rounded-full text-xs font-bold">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 10 }}>
+                <span style={{ fontSize: 12, color: '#475569' }}>Тренажёр:</span>
+                <span style={{ padding: '3px 10px', background: 'rgba(110,231,183,0.1)', color: '#6ee7b7', borderRadius: 20, fontSize: 12, fontWeight: 600 }}>
                   {selectedEquipment}
                 </span>
                 <button
                   onClick={() => setSelectedEquipment(null)}
-                  className="text-slate-500 hover:text-white text-xs transition-colors"
+                  style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer', fontSize: 12 }}
                 >
                   ✕ сбросить
                 </button>
@@ -156,38 +152,62 @@ export const ExerciseGrid = () => {
             )}
           </>
         )}
-      </header>
+      </div>
 
       {/* ─── Вкладка: Тренажёры ─────────────────────────────────────── */}
-      {activeTab === 'equipment' && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-          {equipment.length === 0 ? (
-            <p className="col-span-full text-center text-slate-500 py-16">
-              Тренажёры не загружены
-            </p>
-          ) : (
-            equipment.map((eq) => (
-              <EquipmentCard key={eq.id} equipment={eq} onClick={handleEquipmentClick} />
-            ))
-          )}
-        </div>
-      )}
+      {activeTab === 'equipment' && (() => {
+        const countByEquipment = exercises.reduce<Record<string, number>>((acc, ex) => {
+          if (ex.equipment) acc[ex.equipment] = (acc[ex.equipment] ?? 0) + 1;
+          return acc;
+        }, {});
+        return (
+          <>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#475569', letterSpacing: '1.5px', textTransform: 'uppercase', padding: '4px 16px 8px' }}>
+              Оборудование
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, padding: '0 16px 16px' }}>
+              {equipment.length === 0 ? (
+                <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#475569', padding: '48px 0' }}>
+                  Тренажёры не загружены
+                </p>
+              ) : (
+                equipment.map((eq) => (
+                  <EquipmentCard
+                    key={eq.id}
+                    equipment={eq}
+                    onClick={handleEquipmentClick}
+                    exerciseCount={countByEquipment[eq.name]}
+                  />
+                ))
+              )}
+            </div>
+          </>
+        );
+      })()}
 
       {/* ─── Вкладка: Все упражнения ────────────────────────────────── */}
       {activeTab === 'all' && (
         loading ? (
-          <div className="flex flex-col items-center justify-center py-20 opacity-50">
-            <Loader2 className="w-10 h-10 animate-spin text-[#6ee7b7] mb-4" />
-            <p className="font-bold tracking-widest uppercase text-xs">Загрузка данных...</p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 0', opacity: 0.5 }}>
+            <Loader2 className="w-10 h-10 animate-spin text-[#6ee7b7]" style={{ marginBottom: 12 }} />
+            <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6ee7b7' }}>Загрузка...</p>
           </div>
         ) : exercises.length === 0 ? (
-          <p className="text-center text-slate-500 py-16">Ничего не найдено</p>
+          <p style={{ textAlign: 'center', color: '#475569', padding: '48px 0' }}>Ничего не найдено</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {exercises.map((ex) => (
-              <ExerciseCard key={ex.id} exercise={ex} onClick={setSelectedExercise} />
-            ))}
-          </div>
+          <>
+            <style>{`@media (min-width: 640px) { .ex-grid { grid-template-columns: repeat(3, 1fr) !important; } } @media (min-width: 1024px) { .ex-grid { grid-template-columns: repeat(4, 1fr) !important; } }`}</style>
+            <div className="ex-grid" style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: 12,
+              padding: '0 16px 16px',
+            }}>
+              {exercises.map((ex) => (
+                <ExerciseCard key={ex.id} exercise={ex} onClick={setSelectedExercise} />
+              ))}
+            </div>
+          </>
         )
       )}
 

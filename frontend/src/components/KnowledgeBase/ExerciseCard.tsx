@@ -5,31 +5,75 @@ interface Props {
   onClick: (ex: Exercise) => void;
 }
 
-export const ExerciseCard = ({ exercise, onClick }: Props) => (
-  <div
-    onClick={() => onClick(exercise)}
-    className="group bg-[#1a1d24] rounded-3xl border border-white/5 overflow-hidden cursor-pointer hover:border-[#6ee7b7]/50 transition-all shadow-lg hover:-translate-y-1"
-  >
-    <div className="aspect-[4/3] bg-slate-800 relative">
-      {exercise.images?.cover ? (
-        <img 
-          src={exercise.images.cover} 
-          alt={exercise.name} 
-          className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" 
-        />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center text-slate-600 italic text-xs">
-          Нет фото
-        </div>
-      )}
-    </div>
-    <div className="p-5 text-center">
-      <h3 className="font-bold text-white group-hover:text-[#6ee7b7] transition-colors">
-        {exercise.name}
-      </h3>
-      <p className="text-slate-500 text-[10px] uppercase font-bold mt-1">
-        {exercise.equipment}
-      </p>
-    </div>
-  </div>
+const DIFFICULTY_DOT: Record<string, string> = {
+  beginner: '#6ee7b7',
+  intermediate: '#fbbf24',
+  advanced: '#f87171',
+};
+
+const IconDumbbell = () => (
+  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 4v16M18 4v16M6 8H2v8h4M18 8h4v8h-4M6 8h12v8H6z"/>
+  </svg>
 );
+
+export const ExerciseCard = ({ exercise, onClick }: Props) => {
+  const dotColor = exercise.difficulty ? (DIFFICULTY_DOT[exercise.difficulty] ?? null) : null;
+
+  return (
+    <div
+      onClick={() => onClick(exercise)}
+      style={{
+        background: '#1a1d24',
+        borderRadius: 12,
+        border: '1px solid rgba(255,255,255,0.06)',
+        overflow: 'hidden',
+        cursor: 'pointer',
+        transition: 'transform 150ms ease, border-color 150ms ease',
+      }}
+      onMouseEnter={e => {
+        (e.currentTarget as HTMLDivElement).style.transform = 'scale(1.02)';
+        (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(110,231,183,0.2)';
+      }}
+      onMouseLeave={e => {
+        (e.currentTarget as HTMLDivElement).style.transform = 'scale(1)';
+        (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.06)';
+      }}
+    >
+      {/* Image */}
+      <div style={{ aspectRatio: '1 / 1', width: '100%', background: '#111318', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+        {exercise.images?.cover ? (
+          <img
+            src={exercise.images.cover}
+            alt={exercise.name}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          />
+        ) : (
+          <IconDumbbell />
+        )}
+      </div>
+
+      {/* Content */}
+      <div style={{ padding: '10px 10px 12px' }}>
+        <div style={{
+          fontSize: 13, fontWeight: 600, color: '#f1f5f9', lineHeight: 1.3,
+          overflow: 'hidden', display: '-webkit-box',
+          WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+        }}>
+          {exercise.name}
+        </div>
+
+        {exercise.equipment && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }}>
+            {dotColor && (
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
+            )}
+            <span style={{ fontSize: 11, color: '#6ee7b7', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {exercise.equipment}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};

@@ -1,12 +1,60 @@
-import { useState } from 'react';
-import { X } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import type { CSSProperties } from 'react';
 import type { Exercise } from '../../types/workout';
 
-const DIFFICULTY_LABELS: Record<string, string> = {
+const DIFFICULTY_LABEL: Record<string, string> = {
   beginner: 'Новичок',
   intermediate: 'Средний',
   advanced: 'Продвинутый',
 };
+
+const DIFFICULTY_STYLE: Record<string, { bg: string; color: string }> = {
+  beginner:     { bg: 'rgba(34,197,94,0.15)',   color: '#4ade80' },
+  intermediate: { bg: 'rgba(251,191,36,0.15)',  color: '#fbbf24' },
+  advanced:     { bg: 'rgba(239,68,68,0.15)',   color: '#f87171' },
+};
+
+const sectionLabel: CSSProperties = {
+  fontSize: 11, fontWeight: 600, color: '#475569',
+  letterSpacing: '1.5px', textTransform: 'uppercase',
+  marginBottom: 8, display: 'block',
+};
+
+const muscleChip: CSSProperties = {
+  background: '#1a1d24', border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 8, padding: '6px 12px', fontSize: 13, color: '#cbd5e1',
+};
+
+const frostedCircle: CSSProperties = {
+  width: 36, height: 36, borderRadius: '50%',
+  background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)',
+  border: 'none', cursor: 'pointer', color: '#fff',
+  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+};
+
+const IconClose = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+    <path d="M18 6L6 18M6 6l12 12"/>
+  </svg>
+);
+
+const IconChevronLeft = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M15 18l-6-6 6-6"/>
+  </svg>
+);
+
+const IconChevronRight = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 18l6-6-6-6"/>
+  </svg>
+);
+
+const IconDumbbell = () => (
+  <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#2d3748" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 4v16M18 4v16M6 8H2v8h4M18 8h4v8h-4M6 8h12v8H6z"/>
+  </svg>
+);
 
 interface Props {
   exercise: Exercise | null;
@@ -16,147 +64,241 @@ interface Props {
 
 export const ExerciseModal = ({ exercise, onClose, zIndex = 50 }: Props) => {
   const [techniqueIdx, setTechniqueIdx] = useState(0);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  const touchStartX = useRef(0);
+
+  // Reset carousel index whenever a different exercise opens
+  useEffect(() => { setTechniqueIdx(0); }, [exercise?.id]);
 
   if (!exercise) return null;
 
-  const t = exercise.images?.technique;
-  const techniques: string[] = Array.isArray(t)
-    ? t.filter((item): item is string => Boolean(item))
-    : typeof t === 'string' && t
-    ? [t]
+  const techniques: string[] = Array.isArray(exercise.images?.technique)
+    ? exercise.images.technique.filter(Boolean)
     : [];
-
-  // Показываем muscleMap ТОЛЬКО если поле непустое (не null, не undefined, не "")
   const muscleMap = exercise.images?.muscleMap || null;
+  const hasDescription = Boolean(exercise.description?.trim());
+  const hasMuscles = (exercise.targetMuscles?.length ?? 0) > 0;
+  const diffStyle = exercise.difficulty ? (DIFFICULTY_STYLE[exercise.difficulty] ?? null) : null;
+  const heroSrc = exercise.images?.cover || techniques[0] || null;
+  const multiTechnique = techniques.length > 1;
+
+  const prevTechnique = () => setTechniqueIdx(i => Math.max(i - 1, 0));
+  const nextTechnique = () => setTechniqueIdx(i => Math.min(i + 1, techniques.length - 1));
 
   return (
-    <div
-      className="fixed inset-0 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-      style={{ zIndex }}
-      onClick={onClose}
-    >
+    <>
+      <style>{`
+        @media (min-width: 640px) {
+          .ex-modal-panel {
+            max-width: 520px !important;
+            border-radius: 20px !important;
+            max-height: 90dvh !important;
+            height: auto !important;
+          }
+          .ex-modal-backdrop {
+            align-items: center !important;
+            padding: 20px !important;
+          }
+        }
+      `}</style>
+
+      {/* Backdrop */}
       <div
-        className="bg-[#1a1d24] w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/10 shadow-2xl relative"
-        onClick={(e) => e.stopPropagation()}
+        className="ex-modal-backdrop"
+        style={{
+          position: 'fixed', inset: 0, zIndex,
+          background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)',
+          display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+        }}
+        onClick={onClose}
       >
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 z-10 p-2 bg-black/20 hover:bg-black/40 rounded-full text-white transition-colors"
+        {/* Panel */}
+        <div
+          className="ex-modal-panel"
+          style={{ width: '100%', height: '100dvh', overflowY: 'auto', background: '#111318', position: 'relative' }}
+          onClick={e => e.stopPropagation()}
         >
-          <X className="w-6 h-6" />
-        </button>
-
-        {/* Обложка */}
-        <div className="aspect-video bg-slate-900 relative">
-          {exercise.images?.cover ? (
-            <img
-              src={exercise.images.cover}
-              alt={exercise.name}
-              className="w-full h-full object-contain"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-slate-600 italic">
-              Нет изображения
+          {/* ── Hero image ─────────────────────────────────────── */}
+          <div style={{ position: 'relative', height: 260, background: '#0d0f14', overflow: 'hidden', flexShrink: 0 }}>
+            {heroSrc ? (
+              <img src={heroSrc} alt={exercise.name}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            ) : (
+              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <IconDumbbell />
+              </div>
+            )}
+            <div style={{
+              position: 'absolute', bottom: 0, left: 0, right: 0, height: 160,
+              background: 'linear-gradient(to top, #111318 0%, transparent 60%)',
+              pointerEvents: 'none',
+            }} />
+            <div style={{ position: 'absolute', bottom: 16, left: 16, right: 60 }}>
+              <h2 style={{
+                fontSize: 24, fontWeight: 700, color: '#ffffff', margin: 0,
+                lineHeight: 1.25, textShadow: '0 2px 8px rgba(0,0,0,0.5)',
+              }}>
+                {exercise.name}
+              </h2>
             </div>
-          )}
-          <div className="absolute bottom-0 inset-x-0 h-24 bg-gradient-to-t from-[#1a1d24] to-transparent" />
-        </div>
-
-        <div className="p-8">
-          {/* Название + бейджи */}
-          <div className="mb-6">
-            <h2 className="text-3xl font-black text-white mb-2 leading-tight">
-              {exercise.name}
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {exercise.difficulty && (
-                <span className="px-3 py-1 bg-[#6ee7b7]/10 text-[#6ee7b7] rounded-lg text-xs font-bold uppercase tracking-wider">
-                  {DIFFICULTY_LABELS[exercise.difficulty] ?? exercise.difficulty}
-                </span>
-              )}
-              {exercise.equipment && (
-                <span className="px-3 py-1 bg-white/5 text-slate-400 rounded-lg text-xs font-bold uppercase tracking-wider">
-                  {exercise.equipment}
-                </span>
-              )}
-            </div>
+            <button onClick={onClose} style={{ ...frostedCircle, position: 'absolute', top: 14, right: 14 }}>
+              <IconClose />
+            </button>
           </div>
 
-          {/* Описание */}
-          <div className="mb-8">
-            <section>
-              <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-3">
-                Описание
-              </h3>
-              <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-line">
-                {exercise.description || 'Описание временно отсутствует.'}
-              </p>
-            </section>
-          </div>
+          {/* ── Content ────────────────────────────────────────── */}
+          <div style={{ padding: '16px 16px 40px' }}>
 
-          {/* Блок 1: Техника выполнения */}
-          {techniques.length > 0 && (
-            <section className="mt-8 pt-8 border-t border-white/5 mb-8">
-              <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-4">
-                Техника выполнения
-              </h3>
-              <div className="rounded-2xl overflow-hidden border border-white/5 bg-black/20 relative">
-                <img
-                  src={techniques[techniqueIdx]}
-                  alt="Техника выполнения"
-                  className="w-full h-auto"
-                />
-                {techniques.length > 1 && (
-                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
+            {/* Badges */}
+            {(exercise.difficulty || exercise.equipment) && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+                {exercise.difficulty && diffStyle && (
+                  <span style={{
+                    background: diffStyle.bg, color: diffStyle.color,
+                    borderRadius: 999, padding: '4px 12px', fontSize: 12, fontWeight: 600, textTransform: 'uppercase',
+                  }}>
+                    {DIFFICULTY_LABEL[exercise.difficulty] ?? exercise.difficulty}
+                  </span>
+                )}
+                {exercise.equipment && (
+                  <span style={{
+                    background: 'rgba(110,231,183,0.1)', color: '#6ee7b7',
+                    borderRadius: 999, padding: '4px 12px', fontSize: 12, fontWeight: 600,
+                  }}>
+                    {exercise.equipment}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Target muscles */}
+            {hasMuscles && (
+              <div style={{ marginBottom: 20 }}>
+                <span style={sectionLabel}>Целевые мышцы</span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {exercise.targetMuscles.map(m => (
+                    <span key={m} style={muscleChip}>{m}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Description */}
+            {hasDescription && (
+              <div style={{ marginBottom: 20 }}>
+                <span style={sectionLabel}>Описание</span>
+                <p style={{ fontSize: 15, lineHeight: 1.7, color: '#94a3b8', margin: 0, whiteSpace: 'pre-wrap' }}>
+                  {exercise.description}
+                </p>
+              </div>
+            )}
+
+            {/* ── Technique carousel ─────────────────────────── */}
+            {techniques.length > 0 && (
+              <div style={{ marginBottom: 20 }}>
+                <span style={sectionLabel}>Техника выполнения</span>
+
+                {/* Image frame */}
+                <div style={{ position: 'relative', borderRadius: 12 }}>
+                  <img
+                    src={techniques[techniqueIdx]}
+                    alt={`Техника ${techniqueIdx + 1}`}
+                    onClick={() => setLightboxSrc(techniques[techniqueIdx])}
+                    onTouchStart={e => { touchStartX.current = e.touches[0].clientX; }}
+                    onTouchEnd={e => {
+                      const delta = e.changedTouches[0].clientX - touchStartX.current;
+                      if (delta < -50) nextTechnique();
+                      if (delta > 50) prevTechnique();
+                    }}
+                    style={{
+                      width: '100%', aspectRatio: '4 / 3', objectFit: 'contain',
+                      background: '#0d0f13', display: 'block', cursor: 'zoom-in',
+                    }}
+                  />
+
+                  {/* Arrow buttons */}
+                  {multiTechnique && techniqueIdx > 0 && (
+                    <button
+                      onClick={prevTechnique}
+                      style={{ ...frostedCircle, position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }}
+                    >
+                      <IconChevronLeft />
+                    </button>
+                  )}
+                  {multiTechnique && techniqueIdx < techniques.length - 1 && (
+                    <button
+                      onClick={nextTechnique}
+                      style={{ ...frostedCircle, position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)' }}
+                    >
+                      <IconChevronRight />
+                    </button>
+                  )}
+                </div>
+
+                {/* Dot indicators */}
+                {multiTechnique && (
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: 10 }}>
                     {techniques.map((_, i) => (
                       <button
                         key={i}
                         onClick={() => setTechniqueIdx(i)}
-                        className={`w-2 h-2 rounded-full transition ${
-                          i === techniqueIdx ? 'bg-[#6ee7b7]' : 'bg-white/30'
-                        }`}
+                        style={{
+                          height: 6,
+                          width: i === techniqueIdx ? 18 : 6,
+                          borderRadius: 999, border: 'none', padding: 0, cursor: 'pointer',
+                          background: i === techniqueIdx ? '#6ee7b7' : 'rgba(255,255,255,0.2)',
+                          transition: 'width 200ms ease, background 200ms ease',
+                          flexShrink: 0,
+                        }}
                       />
                     ))}
                   </div>
                 )}
               </div>
-            </section>
-          )}
+            )}
 
-          {/* Блок 2: Целевые мышцы (карта) — рендерим ТОЛЬКО если поле непустое */}
-          {muscleMap && (
-            <section className="mt-8 pt-8 border-t border-white/5 mb-8 flex flex-col items-center">
-              <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-4 w-full">
-                Целевые мышцы (карта)
-              </h3>
-              <div className="w-full flex justify-center bg-black/10 rounded-xl p-4">
-                <img
-                  src={muscleMap}
-                  alt="Карта целевых мышц"
-                  className="max-w-[400px] w-full h-auto"
-                />
+            {/* Muscle map */}
+            {muscleMap && (
+              <div style={{ marginBottom: 20 }}>
+                <span style={sectionLabel}>Карта мышц</span>
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <img src={muscleMap} alt="Карта мышц"
+                    style={{ maxWidth: 200, width: '100%', height: 'auto' }} />
+                </div>
               </div>
-            </section>
-          )}
-
-          {/* Блок 3: Теги мышц */}
-          <section className="mt-8 pt-8 border-t border-white/5">
-            <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-3">
-              Целевые мышцы
-            </h3>
-            <div className="flex flex-wrap gap-1.5">
-              {(exercise.targetMuscles ?? []).map((muscle) => (
-                <span
-                  key={muscle}
-                  className="px-3 py-1 bg-white/5 border border-white/5 rounded-md text-xs text-white"
-                >
-                  {muscle}
-                </span>
-              ))}
-            </div>
-          </section>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* ── Fullscreen lightbox ────────────────────────────────── */}
+      {lightboxSrc && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: zIndex + 50,
+            background: 'rgba(0,0,0,0.95)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+          onClick={() => setLightboxSrc(null)}
+        >
+          <img
+            src={lightboxSrc}
+            alt="Техника"
+            onClick={e => e.stopPropagation()}
+            style={{
+              maxWidth: '100vw', maxHeight: '100vh',
+              objectFit: 'contain',
+              touchAction: 'pinch-zoom',
+            }}
+          />
+          <button
+            onClick={() => setLightboxSrc(null)}
+            style={{ ...frostedCircle, position: 'absolute', top: 14, right: 14 }}
+          >
+            <IconClose />
+          </button>
+        </div>
+      )}
+    </>
   );
 };

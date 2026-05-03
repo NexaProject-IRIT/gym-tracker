@@ -6,17 +6,24 @@ interface Props {
 }
 
 export const TagFilter = ({ selectedTag, onSelect }: Props) => (
-  <div className="flex flex-wrap gap-2 mb-8">
-    {TAGS.map(tag => (
-      <button
-        key={tag}
-        onClick={() => onSelect(selectedTag === tag ? null : tag)}
-        className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-all ${
-          selectedTag === tag ? 'bg-[#6ee7b7] text-[#111318] border-[#6ee7b7]' : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/30'
-        }`}
-      >
-        {tag}
-      </button>
-    ))}
+  <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none', marginBottom: 12 }}>
+    {TAGS.map(tag => {
+      const active = selectedTag === tag;
+      return (
+        <button
+          key={tag}
+          onClick={() => onSelect(active ? null : tag)}
+          style={{
+            flexShrink: 0, padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600,
+            border: active ? '1px solid #6ee7b7' : '1px solid rgba(255,255,255,0.1)',
+            background: active ? '#6ee7b7' : 'rgba(255,255,255,0.05)',
+            color: active ? '#064e3b' : '#64748b',
+            cursor: 'pointer', transition: 'all 0.15s',
+          }}
+        >
+          {tag}
+        </button>
+      );
+    })}
   </div>
 );
