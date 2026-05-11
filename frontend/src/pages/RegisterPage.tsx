@@ -149,7 +149,12 @@ export const RegisterPage = () => {
       });
       const data = await res.json();
       if (!res.ok) {
-        const msg = data.username?.[0] || data.password?.[0] || data.detail || 'Ошибка регистрации';
+        if (data.username?.[0]) {
+          setAccountErrors({ login: data.username[0] });
+          setStep('account');
+          return;
+        }
+        const msg = data.password?.[0] || data.detail || 'Ошибка регистрации';
         setBodyErrors({ api: msg });
         return;
       }

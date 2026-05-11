@@ -24,7 +24,8 @@ const GOAL_LABELS: Record<Goal, string> = {
 const GOAL_OPTIONS = Object.entries(GOAL_LABELS) as [Goal, string][];
 
 interface ProfileData {
-  name: string;
+  username: string;
+  displayName: string;
   age: string;
   weight: string;
   height: string;
@@ -93,14 +94,16 @@ export const ProfilePage = () => {
   const [exporting, setExporting] = useState(false);
   const [clearing, setClearing] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const [profile, setProfile] = useState<ProfileData>({ name: '', age: '', weight: '', height: '', goal: '' });
+  const [profile, setProfile] = useState<ProfileData>({ username: '', displayName: '', age: '', weight: '', height: '', goal: '' });
   const [draft, setDraft] = useState<ProfileData>(profile);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
   const [stats, setStats] = useState<Stats>({ total: 0, this_month: 0 });
   const [statsLoaded, setStatsLoaded] = useState(false);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const readProfileFromResponse = (data: any): ProfileData => ({
-    name: data.name ?? data.first_name ?? data.username ?? '',
+    username: data.username ?? '',
+    displayName: data.display_name ?? data.username ?? '',
     age: data.age != null ? String(data.age) : '',
     weight: data.weight != null ? String(data.weight) : '',
     height: data.height != null ? String(data.height) : '',
@@ -144,15 +147,20 @@ export const ProfilePage = () => {
     loadStats();
   }, []);
 
-  const handleEdit = () => { setDraft(profile); setSaveError(null); setIsEditing(true); };
+  const handleEdit = () => { setDraft(profile); setSaveError(null); setUsernameError(null); setIsEditing(true); };
 
   const handleSave = async () => {
+    setUsernameError(null);
+    if (!draft.username.trim() || draft.username.trim().length < 3) {
+      setUsernameError('Минимум 3 символа');
+      return;
+    }
     setSaving(true);
     setSaveError(null);
     try {
       const body: Record<string, unknown> = {};
-      // Имя → поле `name`, а не `username` (пишется в user.first_name)
-      if (draft.name !== profile.name) body.name = draft.name;
+      if (draft.username !== profile.username) body.username = draft.username.trim();
+      if (draft.displayName !== profile.displayName) body.display_name = draft.displayName;
       if (draft.height) body.height = parseFloat(draft.height);
       if (draft.weight) body.weight = parseFloat(draft.weight);
       if (draft.age) body.age = parseInt(draft.age);
@@ -171,8 +179,12 @@ export const ProfilePage = () => {
         setIsEditing(false);
       } else {
         const err = await res.json().catch(() => ({}));
+        if (err.username?.[0]) {
+          setUsernameError(err.username[0]);
+          return;
+        }
         const firstKey = Object.keys(err)[0];
-        setSaveError(firstKey ? `${firstKey}: ${err[firstKey]}` : `Ошибка ${res.status}`);
+        setSaveError(firstKey ? String(Array.isArray(err[firstKey]) ? err[firstKey][0] : err[firstKey]) : `Ошибка ${res.status}`);
       }
     } catch {
       setSaveError('Нет связи с сервером');
@@ -181,7 +193,7 @@ export const ProfilePage = () => {
     }
   };
 
-  const handleCancel = () => { setDraft(profile); setSaveError(null); setIsEditing(false); };
+  const handleCancel = () => { setDraft(profile); setSaveError(null); setUsernameError(null); setIsEditing(false); };
 
   const handleExport = async () => {
     setExporting(true);
@@ -245,7 +257,8 @@ export const ProfilePage = () => {
         }}>
           <IconPerson />
         </div>
-        <h2 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 700 }}>{profile.name || 'Ваш профиль'}</h2>
+        <h2 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 700 }}>{profile.displayName || profile.username || 'Ваш профиль'}</h2>
+        <p style={{ margin: '0 0 2px', color: '#475569', fontSize: 13 }}>@{profile.username}</p>
         <p style={{ margin: 0, color: '#475569', fontSize: 14 }}>Личные данные и настройки</p>
       </div>
 
@@ -302,16 +315,36 @@ export const ProfilePage = () => {
         )}
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-          <span style={{ color: '#94a3b8', fontSize: 14 }}>Имя</span>
+          <span style={{ color: '#94a3b8', fontSize: 14 }}>Логин</span>
           {isEditing ? (
-            <input type="text" value={draft.name} onChange={e => setDraft(d => ({ ...d, name: e.target.value }))}
-              placeholder="—" style={{
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+              <input type="text" value={draft.username} onChange={e => setDraft(d => ({ ...d, username: e.target.value }))}
+                placeholder="Логин" style={{
+                  background: '#21252e', color: '#f1f5f9',
+                  border: `1px solid ${usernameError ? 'rgba(248,113,113,0.5)' : 'rgba(255,255,255,0.1)'}`,
+                  borderRadius: 8, padding: '6px 10px', fontSize: 14, outline: 'none', width: 150, textAlign: 'right',
+                }}
+              />
+              {usernameError && <span style={{ fontSize: 11, color: '#f87171' }}>{usernameError}</span>}
+            </div>
+          ) : (
+            <span style={{ color: '#f1f5f9', fontSize: 14 }}>@{profile.username}</span>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+          <span style={{ color: '#94a3b8', fontSize: 14 }}>Отображаемое имя</span>
+          {isEditing ? (
+            <input type="text" value={draft.displayName} onChange={e => setDraft(d => ({ ...d, displayName: e.target.value }))}
+              placeholder="Как вас называть" style={{
                 background: '#21252e', color: '#f1f5f9', border: '1px solid rgba(255,255,255,0.1)',
                 borderRadius: 8, padding: '6px 10px', fontSize: 14, outline: 'none', width: 150, textAlign: 'right',
               }}
             />
           ) : (
-            <span style={{ color: profile.name ? '#f1f5f9' : '#334155', fontSize: 14 }}>{profile.name || '— не указано'}</span>
+            <span style={{ color: profile.displayName !== profile.username ? '#f1f5f9' : '#334155', fontSize: 14 }}>
+              {profile.displayName !== profile.username ? profile.displayName : '— не задано'}
+            </span>
           )}
         </div>
 

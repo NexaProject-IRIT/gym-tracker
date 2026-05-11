@@ -7,7 +7,6 @@ from .models import UserProfile
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     password2 = serializers.CharField(write_only=True, required=True)
-    name = serializers.CharField(write_only=True, required=False, allow_blank=True)
     height = serializers.FloatField(write_only=True, required=False, allow_null=True)
     weight = serializers.FloatField(write_only=True, required=False, allow_null=True)
     age = serializers.IntegerField(write_only=True, required=False, allow_null=True)
@@ -15,7 +14,12 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'password', 'password2', 'name', 'height', 'weight', 'age', 'goal')
+        fields = ('username', 'password', 'password2', 'height', 'weight', 'age', 'goal')
+
+    def validate_username(self, value):
+        if User.objects.filter(username__iexact=value).exists():
+            raise serializers.ValidationError("Этот логин уже занят")
+        return value
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
@@ -23,21 +27,13 @@ class RegisterSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        name = validated_data.pop('name', '')
         validated_data.pop('password2')
         height = validated_data.pop('height', None)
         weight = validated_data.pop('weight', None)
         age = validated_data.pop('age', None)
         goal = validated_data.pop('goal', 'maintain')
 
-        user = User.objects.create(
-            username=validated_data['username'],
-            email=validated_data.get('email', '')
-        )
-
-        if name:
-            user.first_name = name
-        user.save()
+        user = User.objects.create(username=validated_data['username'])
         user.set_password(validated_data['password'])
         user.save()
 
@@ -55,22 +51,23 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    display_name = serializers.SerializerMethodField()
     height = serializers.FloatField(source='profile.height', read_only=True)
     weight = serializers.FloatField(source='profile.weight', read_only=True)
     age = serializers.IntegerField(source='profile.age', read_only=True)
     goal = serializers.CharField(source='profile.goal', read_only=True)
-    name = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'name', 'height', 'weight', 'age', 'goal')
+        fields = ('id', 'username', 'display_name', 'height', 'weight', 'age', 'goal')
 
-    def get_name(self, obj):
+    def get_display_name(self, obj):
         return obj.first_name if obj.first_name else obj.username
 
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    username = serializers.CharField(required=False, min_length=3)
+    display_name = serializers.CharField(required=False, allow_blank=True)
     height = serializers.FloatField(required=False, allow_null=True)
     weight = serializers.FloatField(required=False, allow_null=True)
     age = serializers.IntegerField(required=False, allow_null=True)
@@ -78,13 +75,24 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ('name', 'height', 'weight', 'age', 'goal')
+        fields = ('username', 'display_name', 'height', 'weight', 'age', 'goal')
+
+    def validate_username(self, value):
+        current_user = self.instance.user
+        if User.objects.filter(username__iexact=value).exclude(pk=current_user.pk).exists():
+            raise serializers.ValidationError("Этот логин уже занят")
+        return value
 
     def update(self, instance, validated_data):
-        name = validated_data.pop('name', None)
-        if name is not None:
+        username = validated_data.pop('username', None)
+        display_name = validated_data.pop('display_name', None)
+
+        if username is not None or display_name is not None:
             user = instance.user
-            user.first_name = name
+            if username is not None:
+                user.username = username
+            if display_name is not None:
+                user.first_name = display_name
             user.save()
 
         for attr, value in validated_data.items():
