@@ -21,6 +21,7 @@ interface TimerContextValue {
   isTmRunning: boolean;
   tmStartCancel: () => void;
   tmPreset: (mins: number) => void;
+  tmAddTime: (mins: number) => void;
   formatTmTime: (ms: number) => string;
   tmFinished: boolean;
   clearTmFinished: () => void;
@@ -143,6 +144,14 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     startCountdown(mins * 60);
   }, []);
 
+  const tmAddTime = useCallback((mins: number) => {
+    if (isTmRunning) {
+      tmEndRef.current += mins * 60 * 1000;
+    } else {
+      startCountdown(mins * 60);
+    }
+  }, [isTmRunning]);
+
   const formatTmTime = (ms: number): string => {
     const totalSecs = Math.floor(ms / 1000);
     const h = Math.floor(totalSecs / 3600);
@@ -161,7 +170,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       activeTab, setActiveTab,
       swTime, isSwRunning, laps, swStartStop, swLapReset, formatSwTime,
       tmHours, tmMins, tmSecs, setTmHours, setTmMins, setTmSecs,
-      tmTimeLeftMs, isTmRunning, tmStartCancel, tmPreset, formatTmTime,
+      tmTimeLeftMs, isTmRunning, tmStartCancel, tmPreset, tmAddTime, formatTmTime,
       tmFinished, clearTmFinished,
     }}>
       {children}

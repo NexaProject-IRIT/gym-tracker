@@ -42,6 +42,7 @@ def serialize_exercise(we: WorkoutExercise) -> dict:
         "isCustom": we.is_custom,
         "isDone": we.is_done,
         "parameters": we.parameters if we.parameters else [],
+        "order": we.order,
     }
 
 
@@ -151,7 +152,7 @@ class WorkoutViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['patch'], url_path=r'exercises/(?P<ex_uid>[^/.]+)/done')
-    def exercise_done(self, request, pk=None, ex_uid=None):
+    def exercise_done(self, request, uid=None, ex_uid=None):
         workout = self.get_object()
         exercise = workout.exercises.filter(uid=ex_uid).first()
         if not exercise:

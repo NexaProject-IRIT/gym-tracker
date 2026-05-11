@@ -10,7 +10,7 @@ export const WorkoutDetailPage = () => {
     workouts, loading,
     fetchWorkouts, fetchWorkoutDetail,
     updateWorkout, deleteWorkout, repeatWorkout,
-    addExercise, updateExercise, deleteExercise,
+    addExercise, updateExercise, deleteExercise, toggleExerciseDone,
   } = useWorkoutsApi();
 
   const [detailLoaded, setDetailLoaded] = useState(false);
@@ -51,6 +51,7 @@ export const WorkoutDetailPage = () => {
       onUpdateExercise={(exId, u) => updateExercise(workout.id, exId, u)}
       onDeleteExercise={exId => deleteExercise(workout.id, exId)}
       onAddExercise={ex => addExercise(workout.id, ex)}
+      onToggleDone={exId => toggleExerciseDone(workout.id, exId)}
     />
   );
 };

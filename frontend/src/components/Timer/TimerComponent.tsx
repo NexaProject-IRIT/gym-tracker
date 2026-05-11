@@ -199,11 +199,12 @@ export const TimerComponent: React.FC = () => {
     }
   };
 
-  const handlePreset = (mins: number) => {
-    setTmHours(0);
-    setTmMins(mins);
-    setTmSecs(0);
-    startTimer(mins * 60);
+  const addTime = (mins: number) => {
+    if (isTmRunning) {
+      tmEndTimeRef.current += mins * 60 * 1000;
+    } else {
+      startTimer(mins * 60);
+    }
   };
 
   const formatTmTime = (ms: number) => {
@@ -300,12 +301,28 @@ export const TimerComponent: React.FC = () => {
       {/* =========== ТАЙМЕР =========== */}
       {activeTab === 'timer' && (
         <div className="flex flex-col flex-1 px-4 max-w-md mx-auto w-full items-center">
-          
+
           {isTmRunning ? (
-            <div className="flex flex-col items-center justify-center flex-1 w-full">
-               <div className="text-[5rem] font-light tracking-tight tabular-nums text-white mb-16 whitespace-nowrap">
+            <div className="flex flex-col items-center justify-center flex-1 w-full gap-10">
+              <div className="text-[5rem] font-light tracking-tight tabular-nums text-white whitespace-nowrap">
                 {formatTmTime(tmTimeLeftMs)}
               </div>
+
+              <div className="flex flex-col items-center gap-3 w-full">
+                <p className="text-xs text-gray-600 uppercase tracking-widest">добавить время</p>
+                <div className="flex justify-center gap-2">
+                  {[1, 2, 3, 5].map((mins) => (
+                    <button
+                      key={mins}
+                      onClick={() => addTime(mins)}
+                      className="px-5 py-2.5 rounded-full bg-[#1c1c1e] border border-gray-800 text-emerald-400 text-sm font-medium hover:bg-emerald-500/10 hover:border-emerald-500/30 active:scale-95 transition-all"
+                    >
+                      +{mins} мин
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <button
                 onClick={handleTmStartCancel}
                 className="w-24 h-24 rounded-full flex items-center justify-center border-2 bg-red-500/20 border-red-500/30 text-red-500 transition-colors"
@@ -315,28 +332,38 @@ export const TimerComponent: React.FC = () => {
             </div>
           ) : (
             <div className="flex flex-col items-center w-full mt-4">
-              
-              <div className="flex justify-center items-center gap-4 mb-12 w-full bg-[#1c1c1e] py-4 rounded-3xl overflow-hidden relative">
+
+              <div className="flex justify-center items-center gap-4 mb-10 w-full bg-[#1c1c1e] py-4 rounded-3xl overflow-hidden relative">
                 <div className="absolute top-0 w-full h-1/3 bg-gradient-to-b from-[#1c1c1e] to-transparent pointer-events-none z-10"></div>
                 <div className="absolute bottom-0 w-full h-1/3 bg-gradient-to-t from-[#1c1c1e] to-transparent pointer-events-none z-10"></div>
-                
+
                 <ScrollPicker value={tmHours} setValue={setTmHours} max={23} label="часов" />
-                <div className="text-4xl font-light text-[#3a3a3c] mb-6">:</div>
+                <div className="flex flex-col items-center">
+                  <div className="h-[192px] flex items-center justify-center">
+                    <span className="text-4xl font-light text-[#3a3a3c]">:</span>
+                  </div>
+                  <span className="text-sm mt-2 invisible">x</span>
+                </div>
                 <ScrollPicker value={tmMins} setValue={setTmMins} max={59} label="минут" />
-                <div className="text-4xl font-light text-[#3a3a3c] mb-6">:</div>
+                <div className="flex flex-col items-center">
+                  <div className="h-[192px] flex items-center justify-center">
+                    <span className="text-4xl font-light text-[#3a3a3c]">:</span>
+                  </div>
+                  <span className="text-sm mt-2 invisible">x</span>
+                </div>
                 <ScrollPicker value={tmSecs} setValue={setTmSecs} max={59} label="секунд" />
               </div>
 
-              <div className="w-full mb-12">
-                <p className="text-sm text-gray-500 mb-4 text-center">Быстрый старт</p>
-                <div className="flex justify-center gap-3">
-                  {[1, 2, 3, 5, 10].map((mins) => (
+              <div className="flex flex-col items-center gap-3 w-full mb-10">
+                <p className="text-xs text-gray-600 uppercase tracking-widest">быстрый старт</p>
+                <div className="flex justify-center gap-2">
+                  {[1, 2, 3, 5].map((mins) => (
                     <button
                       key={mins}
-                      onClick={() => handlePreset(mins)}
-                      className="w-14 h-14 rounded-full bg-[#2c2c2e] text-gray-300 font-medium active:bg-[#3a3a3c] transition-colors border border-gray-700 hover:border-emerald-500/50"
+                      onClick={() => addTime(mins)}
+                      className="px-5 py-2.5 rounded-full bg-[#2c2c2e] border border-gray-700 text-emerald-400 text-sm font-medium hover:bg-emerald-500/10 hover:border-emerald-500/30 active:scale-95 transition-all"
                     >
-                      {mins}
+                      +{mins} мин
                     </button>
                   ))}
                 </div>

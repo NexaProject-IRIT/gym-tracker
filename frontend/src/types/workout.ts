@@ -48,6 +48,7 @@ export interface WorkoutExercise {
   isCustom: boolean;
   isDone?: boolean;
   parameters: ParameterType[];
+  order?: number;
   note?: string;
 }
 

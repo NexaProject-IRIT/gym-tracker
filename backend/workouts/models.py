@@ -45,9 +45,11 @@ class WorkoutExercise(models.Model):
     # Без этого поля фронтенд не знает, какие поля рендерить в карточке.
     parameters = models.JSONField(default=list, blank=True)
     is_done = models.BooleanField(default=False)
+    order = models.IntegerField(default=0)
 
     class Meta:
         db_table = 'workout_exercises'
+        ordering = ['order', 'id']
 
     def __str__(self):
         name = self.custom_name if self.is_custom else self.exercise_id

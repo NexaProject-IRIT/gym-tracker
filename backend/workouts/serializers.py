@@ -12,16 +12,17 @@ class WorkoutExerciseSerializer(serializers.ModelSerializer):
         required=False,
         default=list
     )
+    # uid отправляется фронтендом для сопоставления с существующими упражнениями при обновлении
+    uid = serializers.CharField(required=False, allow_blank=True, default='', write_only=True)
 
     class Meta:
         model = WorkoutExercise
-        fields = ['id', 'exerciseId', 'customName', 'sets', 'reps',
-                  'weight', 'time', 'distance', 'isCustom', 'isDone', 'parameters']
+        fields = ['id', 'uid', 'exerciseId', 'customName', 'sets', 'reps',
+                  'weight', 'time', 'distance', 'isCustom', 'isDone', 'parameters', 'order']
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data['id'] = str(instance.uid)
-        # Гарантируем, что parameters всегда список, никогда не None
         if data.get('parameters') is None:
             data['parameters'] = []
         return data
@@ -63,7 +64,8 @@ class WorkoutCreateSerializer(serializers.ModelSerializer):
         exercises_data = validated_data.pop('exercises', [])
         workout = Workout.objects.create(**validated_data)
 
-        for ex_data in exercises_data:
+        for idx, ex_data in enumerate(exercises_data):
+            ex_data.pop('uid', None)
             exercise_id = ex_data.pop('exercise_id', None)
             custom_name = ex_data.pop('custom_name', None)
             is_custom = ex_data.pop('is_custom', False)
@@ -76,6 +78,7 @@ class WorkoutCreateSerializer(serializers.ModelSerializer):
                 is_custom=is_custom,
                 is_done=is_done,
                 parameters=parameters,
+                order=idx,
                 **ex_data
             )
 
@@ -97,21 +100,44 @@ class WorkoutUpdateSerializer(serializers.ModelSerializer):
         instance.save()
 
         if exercises_data is not None:
-            instance.exercises.all().delete()
-            for ex_data in exercises_data:
+            existing = {str(ex.uid): ex for ex in instance.exercises.all()}
+            seen_uids = set()
+
+            for idx, ex_data in enumerate(exercises_data):
+                incoming_uid = ex_data.pop('uid', '') or ''
                 exercise_id = ex_data.pop('exercise_id', None)
                 custom_name = ex_data.pop('custom_name', None)
                 is_custom = ex_data.pop('is_custom', False)
                 is_done = ex_data.pop('is_done', False)
                 parameters = ex_data.pop('parameters', [])
-                WorkoutExercise.objects.create(
-                    workout=instance,
-                    exercise_id=exercise_id or '',
-                    custom_name=custom_name or '',
-                    is_custom=is_custom,
-                    is_done=is_done,
-                    parameters=parameters,
-                    **ex_data
-                )
+
+                if incoming_uid in existing:
+                    # Обновляем существующее упражнение, is_done не трогаем
+                    ex = existing[incoming_uid]
+                    ex.exercise_id = exercise_id or ''
+                    ex.custom_name = custom_name or ''
+                    ex.is_custom = is_custom
+                    ex.parameters = parameters
+                    ex.order = idx
+                    for attr, val in ex_data.items():
+                        setattr(ex, attr, val)
+                    ex.save()
+                    seen_uids.add(incoming_uid)
+                else:
+                    new_ex = WorkoutExercise.objects.create(
+                        workout=instance,
+                        exercise_id=exercise_id or '',
+                        custom_name=custom_name or '',
+                        is_custom=is_custom,
+                        is_done=is_done,
+                        parameters=parameters,
+                        order=idx,
+                        **ex_data
+                    )
+                    seen_uids.add(str(new_ex.uid))
+
+            for uid_str, ex in existing.items():
+                if uid_str not in seen_uids:
+                    ex.delete()
 
         return instance

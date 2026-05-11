@@ -13,8 +13,9 @@ function generateExId(): string {
 // Frontend → Backend body
 // ИСПРАВЛЕНО: добавлено поле parameters — без него бэкенд сохраняет [],
 // и при следующем открытии тренировки все упражнения выглядят пустыми.
-function serializeExercise(e: WorkoutExercise) {
+function serializeExercise(e: WorkoutExercise, idx?: number) {
   return {
+    uid: e.id,
     exerciseId: e.exerciseId ?? '',
     customName: e.customName ?? e.name ?? '',
     sets: e.sets ?? 0,
@@ -25,6 +26,7 @@ function serializeExercise(e: WorkoutExercise) {
     isCustom: e.isCustom,
     isDone: e.isDone ?? false,
     parameters: e.parameters ?? [],
+    order: idx !== undefined ? idx : (e.order ?? 0),
   };
 }
 
@@ -56,13 +58,14 @@ function normalizeWorkout(raw: any): Workout {
     date: raw.date ?? '',
     color: raw.color ?? '',
     notes: raw.notes ?? '',
-    exercises: (raw.exercises ?? []).map((e: any) => ({
+    exercises: (raw.exercises ?? []).map((e: any, idx: number) => ({
       ...e,
       id: e.id?.toString() ?? generateExId(),
       name: e.customName || e.exerciseId || 'Упражнение',
       parameters: inferParameters(e),
       isCustom: e.isCustom ?? true,
       isDone: e.isDone ?? false,
+      order: e.order ?? idx,
     })),
   };
 }
@@ -162,9 +165,9 @@ export const useWorkoutsApi = () => {
         notes: updates.notes !== undefined ? updates.notes : (current?.notes ?? ''),
       };
       if (updates.exercises !== undefined) {
-        body.exercises = updates.exercises.map(serializeExercise);
+        body.exercises = updates.exercises.map((e, idx) => serializeExercise(e, idx));
       } else if (current?.exercises) {
-        body.exercises = current.exercises.map(serializeExercise);
+        body.exercises = current.exercises.map((e, idx) => serializeExercise(e, idx));
       }
       const res = await authedFetch(`${BASE}/workouts/${id}/`, {
         method: 'PUT',
@@ -252,6 +255,47 @@ export const useWorkoutsApi = () => {
     });
   }, [workouts, updateWorkout]);
 
+  // PATCH /workouts/:workoutId/exercises/:exerciseId/done/
+  const toggleExerciseDone = useCallback(async (workoutId: string, exerciseId: string) => {
+    const workout = workouts.find(w => w.id === workoutId);
+    const exercise = workout?.exercises.find(e => e.id === exerciseId);
+    if (!exercise) return;
+    const newIsDone = !exercise.isDone;
+    // Оптимистичное обновление
+    setWorkouts(prev => prev.map(w =>
+      w.id === workoutId
+        ? { ...w, exercises: w.exercises.map(e => e.id === exerciseId ? { ...e, isDone: newIsDone } : e) }
+        : w
+    ));
+    try {
+      const res = await authedFetch(`/workouts/${workoutId}/exercises/${exerciseId}/done/`, {
+        method: 'PATCH',
+        body: JSON.stringify({ isDone: newIsDone }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setWorkouts(prev => prev.map(w =>
+          w.id === workoutId
+            ? { ...w, exercises: w.exercises.map(e => e.id === exerciseId ? { ...e, isDone: data.isDone } : e) }
+            : w
+        ));
+      } else {
+        // Откатываем
+        setWorkouts(prev => prev.map(w =>
+          w.id === workoutId
+            ? { ...w, exercises: w.exercises.map(e => e.id === exerciseId ? { ...e, isDone: !newIsDone } : e) }
+            : w
+        ));
+      }
+    } catch {
+      setWorkouts(prev => prev.map(w =>
+        w.id === workoutId
+          ? { ...w, exercises: w.exercises.map(e => e.id === exerciseId ? { ...e, isDone: !newIsDone } : e) }
+          : w
+      ));
+    }
+  }, [workouts]);
+
   return {
     workouts,
     loading,
@@ -265,5 +309,6 @@ export const useWorkoutsApi = () => {
     addExercise,
     updateExercise,
     deleteExercise,
+    toggleExerciseDone,
   };
 };

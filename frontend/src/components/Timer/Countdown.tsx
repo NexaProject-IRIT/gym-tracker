@@ -70,23 +70,22 @@ const Separator = () => (
   <span style={{
     fontSize: 24,
     color: '#64748b',
-    paddingBottom: 16,
     lineHeight: 1,
-    alignSelf: 'flex-end',
-    marginBottom: 2,
+    alignSelf: 'center',
+    paddingBottom: 18,
   }}>
     :
   </span>
 );
 
-const QUICK_PRESETS = [1, 2, 3, 5, 10] as const;
+const QUICK_PRESETS = [1, 2, 3, 5] as const;
 
 export const Countdown: React.FC = () => {
   const {
     tmHours, tmMins, tmSecs,
     setTmHours, setTmMins, setTmSecs,
     tmTimeLeftMs, isTmRunning,
-    tmStartCancel, tmPreset, formatTmTime,
+    tmStartCancel, tmPreset, tmAddTime, formatTmTime,
   } = useTimer();
 
   const canStart = tmHours > 0 || tmMins > 0 || tmSecs > 0;
@@ -115,66 +114,74 @@ export const Countdown: React.FC = () => {
 
       {/* Setup controls — hidden while running */}
       {!isTmRunning && (
-        <>
-          {/* Time inputs */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'flex-end',
-            gap: 4,
-            marginBottom: 14,
-          }}>
-            <NumInput value={tmHours} onChange={setTmHours} max={23} label="Часы" />
-            <Separator />
-            <NumInput value={tmMins} onChange={setTmMins} max={59} label="Мин" />
-            <Separator />
-            <NumInput value={tmSecs} onChange={setTmSecs} max={59} label="Сек" />
-          </div>
-
-          {/* Quick start pills */}
-          <div style={{
-            display: 'flex',
-            gap: 8,
-            marginBottom: 16,
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-          }}>
-            {QUICK_PRESETS.map(mins => (
-              <button
-                key={mins}
-                onClick={() => tmPreset(mins)}
-                onMouseEnter={e => {
-                  e.currentTarget.style.background = 'rgba(110,231,183,0.1)';
-                  e.currentTarget.style.borderColor = 'rgba(110,231,183,0.3)';
-                  e.currentTarget.style.color = '#6ee7b7';
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
-                  e.currentTarget.style.color = '#94a3b8';
-                }}
-                onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.95)'; }}
-                onMouseUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-                style={{
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: 20,
-                  padding: '6px 14px',
-                  fontSize: 12,
-                  fontWeight: 500,
-                  color: '#94a3b8',
-                  cursor: 'pointer',
-                  transition: 'all 150ms ease',
-                  minHeight: 40,
-                  display: 'flex',
-                  alignItems: 'center',
-                }}
-              >
-                {mins} мин
-              </button>
-            ))}
-          </div>
-        </>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 4,
+          marginBottom: 14,
+        }}>
+          <NumInput value={tmHours} onChange={setTmHours} max={23} label="Часы" />
+          <Separator />
+          <NumInput value={tmMins} onChange={setTmMins} max={59} label="Мин" />
+          <Separator />
+          <NumInput value={tmSecs} onChange={setTmSecs} max={59} label="Сек" />
+        </div>
       )}
+
+      {/* Quick presets — always visible */}
+      <div style={{ marginBottom: 6 }}>
+        <p style={{
+          fontSize: 10,
+          color: '#475569',
+          textTransform: 'uppercase',
+          letterSpacing: '1.5px',
+          textAlign: 'center',
+          marginBottom: 8,
+        }}>
+          {isTmRunning ? 'добавить время' : 'быстрый старт'}
+        </p>
+        <div style={{
+          display: 'flex',
+          gap: 8,
+          marginBottom: 16,
+          justifyContent: 'center',
+        }}>
+          {QUICK_PRESETS.map(mins => (
+            <button
+              key={mins}
+              onClick={() => isTmRunning ? tmAddTime(mins) : tmPreset(mins)}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'rgba(110,231,183,0.1)';
+                e.currentTarget.style.borderColor = 'rgba(110,231,183,0.3)';
+                e.currentTarget.style.color = '#6ee7b7';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+                e.currentTarget.style.color = '#94a3b8';
+              }}
+              onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.95)'; }}
+              onMouseUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+              style={{
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: 20,
+                padding: '6px 14px',
+                fontSize: 12,
+                fontWeight: 500,
+                color: '#94a3b8',
+                cursor: 'pointer',
+                transition: 'all 150ms ease',
+                minHeight: 40,
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              +{mins} мин
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Start / Stop button */}
       <button

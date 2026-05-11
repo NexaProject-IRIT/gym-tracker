@@ -13,6 +13,7 @@ interface Props {
   onUpdateExercise: (exId: string, updates: Partial<WorkoutExercise>) => void;
   onDeleteExercise: (exId: string) => void;
   onAddExercise: (exercise: Omit<WorkoutExercise, 'id'>) => void;
+  onToggleDone: (exId: string) => void;
 }
 
 const IconBack = () => (
@@ -45,6 +46,16 @@ const IconInfo = () => (
 const IconPlus2 = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
     <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+);
+const IconDrag = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+    <circle cx="9" cy="6" r="1.5" fill="currentColor"/>
+    <circle cx="15" cy="6" r="1.5" fill="currentColor"/>
+    <circle cx="9" cy="12" r="1.5" fill="currentColor"/>
+    <circle cx="15" cy="12" r="1.5" fill="currentColor"/>
+    <circle cx="9" cy="18" r="1.5" fill="currentColor"/>
+    <circle cx="15" cy="18" r="1.5" fill="currentColor"/>
   </svg>
 );
 const IconPencil = () => (
@@ -323,7 +334,7 @@ const Field: React.FC<{ label: string; value: string; onChange: (v: string) => v
 };
 
 export const WorkoutDetail: React.FC<Props> = ({
-  workout, onClose, onUpdate, onDelete, onRepeat, onUpdateExercise, onDeleteExercise, onAddExercise,
+  workout, onClose, onUpdate, onDelete, onRepeat, onUpdateExercise, onDeleteExercise, onAddExercise, onToggleDone,
 }) => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingExercise, setEditingExercise] = useState<WorkoutExercise | null>(null);
@@ -357,29 +368,33 @@ export const WorkoutDetail: React.FC<Props> = ({
     setInfoLoading(false);
   };
 
-  // ── Чекбоксы выполнения ──
-  // Keys are index-based ("exercise_0", "exercise_1", …) so they survive backend
-  // round-trips that reassign database PKs on every PUT.
-  const storageKey = `workout_completed_${workout.id}`;
-  const [doneExercises, setDoneExercises] = useState<Set<string>>(() => {
-    try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) return new Set(JSON.parse(saved));
-      return new Set(
-        workout.exercises
-          .map((e, i) => (e.isDone ? `exercise_${i}` : null))
-          .filter(Boolean) as string[]
-      );
-    } catch { return new Set(); }
-  });
-  const toggleDone = (key: string) => {
-    setDoneExercises(prev => {
-      const next = new Set(prev);
-      if (next.has(key)) { next.delete(key); } else { next.add(key); }
-      localStorage.setItem(storageKey, JSON.stringify([...next]));
-      return next;
-    });
+  const doneCount = workout.exercises.filter(e => e.isDone).length;
+
+  // ── Drag-and-drop для переупорядочивания упражнений ──
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
+  const handleDragStart = (e: React.DragEvent, idx: number) => {
+    setDragIndex(idx);
+    e.dataTransfer.effectAllowed = 'move';
   };
+  const handleDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverIndex !== idx) setDragOverIndex(idx);
+  };
+  const handleDrop = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    if (dragIndex === null || dragIndex === idx) {
+      setDragIndex(null); setDragOverIndex(null); return;
+    }
+    const reordered = [...workout.exercises];
+    const [moved] = reordered.splice(dragIndex, 1);
+    reordered.splice(idx, 0, moved);
+    onUpdate({ exercises: reordered });
+    setDragIndex(null); setDragOverIndex(null);
+  };
+  const handleDragEnd = () => { setDragIndex(null); setDragOverIndex(null); };
 
   const c = WORKOUT_TYPE_COLORS[workout.type];
   const formatDate = (iso: string) => new Date(iso).toLocaleDateString('ru-RU', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -592,13 +607,13 @@ export const WorkoutDetail: React.FC<Props> = ({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <span style={{ fontSize: 12, color: '#475569' }}>Выполнено</span>
               <span style={{ fontSize: 12, color: '#6ee7b7', fontWeight: 600 }}>
-                {doneExercises.size} / {workout.exercises.length}
+                {doneCount} / {workout.exercises.length}
               </span>
             </div>
             <div style={{ height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
               <div style={{
                 height: '100%',
-                width: `${(doneExercises.size / workout.exercises.length) * 100}%`,
+                width: `${(doneCount / workout.exercises.length) * 100}%`,
                 background: 'linear-gradient(90deg, #6ee7b7, #34d399)',
                 borderRadius: 2,
                 transition: 'width 0.3s ease',
@@ -614,32 +629,57 @@ export const WorkoutDetail: React.FC<Props> = ({
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {workout.exercises.map((ex, idx) => {
-            const doneKey = `exercise_${idx}`;
-            const isDone = doneExercises.has(doneKey);
+            const isDone = ex.isDone;
+            const isDragging = dragIndex === idx;
+            const isDragOver = dragOverIndex === idx && dragIndex !== idx;
             return (
               <div
                 key={ex.id}
+                draggable={isEditMode}
+                onDragStart={isEditMode ? e => handleDragStart(e, idx) : undefined}
+                onDragOver={isEditMode ? e => handleDragOver(e, idx) : undefined}
+                onDrop={isEditMode ? e => handleDrop(e, idx) : undefined}
+                onDragEnd={isEditMode ? handleDragEnd : undefined}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 12,
                   padding: '14px 16px', borderRadius: 14,
-                  background: isDone
-                    ? 'rgba(110,231,183,0.04)'
-                    : isEditMode ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.025)',
-                  border: `1px solid ${isDone
-                    ? 'rgba(110,231,183,0.15)'
-                    : isEditMode ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)'}`,
-                  borderLeft: isDone ? '2px solid rgba(110,231,183,0.35)' : undefined,
-                  cursor: isEditMode ? 'pointer' : 'default',
-                  transition: 'background 0.15s, border-color 0.15s',
+                  background: isDragging
+                    ? 'rgba(110,231,183,0.08)'
+                    : isDone
+                      ? 'rgba(110,231,183,0.04)'
+                      : isEditMode ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.025)',
+                  border: `1px solid ${isDragOver
+                    ? 'rgba(110,231,183,0.5)'
+                    : isDone
+                      ? 'rgba(110,231,183,0.15)'
+                      : isEditMode ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)'}`,
+                  borderLeft: isDone && !isEditMode ? '2px solid rgba(110,231,183,0.35)' : undefined,
+                  borderTop: isDragOver ? '2px solid rgba(110,231,183,0.5)' : undefined,
+                  opacity: isDragging ? 0.4 : 1,
+                  cursor: isEditMode ? 'default' : 'default',
+                  transition: 'background 0.15s, border-color 0.15s, opacity 0.15s',
                 }}
                 onClick={() => isEditMode && setEditingExercise(ex)}
-                onMouseEnter={e => isEditMode && ((e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.07)')}
-                onMouseLeave={e => isEditMode && ((e.currentTarget as HTMLDivElement).style.background = isDone ? 'rgba(110,231,183,0.04)' : 'rgba(255,255,255,0.04)')}
               >
+                {/* Drag handle — только в режиме редактирования */}
+                {isEditMode && (
+                  <div
+                    onMouseDown={e => e.stopPropagation()}
+                    style={{
+                      cursor: 'grab', color: '#334155', flexShrink: 0,
+                      display: 'flex', alignItems: 'center', padding: '2px 0',
+                      userSelect: 'none',
+                    }}
+                    title="Перетащить"
+                  >
+                    <IconDrag />
+                  </div>
+                )}
+
                 {/* Чекбокс — только в режиме просмотра */}
                 {!isEditMode && (
                   <button
-                    onClick={e => { e.stopPropagation(); toggleDone(doneKey); }}
+                    onClick={e => { e.stopPropagation(); onToggleDone(ex.id); }}
                     style={{
                       width: 22, height: 22, borderRadius: 6, flexShrink: 0,
                       border: `1.5px solid ${isDone ? '#6ee7b7' : 'rgba(255,255,255,0.15)'}`,
