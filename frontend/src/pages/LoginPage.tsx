@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import React from 'react';
+import { setTokens } from '../utils/api';
 
 const IconEye = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -56,7 +57,7 @@ export const LoginPage = () => {
         setErrors({ api: data.error || 'Неверные данные' });
         return;
       }
-      localStorage.setItem('token', data.token);
+      setTokens(data.access, data.refresh);
       localStorage.setItem('user', JSON.stringify(data.user));
       navigate('/');
     } catch {

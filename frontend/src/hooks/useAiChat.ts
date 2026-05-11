@@ -1,5 +1,6 @@
 // src/hooks/useAiChat.ts
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { authedFetch } from '../utils/api';
 
 const BASE = '';
 
@@ -43,17 +44,6 @@ export interface ChatMessage {
   workoutsImported?: boolean;
 }
 
-function getToken(): string {
-  return localStorage.getItem('token') ?? '';
-}
-
-function authHeaders(): HeadersInit {
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Token ${getToken()}`,
-  };
-}
-
 function inferParameters(ex: { sets?: number; reps?: number; weight?: number; time?: number; distance?: number }): string[] {
   const params: string[] = [];
   if (ex.sets != null)     params.push('sets');
@@ -75,7 +65,7 @@ export const useAiChat = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${BASE}/ai/history/`, { headers: authHeaders() });
+      const res = await authedFetch(`${BASE}/ai/history/`);
       if (!res.ok) throw new Error(`Ошибка ${res.status}`);
       const data = await res.json();
       setMessages(data.messages ?? []);
@@ -106,9 +96,8 @@ export const useAiChat = () => {
     setMessages(prev => [...prev, optimisticUserMsg]);
 
     try {
-      const res = await fetch(`${BASE}/ai/chat/`, {
+      const res = await authedFetch(`${BASE}/ai/chat/`, {
         method: 'POST',
-        headers: authHeaders(),
         body: JSON.stringify({ message: trimmed }),
       });
 
@@ -143,9 +132,8 @@ export const useAiChat = () => {
   const clearHistory = useCallback(async () => {
     setError(null);
     try {
-      const res = await fetch(`${BASE}/ai/history/`, {
+      const res = await authedFetch(`${BASE}/ai/history/`, {
         method: 'DELETE',
-        headers: authHeaders(),
       });
       if (!res.ok && res.status !== 204) throw new Error(`Ошибка ${res.status}`);
       setMessages([]);
@@ -178,9 +166,8 @@ export const useAiChat = () => {
     };
 
     try {
-      const res = await fetch(`${BASE}/workouts/`, {
+      const res = await authedFetch(`${BASE}/workouts/`, {
         method: 'POST',
-        headers: authHeaders(),
         body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error(`Ошибка ${res.status}`);
@@ -198,9 +185,8 @@ export const useAiChat = () => {
     if (!msg?.workout_imports?.length) return 0;
 
     try {
-      const res = await fetch(`${BASE}/workouts/bulk-import/`, {
+      const res = await authedFetch(`${BASE}/workouts/bulk-import/`, {
         method: 'POST',
-        headers: authHeaders(),
         body: JSON.stringify({ workouts: msg.workout_imports }),
       });
       if (!res.ok) throw new Error(`Ошибка ${res.status}`);

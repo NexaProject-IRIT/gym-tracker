@@ -31,6 +31,9 @@ services:
       - DB_PASSWORD=gym_password
       - DB_HOST=db
       - DB_PORT=5432
+      - DEBUG=True
+      - ALLOWED_HOSTS=localhost,127.0.0.1
+      - CORS_ALLOWED_ORIGINS=http://localhost:5173
       - LLM_PROVIDER=gigachat
       - GIGACHAT_AUTH_KEY=MDE5Y2I5ZGQtOWY2OS03NDdhLWIxMjAtMTVmOTRhMTE1MGYwOmQxMGU1NzNlLTlkYjMtNDBiYi1iMDIyLTQ5MjQyOWE2MDJiZQ==
       - GIGACHAT_SCOPE=GIGACHAT_API_PERS

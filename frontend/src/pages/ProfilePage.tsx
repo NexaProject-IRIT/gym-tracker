@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NumberInput } from '../components/UI/NumberInput';
+import { authedFetch, clearTokens } from '../utils/api';
 
 // Enum строго из бэка (profiles/models.py GOAL_CHOICES)
 type Goal =
@@ -35,9 +36,7 @@ interface Stats {
   this_month: number;
 }
 
-function getToken(): string {
-  return localStorage.getItem('token') ?? '';
-}
+
 
 function formatWorkouts(n: number): string {
   const abs = Math.abs(n);
@@ -111,9 +110,7 @@ export const ProfilePage = () => {
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const res = await fetch('/auth/profile/', {
-          headers: { Authorization: `Token ${getToken()}` },
-        });
+        const res = await authedFetch('/auth/profile/');
         if (res.ok) {
           const data = await res.json();
           const p = readProfileFromResponse(data);
@@ -136,9 +133,7 @@ export const ProfilePage = () => {
   useEffect(() => {
     const loadStats = async () => {
       try {
-        const res = await fetch('/workouts/stats/', {
-          headers: { Authorization: `Token ${getToken()}` },
-        });
+        const res = await authedFetch('/workouts/stats/');
         if (res.ok) {
           const data = await res.json();
           setStats({ total: data.total ?? 0, this_month: data.this_month ?? 0 });
@@ -163,9 +158,8 @@ export const ProfilePage = () => {
       if (draft.age) body.age = parseInt(draft.age);
       if (draft.goal) body.goal = draft.goal;
 
-      const res = await fetch('/auth/profile/', {
+      const res = await authedFetch('/auth/profile/', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Token ${getToken()}` },
         body: JSON.stringify(body),
       });
       if (res.ok) {
@@ -192,7 +186,7 @@ export const ProfilePage = () => {
   const handleExport = async () => {
     setExporting(true);
     try {
-      const res = await fetch('/export/', { headers: { Authorization: `Token ${getToken()}` } });
+      const res = await authedFetch('/export/');
       if (res.ok) {
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
@@ -212,9 +206,8 @@ export const ProfilePage = () => {
     setShowClearConfirm(false);
     setClearing(true);
     try {
-      const res = await fetch('/workouts/clear/', {
+      const res = await authedFetch('/workouts/clear/', {
         method: 'DELETE',
-        headers: { Authorization: `Token ${getToken()}` },
       });
       if (res.ok) setStats({ total: 0, this_month: 0 });
     } catch { /* ignore */ }
@@ -222,9 +215,8 @@ export const ProfilePage = () => {
   };
 
   const handleLogout = () => {
-    fetch('/auth/logout/', { method: 'POST', headers: { Authorization: `Token ${getToken()}` } }).catch(() => {});
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    authedFetch('/auth/logout/', { method: 'POST' }).catch(() => {});
+    clearTokens();
     navigate('/login');
   };
 

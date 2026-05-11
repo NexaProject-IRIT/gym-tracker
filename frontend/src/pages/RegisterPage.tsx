@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import React from 'react';
 import { NumberInput } from '../components/UI/NumberInput';
+import { setTokens } from '../utils/api';
 
 const IconEye = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -102,7 +103,8 @@ export const RegisterPage = () => {
     if (!account.login.trim()) e.login = 'Введите логин';
     else if (account.login.length < 3) e.login = 'Минимум 3 символа';
     if (!account.password) e.password = 'Введите пароль';
-    else if (account.password.length < 8) e.password = 'Минимум 8 символов';
+    else if (account.password.length < 10) e.password = 'Минимум 10 символов';
+    else if (!/\d/.test(account.password)) e.password = 'Пароль должен содержать хотя бы одну цифру';
     if (!account.confirmPassword) e.confirmPassword = 'Повторите пароль';
     else if (account.password !== account.confirmPassword) e.confirmPassword = 'Пароли не совпадают';
     setAccountErrors(e);
@@ -151,7 +153,7 @@ export const RegisterPage = () => {
         setBodyErrors({ api: msg });
         return;
       }
-      localStorage.setItem('token', data.token);
+      setTokens(data.access, data.refresh);
       localStorage.setItem('user', JSON.stringify(data.user));
       navigate('/');
     } catch {
@@ -234,7 +236,7 @@ export const RegisterPage = () => {
               <Field
                 label="Пароль" value={account.password}
                 onChange={v => setAccount(f => ({ ...f, password: v }))}
-                error={accountErrors.password} placeholder="Минимум 8 символов"
+                error={accountErrors.password} placeholder="Минимум 10 символов, хотя бы одна цифра"
                 type={showPassword ? 'text' : 'password'}
                 rightEl={
                   <button onClick={() => setShowPassword(s => !s)}
@@ -243,6 +245,7 @@ export const RegisterPage = () => {
                   </button>
                 }
               />
+              <PasswordStrength password={account.password} />
               <Field
                 label="Повтор пароля" value={account.confirmPassword}
                 onChange={v => setAccount(f => ({ ...f, confirmPassword: v }))}
@@ -354,6 +357,40 @@ export const RegisterPage = () => {
           </p>
         </div>
       </div>
+    </div>
+  );
+};
+
+function getPasswordStrength(p: string): 0 | 1 | 2 | 3 {
+  if (!p) return 0;
+  const long = p.length >= 10;
+  const hasDigit = /\d/.test(p);
+  const hasSpecial = /[^a-zA-Z0-9]/.test(p);
+  if (long && hasDigit && hasSpecial) return 3;
+  if (long && hasDigit) return 2;
+  return 1;
+}
+
+const STRENGTH_LABEL = ['', 'Слабый', 'Средний', 'Сильный'] as const;
+const STRENGTH_COLOR = ['', '#f87171', '#fbbf24', '#34d399'] as const;
+
+const PasswordStrength = ({ password }: { password: string }) => {
+  const strength = getPasswordStrength(password);
+  if (!password) return null;
+  return (
+    <div style={{ marginTop: -10, marginBottom: 16 }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
+        {[1, 2, 3].map(i => (
+          <div key={i} style={{
+            flex: 1, height: 3, borderRadius: 2,
+            background: i <= strength ? STRENGTH_COLOR[strength] : 'rgba(255,255,255,0.08)',
+            transition: 'background 0.2s',
+          }} />
+        ))}
+      </div>
+      <span style={{ fontSize: 11, color: STRENGTH_COLOR[strength] }}>
+        {STRENGTH_LABEL[strength]}
+      </span>
     </div>
   );
 };

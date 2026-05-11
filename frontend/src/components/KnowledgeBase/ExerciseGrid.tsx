@@ -6,16 +6,13 @@ import { ExerciseModal } from './ExerciseModal';
 import { ExerciseCard } from './ExerciseCard';
 import { EquipmentCard } from './EquipmentCard';
 import type { Exercise } from '../../types/workout';
+import { authedFetch } from '../../utils/api';
 
 interface Equipment {
   id: string;
   name: string;
   image: string | null;
 }
-
-const authHeaders = () => ({
-  Authorization: `Token ${localStorage.getItem('token') ?? ''}`,
-});
 
 export const ExerciseGrid = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -45,7 +42,7 @@ export const ExerciseGrid = () => {
       // Фильтр по тренажёру — только при вкладке equipment и выбранном тренажёре
       if (equipmentFilter) params.append('equipment', equipmentFilter);
 
-      const res = await fetch(`${url}?${params.toString()}`, { headers: authHeaders() });
+      const res = await authedFetch(`${url}?${params.toString()}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       const data = await res.json();
@@ -61,7 +58,7 @@ export const ExerciseGrid = () => {
   // ─── Загрузка тренажёров (один раз) ──────────────────────────────────────
   const fetchEquipment = async () => {
     try {
-      const res = await fetch(`/exercises/equipment/`, { headers: authHeaders() });
+      const res = await authedFetch(`/exercises/equipment/`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setEquipment(Array.isArray(data) ? data : []);
@@ -98,7 +95,7 @@ export const ExerciseGrid = () => {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch('/exercises/', { headers: authHeaders() });
+        const res = await authedFetch('/exercises/');
         if (res.ok) {
           const data = await res.json();
           setAllExercises(Array.isArray(data) ? data : []);

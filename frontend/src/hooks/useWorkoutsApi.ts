@@ -2,19 +2,9 @@
 import { useState, useCallback } from 'react';
 import type { Workout, WorkoutExercise, ParameterType } from '../types/workout';
 import { DEFAULT_PARAMS_FOR_TYPE } from '../types/workout';
+import { authedFetch } from '../utils/api';
 
 const BASE = '';
-
-function getToken(): string {
-  return localStorage.getItem('token') ?? '';
-}
-
-function authHeaders(): HeadersInit {
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Token ${getToken()}`,
-  };
-}
 
 function generateExId(): string {
   return `ex_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
@@ -87,9 +77,7 @@ export const useWorkoutsApi = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${BASE}/workouts/`, {
-        headers: authHeaders(),
-      });
+      const res = await authedFetch(`${BASE}/workouts/`);
       if (!res.ok) throw new Error(`Ошибка ${res.status}`);
       const data = await res.json();
       // List response has no exercises array, just exercise_count
@@ -114,9 +102,7 @@ export const useWorkoutsApi = () => {
   // GET /workouts/:id/ — detail with exercises
   const fetchWorkoutDetail = useCallback(async (id: string): Promise<Workout | null> => {
     try {
-      const res = await fetch(`${BASE}/workouts/${id}/`, {
-        headers: authHeaders(),
-      });
+      const res = await authedFetch(`${BASE}/workouts/${id}/`);
       if (!res.ok) return null;
       const data = await res.json();
       const w = normalizeWorkout(data);
@@ -131,9 +117,8 @@ export const useWorkoutsApi = () => {
   // POST /workouts/
   const addWorkout = useCallback(async (workout: Omit<Workout, 'id'>): Promise<string | null> => {
     try {
-      const res = await fetch(`${BASE}/workouts/`, {
+      const res = await authedFetch(`${BASE}/workouts/`, {
         method: 'POST',
-        headers: authHeaders(),
         body: JSON.stringify({
           name: workout.name,
           type: workout.type,
@@ -181,9 +166,8 @@ export const useWorkoutsApi = () => {
       } else if (current?.exercises) {
         body.exercises = current.exercises.map(serializeExercise);
       }
-      const res = await fetch(`${BASE}/workouts/${id}/`, {
+      const res = await authedFetch(`${BASE}/workouts/${id}/`, {
         method: 'PUT',
-        headers: authHeaders(),
         body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error(`Ошибка ${res.status}`);
@@ -197,9 +181,8 @@ export const useWorkoutsApi = () => {
   // DELETE /workouts/:id/
   const deleteWorkout = useCallback(async (id: string) => {
     try {
-      const res = await fetch(`${BASE}/workouts/${id}/`, {
+      const res = await authedFetch(`${BASE}/workouts/${id}/`, {
         method: 'DELETE',
-        headers: authHeaders(),
       });
       if (!res.ok) throw new Error(`Ошибка ${res.status}`);
       setWorkouts(prev => prev.filter(w => w.id !== id));

@@ -13,7 +13,7 @@ from rapidfuzz import fuzz, process
 
 
 class ExerciseListView(APIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get(self, request):
         queryset = Exercise.objects.all()
@@ -83,7 +83,7 @@ class ExerciseListView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ExerciseDetailView(APIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     def get_object(self, pk):
         try:
             return Exercise.objects.get(pk=pk)
@@ -118,7 +118,7 @@ class ExerciseDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class EquipmentListView(APIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get(self, request):
         queryset = Equipment.objects.all()
@@ -172,7 +172,7 @@ class EquipmentListView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class EquipmentDetailView(APIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     def get_object(self, pk):
         try:
             return Equipment.objects.get(pk=pk)
