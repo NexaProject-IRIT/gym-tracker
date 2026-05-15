@@ -308,7 +308,7 @@ export const WorkoutList: React.FC = () => {
           bottom: isMobile ? 64 : 0,
           left: isMobile ? 0 : 220,
           right: 0,
-          padding: '12px 32px 0',
+          padding: isMobile ? '12px 32px 0' : '12px 32px 20px',
           background: 'linear-gradient(to top, var(--bg) 60%, transparent)',
           zIndex: 30,
         }}>
