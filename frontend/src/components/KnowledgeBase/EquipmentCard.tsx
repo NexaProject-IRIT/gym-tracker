@@ -15,7 +15,7 @@ function getCategory(name: string): string {
 }
 
 const IconDumbbell = () => (
-  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#1e293b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--ghost)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M6 4v16M18 4v16M6 8H2v8h4M18 8h4v8h-4M6 8h12v8H6z"/>
   </svg>
 );
@@ -31,7 +31,7 @@ export const EquipmentCard = ({ equipment, onClick, exerciseCount }: Props) => {
   };
   const onLeave = (e: React.MouseEvent<HTMLDivElement>) => {
     e.currentTarget.style.transform = 'scale(1)';
-    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
+    e.currentTarget.style.borderColor = 'var(--border)';
     e.currentTarget.style.boxShadow = 'none';
     if (imgRef.current) imgRef.current.style.filter = 'brightness(0.75)';
   };
@@ -48,7 +48,7 @@ export const EquipmentCard = ({ equipment, onClick, exerciseCount }: Props) => {
   const onTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
     const el = e.currentTarget as HTMLDivElement;
     el.style.transform = 'scale(1)';
-    el.style.borderColor = 'rgba(255,255,255,0.06)';
+    el.style.borderColor = 'var(--border)';
     el.style.boxShadow = 'none';
     if (imgRef.current) imgRef.current.style.filter = 'brightness(0.75)';
   };
@@ -67,12 +67,12 @@ export const EquipmentCard = ({ equipment, onClick, exerciseCount }: Props) => {
         overflow: 'hidden',
         cursor: 'pointer',
         position: 'relative',
-        border: '1px solid rgba(255,255,255,0.06)',
+        border: '1px solid var(--border)',
         transition: 'transform 150ms ease, border-color 150ms ease, box-shadow 150ms ease',
       }}
     >
       {/* Image + overlays */}
-      <div style={{ aspectRatio: '4 / 3', width: '100%', position: 'relative', background: '#0d0f13' }}>
+      <div style={{ aspectRatio: '4 / 3', width: '100%', position: 'relative', background: 'var(--surface3)' }}>
         {equipment.image ? (
           <img
             ref={imgRef}
@@ -102,7 +102,7 @@ export const EquipmentCard = ({ equipment, onClick, exerciseCount }: Props) => {
           position: 'absolute', top: 10, right: 10,
           background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)',
           borderRadius: 999, padding: '4px 10px',
-          fontSize: 11, fontWeight: 600, color: '#6ee7b7',
+          fontSize: 11, fontWeight: 600, color: 'var(--accent)',
           pointerEvents: 'none',
         }}>
           {getCategory(equipment.name)}
@@ -124,7 +124,7 @@ export const EquipmentCard = ({ equipment, onClick, exerciseCount }: Props) => {
               display: 'inline-flex', alignItems: 'center', gap: 4,
               fontSize: 11, color: 'rgba(255,255,255,0.6)', marginTop: 3,
             }}>
-              <span style={{ width: 4, height: 4, borderRadius: '50%', background: '#6ee7b7', flexShrink: 0, display: 'inline-block' }} />
+              <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0, display: 'inline-block' }} />
               {exerciseCount} упражнений
             </div>
           )}

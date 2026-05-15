@@ -15,14 +15,14 @@ const DIFFICULTY_STYLE: Record<string, { bg: string; color: string }> = {
 };
 
 const sectionLabel: CSSProperties = {
-  fontSize: 11, fontWeight: 600, color: '#475569',
+  fontSize: 11, fontWeight: 600, color: 'var(--faint)',
   letterSpacing: '1.5px', textTransform: 'uppercase',
   marginBottom: 8, display: 'block',
 };
 
 const muscleChip: CSSProperties = {
-  background: '#1a1d24', border: '1px solid rgba(255,255,255,0.08)',
-  borderRadius: 8, padding: '6px 12px', fontSize: 13, color: '#cbd5e1',
+  background: 'var(--surface)', border: '1px solid var(--border)',
+  borderRadius: 8, padding: '6px 12px', fontSize: 13, color: 'var(--text3)',
 };
 
 const frostedCircle: CSSProperties = {
@@ -51,7 +51,7 @@ const IconChevronRight = () => (
 );
 
 const IconDumbbell = () => (
-  <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#2d3748" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="var(--ghost)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M6 4v16M18 4v16M6 8H2v8h4M18 8h4v8h-4M6 8h12v8H6z"/>
   </svg>
 );
@@ -67,7 +67,6 @@ export const ExerciseModal = ({ exercise, onClose, zIndex = 50 }: Props) => {
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const touchStartX = useRef(0);
 
-  // Reset carousel index whenever a different exercise opens
   useEffect(() => { setTechniqueIdx(0); }, [exercise?.id]);
 
   if (!exercise) return null;
@@ -115,11 +114,11 @@ export const ExerciseModal = ({ exercise, onClose, zIndex = 50 }: Props) => {
         {/* Panel */}
         <div
           className="ex-modal-panel"
-          style={{ width: '100%', height: '100dvh', overflowY: 'auto', background: '#111318', position: 'relative' }}
+          style={{ width: '100%', height: '100dvh', overflowY: 'auto', background: 'var(--bg)', position: 'relative' }}
           onClick={e => e.stopPropagation()}
         >
-          {/* ── Hero image ─────────────────────────────────────── */}
-          <div style={{ position: 'relative', height: 260, background: '#0d0f14', overflow: 'hidden', flexShrink: 0 }}>
+          {/* Hero image */}
+          <div style={{ position: 'relative', height: 260, background: 'var(--surface3)', overflow: 'hidden', flexShrink: 0 }}>
             {heroSrc ? (
               <img src={heroSrc} alt={exercise.name}
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
@@ -130,7 +129,7 @@ export const ExerciseModal = ({ exercise, onClose, zIndex = 50 }: Props) => {
             )}
             <div style={{
               position: 'absolute', bottom: 0, left: 0, right: 0, height: 160,
-              background: 'linear-gradient(to top, #111318 0%, transparent 60%)',
+              background: 'linear-gradient(to top, var(--bg) 0%, transparent 60%)',
               pointerEvents: 'none',
             }} />
             <div style={{ position: 'absolute', bottom: 16, left: 16, right: 60 }}>
@@ -146,7 +145,7 @@ export const ExerciseModal = ({ exercise, onClose, zIndex = 50 }: Props) => {
             </button>
           </div>
 
-          {/* ── Content ────────────────────────────────────────── */}
+          {/* Content */}
           <div style={{ padding: '16px 16px 40px' }}>
 
             {/* Badges */}
@@ -162,7 +161,7 @@ export const ExerciseModal = ({ exercise, onClose, zIndex = 50 }: Props) => {
                 )}
                 {exercise.equipment && (
                   <span style={{
-                    background: 'rgba(110,231,183,0.1)', color: '#6ee7b7',
+                    background: 'var(--accent-a10)', color: 'var(--accent)',
                     borderRadius: 999, padding: '4px 12px', fontSize: 12, fontWeight: 600,
                   }}>
                     {exercise.equipment}
@@ -187,18 +186,17 @@ export const ExerciseModal = ({ exercise, onClose, zIndex = 50 }: Props) => {
             {hasDescription && (
               <div style={{ marginBottom: 20 }}>
                 <span style={sectionLabel}>Описание</span>
-                <p style={{ fontSize: 15, lineHeight: 1.7, color: '#94a3b8', margin: 0, whiteSpace: 'pre-wrap' }}>
+                <p style={{ fontSize: 15, lineHeight: 1.7, color: 'var(--muted)', margin: 0, whiteSpace: 'pre-wrap' }}>
                   {exercise.description}
                 </p>
               </div>
             )}
 
-            {/* ── Technique carousel ─────────────────────────── */}
+            {/* Technique carousel */}
             {techniques.length > 0 && (
               <div style={{ marginBottom: 20 }}>
                 <span style={sectionLabel}>Техника выполнения</span>
 
-                {/* Image frame */}
                 <div style={{ position: 'relative', borderRadius: 12 }}>
                   <img
                     src={techniques[techniqueIdx]}
@@ -212,11 +210,10 @@ export const ExerciseModal = ({ exercise, onClose, zIndex = 50 }: Props) => {
                     }}
                     style={{
                       width: '100%', aspectRatio: '4 / 3', objectFit: 'contain',
-                      background: '#0d0f13', display: 'block', cursor: 'zoom-in',
+                      background: 'var(--surface3)', display: 'block', cursor: 'zoom-in',
                     }}
                   />
 
-                  {/* Arrow buttons */}
                   {multiTechnique && techniqueIdx > 0 && (
                     <button
                       onClick={prevTechnique}
@@ -235,7 +232,6 @@ export const ExerciseModal = ({ exercise, onClose, zIndex = 50 }: Props) => {
                   )}
                 </div>
 
-                {/* Dot indicators */}
                 {multiTechnique && (
                   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: 10 }}>
                     {techniques.map((_, i) => (
@@ -246,7 +242,7 @@ export const ExerciseModal = ({ exercise, onClose, zIndex = 50 }: Props) => {
                           height: 6,
                           width: i === techniqueIdx ? 18 : 6,
                           borderRadius: 999, border: 'none', padding: 0, cursor: 'pointer',
-                          background: i === techniqueIdx ? '#6ee7b7' : 'rgba(255,255,255,0.2)',
+                          background: i === techniqueIdx ? 'var(--accent)' : 'var(--border2)',
                           transition: 'width 200ms ease, background 200ms ease',
                           flexShrink: 0,
                         }}
@@ -271,7 +267,7 @@ export const ExerciseModal = ({ exercise, onClose, zIndex = 50 }: Props) => {
         </div>
       </div>
 
-      {/* ── Fullscreen lightbox ────────────────────────────────── */}
+      {/* Fullscreen lightbox */}
       {lightboxSrc && (
         <div
           style={{

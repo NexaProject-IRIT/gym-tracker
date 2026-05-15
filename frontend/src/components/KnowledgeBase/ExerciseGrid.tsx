@@ -16,7 +16,7 @@ interface Equipment {
 
 export const ExerciseGrid = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [allExercises, setAllExercises] = useState<Exercise[]>([]); // unfiltered, for counts
+  const [allExercises, setAllExercises] = useState<Exercise[]>([]);
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'all' | 'equipment'>('all');
@@ -25,26 +25,18 @@ export const ExerciseGrid = () => {
   const [selectedEquipment, setSelectedEquipment] = useState<string | null>(null);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
 
-  // useRef для debounce — не пересоздаётся при ре-рендерах
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ─── Загрузка упражнений (с сервера) ─────────────────────────────────────
   const fetchExercises = async (query: string, tag: string | null, equipmentFilter: string | null) => {
     setLoading(true);
     try {
-      // Если есть поисковый запрос — идём на /exercises/search/, иначе на /exercises/
       const url = query.trim() ? `/exercises/search/` : `/exercises/`;
       const params = new URLSearchParams();
-
       if (query.trim()) params.append('q', query.trim());
-      // Передаём тег без символа # (например, ?tag=ноги)
       if (tag) params.append('tag', tag.replace('#', ''));
-      // Фильтр по тренажёру — только при вкладке equipment и выбранном тренажёре
       if (equipmentFilter) params.append('equipment', equipmentFilter);
-
       const res = await authedFetch(`${url}?${params.toString()}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
       const data = await res.json();
       setExercises(Array.isArray(data) ? data : []);
     } catch (e) {
@@ -55,7 +47,6 @@ export const ExerciseGrid = () => {
     }
   };
 
-  // ─── Загрузка тренажёров (один раз) ──────────────────────────────────────
   const fetchEquipment = async () => {
     try {
       const res = await authedFetch(`/exercises/equipment/`);
@@ -67,31 +58,22 @@ export const ExerciseGrid = () => {
     }
   };
 
-  // ─── Debounce для поискового запроса ─────────────────────────────────────
   useEffect(() => {
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
-
     if (search.trim()) {
-      // Текстовый поиск — с задержкой 300ms
       debounceTimer.current = setTimeout(() => {
         fetchExercises(search, selectedTag, selectedEquipment);
       }, 300);
     } else {
-      // Пустая строка — загружаем сразу без задержки
       fetchExercises('', selectedTag, selectedEquipment);
     }
-
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
     };
   }, [search, selectedTag, selectedEquipment]);
 
-  // Загрузка тренажёров при первом рендере
-  useEffect(() => {
-    fetchEquipment();
-  }, []);
+  useEffect(() => { fetchEquipment(); }, []);
 
-  // Загрузка полного списка упражнений один раз — только для подсчёта количества по тренажёрам
   useEffect(() => {
     (async () => {
       try {
@@ -104,23 +86,21 @@ export const ExerciseGrid = () => {
     })();
   }, []);
 
-  // ─── Обработчик клика по тренажёру ───────────────────────────────────────
   const handleEquipmentClick = (name: string) => {
-    // Переключаемся на вкладку "Все упражнения" и фильтруем по тренажёру
     setSelectedEquipment(name);
     setActiveTab('all');
   };
 
   return (
-    <div style={{ background: '#111318', minHeight: '100vh', color: '#f1f5f9' }}>
-      {/* Sticky header: title + tabs + search + tags */}
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)' }}>
+      {/* Sticky header */}
       <div style={{
         position: 'sticky', top: 0, zIndex: 10,
-        background: 'rgba(17,19,24,0.97)', backdropFilter: 'blur(8px)',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        background: 'var(--bg)', backdropFilter: 'blur(8px)',
+        borderBottom: '1px solid var(--border)',
         padding: '16px 16px 0',
       }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#f1f5f9', margin: '0 0 14px', letterSpacing: '-0.01em' }}>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', margin: '0 0 14px', letterSpacing: '-0.01em' }}>
           База тренировок
         </h1>
 
@@ -133,28 +113,28 @@ export const ExerciseGrid = () => {
               style={{
                 padding: '7px 16px', borderRadius: 10, border: 'none', cursor: 'pointer',
                 fontSize: 13, fontWeight: 700,
-                background: activeTab === tab ? '#6ee7b7' : 'rgba(255,255,255,0.05)',
-                color: activeTab === tab ? '#064e3b' : '#64748b',
+                background: activeTab === tab ? 'var(--accent)' : 'var(--border)',
+                color: activeTab === tab ? 'var(--accent-fg)' : 'var(--dim)',
                 transition: 'all 0.15s',
               }}
             >{label}</button>
           ))}
         </div>
 
-        {/* Поиск и теги — только на вкладке "Все упражнения" */}
+        {/* Поиск и теги */}
         {activeTab === 'all' && (
           <>
             <SearchBar value={search} onChange={setSearch} />
             <TagFilter selectedTag={selectedTag} onSelect={setSelectedTag} />
             {selectedEquipment && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 10 }}>
-                <span style={{ fontSize: 12, color: '#475569' }}>Тренажёр:</span>
-                <span style={{ padding: '3px 10px', background: 'rgba(110,231,183,0.1)', color: '#6ee7b7', borderRadius: 20, fontSize: 12, fontWeight: 600 }}>
+                <span style={{ fontSize: 12, color: 'var(--faint)' }}>Тренажёр:</span>
+                <span style={{ padding: '3px 10px', background: 'var(--accent-a10)', color: 'var(--accent)', borderRadius: 20, fontSize: 12, fontWeight: 600 }}>
                   {selectedEquipment}
                 </span>
                 <button
                   onClick={() => setSelectedEquipment(null)}
-                  style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer', fontSize: 12 }}
+                  style={{ background: 'none', border: 'none', color: 'var(--faint)', cursor: 'pointer', fontSize: 12 }}
                 >
                   ✕ сбросить
                 </button>
@@ -164,7 +144,7 @@ export const ExerciseGrid = () => {
         )}
       </div>
 
-      {/* ─── Вкладка: Тренажёры ─────────────────────────────────────── */}
+      {/* Вкладка: Тренажёры */}
       {activeTab === 'equipment' && (() => {
         const countByEquipment = allExercises.reduce<Record<string, number>>((acc, ex) => {
           if (ex.equipment) acc[ex.equipment] = (acc[ex.equipment] ?? 0) + 1;
@@ -172,13 +152,13 @@ export const ExerciseGrid = () => {
         }, {});
         return (
           <>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#475569', letterSpacing: '1.5px', textTransform: 'uppercase', padding: '4px 16px 8px' }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--faint)', letterSpacing: '1.5px', textTransform: 'uppercase', padding: '4px 16px 8px' }}>
               Оборудование
             </div>
             <style>{`@media (min-width: 640px) { .eq-grid { grid-template-columns: repeat(3, 1fr) !important; } } @media (min-width: 1024px) { .eq-grid { grid-template-columns: repeat(4, 1fr) !important; } }`}</style>
             <div className="eq-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, padding: '0 16px 16px' }}>
               {equipment.length === 0 ? (
-                <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#475569', padding: '48px 0' }}>
+                <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--faint)', padding: '48px 0' }}>
                   Тренажёры не загружены
                 </p>
               ) : (
@@ -196,15 +176,15 @@ export const ExerciseGrid = () => {
         );
       })()}
 
-      {/* ─── Вкладка: Все упражнения ────────────────────────────────── */}
+      {/* Вкладка: Все упражнения */}
       {activeTab === 'all' && (
         loading ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 0', opacity: 0.5 }}>
-            <Loader2 className="w-10 h-10 animate-spin text-[#6ee7b7]" style={{ marginBottom: 12 }} />
-            <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6ee7b7' }}>Загрузка...</p>
+            <Loader2 className="w-10 h-10 animate-spin" style={{ marginBottom: 12, color: 'var(--accent)' }} />
+            <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--accent)' }}>Загрузка...</p>
           </div>
         ) : exercises.length === 0 ? (
-          <p style={{ textAlign: 'center', color: '#475569', padding: '48px 0' }}>Ничего не найдено</p>
+          <p style={{ textAlign: 'center', color: 'var(--faint)', padding: '48px 0' }}>Ничего не найдено</p>
         ) : (
           <>
             <style>{`@media (min-width: 640px) { .ex-grid { grid-template-columns: repeat(3, 1fr) !important; } } @media (min-width: 1024px) { .ex-grid { grid-template-columns: repeat(4, 1fr) !important; } }`}</style>

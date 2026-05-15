@@ -1,7 +1,79 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-/* Скрыть браузерные стрелки у input[type=number] */
+
+/* ── Тема: тёмная (по умолчанию) ── */
+:root {
+  --bg:       #111318;
+  --surface:  #1a1d24;
+  --surface2: #21252e;
+  --surface3: #0d0f14;
+
+  --border:  rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.10);
+  --border3: rgba(255,255,255,0.12);
+
+  --text:   #f1f5f9;
+  --text2:  #e2e8f0;
+  --text3:  #cbd5e1;
+  --muted:  #94a3b8;
+  --dim:    #64748b;
+  --faint:  #475569;
+  --ghost:  #334155;
+
+  --accent:    #6ee7b7;
+  --accent-fg: #052e16;
+  --accent-a10: rgba(110,231,183,0.10);
+  --accent-a12: rgba(110,231,183,0.12);
+  --accent-a20: rgba(110,231,183,0.20);
+  --accent-a25: rgba(110,231,183,0.25);
+  --accent-a30: rgba(110,231,183,0.30);
+
+  --scrollbar-thumb: rgba(255,255,255,0.10);
+  --surface-glass: rgba(26,29,36,0.92);
+}
+
+/* ── Тема: светлая ── */
+[data-theme="light"] {
+  --bg:       #f1f5f9;
+  --surface:  #ffffff;
+  --surface2: #f8fafc;
+  --surface3: #e2e8f0;
+
+  --border:  rgba(0,0,0,0.08);
+  --border2: rgba(0,0,0,0.12);
+  --border3: rgba(0,0,0,0.16);
+
+  --text:   #0f172a;
+  --text2:  #1e293b;
+  --text3:  #334155;
+  --muted:  #475569;
+  --dim:    #64748b;
+  --faint:  #94a3b8;
+  --ghost:  #cbd5e1;
+
+  --accent:    #059669;
+  --accent-fg: #f0fdf4;
+  --accent-a10: rgba(5,150,105,0.08);
+  --accent-a12: rgba(5,150,105,0.10);
+  --accent-a20: rgba(5,150,105,0.18);
+  --accent-a25: rgba(5,150,105,0.22);
+  --accent-a30: rgba(5,150,105,0.28);
+
+  --scrollbar-thumb: rgba(0,0,0,0.15);
+  --surface-glass: rgba(248,250,252,0.92);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 2px; }
+
 input[type='number']::-webkit-inner-spin-button,
 input[type='number']::-webkit-outer-spin-button {
   -webkit-appearance: none;

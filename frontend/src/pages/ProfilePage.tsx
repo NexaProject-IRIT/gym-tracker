@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { NumberInput } from '../components/UI/NumberInput';
 import { authedFetch, clearTokens } from '../utils/api';
 
-// Enum строго из бэка (profiles/models.py GOAL_CHOICES)
 type Goal =
   | 'lose_weight'
   | 'gain_muscle'
@@ -37,8 +36,6 @@ interface Stats {
   this_month: number;
 }
 
-
-
 function formatWorkouts(n: number): string {
   const abs = Math.abs(n);
   const mod10 = abs % 10;
@@ -50,9 +47,9 @@ function formatWorkouts(n: number): string {
 }
 
 const IconPerson = () => (
-  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="12" cy="6" r="3" stroke="#6ee7b7" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M5 21v-1a7 7 0 0114 0v1" stroke="#6ee7b7" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+  <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+    <circle cx="12" cy="6" r="3" stroke="var(--accent)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M5 21v-1a7 7 0 0114 0v1" stroke="var(--accent)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
@@ -65,16 +62,16 @@ const ConfirmModal = ({
     zIndex: 1000, padding: 24,
   }}>
     <div style={{
-      background: '#1a1d24', borderRadius: 20,
-      border: '1px solid rgba(255,255,255,0.1)',
+      background: 'var(--surface)', borderRadius: 20,
+      border: '1px solid var(--border2)',
       padding: 28, maxWidth: 360, width: '100%',
     }}>
-      <p style={{ color: '#f1f5f9', fontSize: 15, margin: '0 0 24px', lineHeight: 1.5 }}>{message}</p>
+      <p style={{ color: 'var(--text)', fontSize: 15, margin: '0 0 24px', lineHeight: 1.5 }}>{message}</p>
       <div style={{ display: 'flex', gap: 10 }}>
         <button onClick={onCancel} style={{
           flex: 1, padding: '12px', borderRadius: 12,
-          border: '1px solid rgba(255,255,255,0.1)', background: 'transparent',
-          color: '#94a3b8', fontWeight: 600, fontSize: 14, cursor: 'pointer',
+          border: '1px solid var(--border2)', background: 'transparent',
+          color: 'var(--muted)', fontWeight: 600, fontSize: 14, cursor: 'pointer',
         }}>Отмена</button>
         <button onClick={onConfirm} style={{
           flex: 1, padding: '12px', borderRadius: 12, border: 'none',
@@ -142,7 +139,7 @@ export const ProfilePage = () => {
           setStats({ total: data.total ?? 0, this_month: data.this_month ?? 0 });
           setStatsLoaded(true);
         }
-      } catch { /* оставляем statsLoaded=false, в плашках будет «—» */ }
+      } catch { /* statsLoaded остаётся false */ }
     };
     loadStats();
   }, []);
@@ -166,10 +163,7 @@ export const ProfilePage = () => {
       if (draft.age) body.age = parseInt(draft.age);
       if (draft.goal) body.goal = draft.goal;
 
-      const res = await authedFetch('/auth/profile/', {
-        method: 'PATCH',
-        body: JSON.stringify(body),
-      });
+      const res = await authedFetch('/auth/profile/', { method: 'PATCH', body: JSON.stringify(body) });
       if (res.ok) {
         const data = await res.json();
         const p = readProfileFromResponse(data);
@@ -179,10 +173,7 @@ export const ProfilePage = () => {
         setIsEditing(false);
       } else {
         const err = await res.json().catch(() => ({}));
-        if (err.username?.[0]) {
-          setUsernameError(err.username[0]);
-          return;
-        }
+        if (err.username?.[0]) { setUsernameError(err.username[0]); return; }
         const firstKey = Object.keys(err)[0];
         setSaveError(firstKey ? String(Array.isArray(err[firstKey]) ? err[firstKey][0] : err[firstKey]) : `Ошибка ${res.status}`);
       }
@@ -218,9 +209,7 @@ export const ProfilePage = () => {
     setShowClearConfirm(false);
     setClearing(true);
     try {
-      const res = await authedFetch('/workouts/clear/', {
-        method: 'DELETE',
-      });
+      const res = await authedFetch('/workouts/clear/', { method: 'DELETE' });
       if (res.ok) setStats({ total: 0, this_month: 0 });
     } catch { /* ignore */ }
     setClearing(false);
@@ -239,51 +228,56 @@ export const ProfilePage = () => {
 
   type NumericField = 'age' | 'weight' | 'height';
   const numericFields: { field: NumericField; label: string; step: number; min: number; max: number }[] = [
-    { field: 'age',    label: 'Возраст',  step: 1,   min: 10, max: 120 },
-    { field: 'weight', label: 'Вес (кг)', step: 0.5, min: 20, max: 500 },
-    { field: 'height', label: 'Рост (см)', step: 1,  min: 50, max: 280 },
+    { field: 'age',    label: 'Возраст',   step: 1,   min: 10, max: 120 },
+    { field: 'weight', label: 'Вес (кг)',  step: 0.5, min: 20, max: 500 },
+    { field: 'height', label: 'Рост (см)', step: 1,   min: 50, max: 280 },
   ];
 
+  const rowStyle: React.CSSProperties = {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    padding: '14px 0', borderBottom: '1px solid var(--border)',
+  };
+
   return (
-    <div style={{ minHeight: '100vh', background: '#111318', color: '#f1f5f9', padding: '48px 24px', maxWidth: 600, margin: '0 auto' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', padding: '48px 24px', maxWidth: 600, margin: '0 auto' }}>
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 40 }}>
         <div style={{
           width: 80, height: 80, borderRadius: '50%',
-          background: 'rgba(110,231,183,0.12)',
-          border: '2px solid rgba(110,231,183,0.3)',
+          background: 'var(--accent-a12)',
+          border: '2px solid var(--accent-a30)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           marginBottom: 16,
         }}>
           <IconPerson />
         </div>
         <h2 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 700 }}>{profile.displayName || profile.username || 'Ваш профиль'}</h2>
-        <p style={{ margin: '0 0 2px', color: '#475569', fontSize: 13 }}>@{profile.username}</p>
-        <p style={{ margin: 0, color: '#475569', fontSize: 14 }}>Личные данные и настройки</p>
+        <p style={{ margin: '0 0 2px', color: 'var(--faint)', fontSize: 13 }}>@{profile.username}</p>
+        <p style={{ margin: 0, color: 'var(--faint)', fontSize: 14 }}>Личные данные и настройки</p>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginBottom: 32 }}>
         {statItems.map(({ label, value }) => (
           <div key={label} style={{
-            background: '#1a1d24', border: '1px solid rgba(255,255,255,0.07)',
+            background: 'var(--surface)', border: '1px solid var(--border)',
             borderRadius: 16, padding: '20px 12px', textAlign: 'center',
           }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: '#6ee7b7' }}>{value}</div>
-            <div style={{ fontSize: 12, color: '#475569', marginTop: 4 }}>{label}</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--accent)' }}>{value}</div>
+            <div style={{ fontSize: 12, color: 'var(--faint)', marginTop: 4 }}>{label}</div>
           </div>
         ))}
       </div>
 
-      <div style={{ background: '#1a1d24', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: 24, marginBottom: 16 }}>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <div style={{ color: '#334155', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          <div style={{ color: 'var(--ghost)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             Личные данные
           </div>
           {!isEditing ? (
             <button onClick={handleEdit} style={{
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '6px 14px', borderRadius: 20, border: 'none',
-              background: 'rgba(110,231,183,0.1)', color: '#6ee7b7', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              background: 'var(--accent-a10)', color: 'var(--accent)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
             }}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
                 <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -293,13 +287,13 @@ export const ProfilePage = () => {
           ) : (
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={handleCancel} style={{
-                padding: '6px 14px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.1)',
-                background: 'transparent', color: '#64748b', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                padding: '6px 14px', borderRadius: 20, border: '1px solid var(--border2)',
+                background: 'transparent', color: 'var(--dim)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
               }}>Отмена</button>
               <button onClick={handleSave} disabled={saving} style={{
                 padding: '6px 14px', borderRadius: 20, border: 'none',
-                background: 'linear-gradient(135deg, #6ee7b7, #34d399)',
-                color: '#052e16', fontSize: 12, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.6 : 1,
+                background: 'linear-gradient(135deg, var(--accent), #34d399)',
+                color: 'var(--accent-fg)', fontSize: 12, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.6 : 1,
               }}>{saving ? 'Сохраняем...' : 'Сохранить'}</button>
             </div>
           )}
@@ -314,60 +308,60 @@ export const ProfilePage = () => {
           </div>
         )}
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-          <span style={{ color: '#94a3b8', fontSize: 14 }}>Логин</span>
+        <div style={rowStyle}>
+          <span style={{ color: 'var(--muted)', fontSize: 14 }}>Логин</span>
           {isEditing ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
               <input type="text" value={draft.username} onChange={e => setDraft(d => ({ ...d, username: e.target.value }))}
                 placeholder="Логин" style={{
-                  background: '#21252e', color: '#f1f5f9',
-                  border: `1px solid ${usernameError ? 'rgba(248,113,113,0.5)' : 'rgba(255,255,255,0.1)'}`,
+                  background: 'var(--surface2)', color: 'var(--text)',
+                  border: `1px solid ${usernameError ? 'rgba(248,113,113,0.5)' : 'var(--border2)'}`,
                   borderRadius: 8, padding: '6px 10px', fontSize: 14, outline: 'none', width: 150, textAlign: 'right',
                 }}
               />
               {usernameError && <span style={{ fontSize: 11, color: '#f87171' }}>{usernameError}</span>}
             </div>
           ) : (
-            <span style={{ color: '#f1f5f9', fontSize: 14 }}>@{profile.username}</span>
+            <span style={{ color: 'var(--text)', fontSize: 14 }}>@{profile.username}</span>
           )}
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-          <span style={{ color: '#94a3b8', fontSize: 14 }}>Отображаемое имя</span>
+        <div style={rowStyle}>
+          <span style={{ color: 'var(--muted)', fontSize: 14 }}>Отображаемое имя</span>
           {isEditing ? (
             <input type="text" value={draft.displayName} onChange={e => setDraft(d => ({ ...d, displayName: e.target.value }))}
               placeholder="Как вас называть" style={{
-                background: '#21252e', color: '#f1f5f9', border: '1px solid rgba(255,255,255,0.1)',
+                background: 'var(--surface2)', color: 'var(--text)', border: '1px solid var(--border2)',
                 borderRadius: 8, padding: '6px 10px', fontSize: 14, outline: 'none', width: 150, textAlign: 'right',
               }}
             />
           ) : (
-            <span style={{ color: profile.displayName !== profile.username ? '#f1f5f9' : '#334155', fontSize: 14 }}>
+            <span style={{ color: profile.displayName !== profile.username ? 'var(--text)' : 'var(--ghost)', fontSize: 14 }}>
               {profile.displayName !== profile.username ? profile.displayName : '— не задано'}
             </span>
           )}
         </div>
 
         {numericFields.map(({ field, label, step, min, max }) => (
-          <div key={field} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-            <span style={{ color: '#94a3b8', fontSize: 14 }}>{label}</span>
+          <div key={field} style={rowStyle}>
+            <span style={{ color: 'var(--muted)', fontSize: 14 }}>{label}</span>
             {isEditing ? (
               <div style={{ width: 170 }}>
                 <NumberInput value={draft[field]} onChange={v => setDraft(d => ({ ...d, [field]: v }))} step={step} min={min} max={max} />
               </div>
             ) : (
-              <span style={{ color: profile[field] ? '#f1f5f9' : '#334155', fontSize: 14 }}>{profile[field] || '— не указано'}</span>
+              <span style={{ color: profile[field] ? 'var(--text)' : 'var(--ghost)', fontSize: 14 }}>{profile[field] || '— не указано'}</span>
             )}
           </div>
         ))}
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0' }}>
-          <span style={{ color: '#94a3b8', fontSize: 14 }}>Цель</span>
+          <span style={{ color: 'var(--muted)', fontSize: 14 }}>Цель</span>
           {isEditing ? (
             <select value={draft.goal} onChange={e => setDraft(d => ({ ...d, goal: e.target.value as Goal }))}
               style={{
-                background: '#21252e', color: draft.goal ? '#f1f5f9' : '#475569',
-                border: '1px solid rgba(255,255,255,0.1)',
+                background: 'var(--surface2)', color: draft.goal ? 'var(--text)' : 'var(--faint)',
+                border: '1px solid var(--border2)',
                 borderRadius: 8, padding: '6px 10px', fontSize: 14, outline: 'none', width: 180, cursor: 'pointer',
               }}
             >
@@ -377,21 +371,21 @@ export const ProfilePage = () => {
               ))}
             </select>
           ) : (
-            <span style={{ color: profile.goal ? '#f1f5f9' : '#334155', fontSize: 14 }}>
+            <span style={{ color: profile.goal ? 'var(--text)' : 'var(--ghost)', fontSize: 14 }}>
               {profile.goal ? GOAL_LABELS[profile.goal] : '— не указано'}
             </span>
           )}
         </div>
       </div>
 
-      <div style={{ background: '#1a1d24', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: 24, marginBottom: 16 }}>
-        <div style={{ color: '#334155', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, marginBottom: 16 }}>
+        <div style={{ color: 'var(--ghost)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>
           Данные
         </div>
 
         <button onClick={handleExport} disabled={exporting} style={{
           width: '100%', padding: '14px', borderRadius: 12, border: 'none',
-          background: 'rgba(110,231,183,0.1)', color: '#6ee7b7', fontWeight: 600, fontSize: 14, cursor: 'pointer',
+          background: 'var(--accent-a10)', color: 'var(--accent)', fontWeight: 600, fontSize: 14, cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           transition: 'background 0.15s', opacity: exporting ? 0.6 : 1, marginBottom: 10,
         }}>
@@ -422,7 +416,7 @@ export const ProfilePage = () => {
         Выйти из аккаунта
       </button>
 
-      <div style={{ textAlign: 'center', marginTop: 32, color: '#1e293b', fontSize: 12 }}>GymLog MVP v0.1</div>
+      <div style={{ textAlign: 'center', marginTop: 32, color: 'var(--ghost)', fontSize: 12 }}>GymLog MVP v0.1</div>
 
       {showClearConfirm && (
         <ConfirmModal

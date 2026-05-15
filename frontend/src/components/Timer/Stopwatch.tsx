@@ -18,7 +18,7 @@ const ResetIcon = () => (
 
 const PlayIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-    <path d="M7 4l13 8-13 8V4z" fill="#0f172a" />
+    <path d="M7 4l13 8-13 8V4z" fill="var(--accent-fg)" />
   </svg>
 );
 
@@ -58,15 +58,15 @@ const LapRow = ({ label, time, isNew }: { label: string; time: string; isNew: bo
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: '6px 0',
-        borderBottom: '1px solid rgba(255,255,255,0.04)',
+        borderBottom: '1px solid var(--border)',
       }}
     >
-      <span style={{ fontSize: 12, color: '#64748b' }}>{label}</span>
+      <span style={{ fontSize: 12, color: 'var(--dim)' }}>{label}</span>
       <span style={{
         fontSize: 13,
         fontWeight: 500,
         fontVariantNumeric: 'tabular-nums',
-        color: '#f1f5f9',
+        color: 'var(--text)',
       }}>
         {time}
       </span>
@@ -79,8 +79,8 @@ export const Stopwatch: React.FC = () => {
   const currentLapTime = swTime - laps.reduce((a, b) => a + b, 0);
 
   const lapResetBtn = useHoverStyle(
-    { background: 'rgba(255,255,255,0.06)' },
-    { background: 'rgba(255,255,255,0.11)' },
+    { background: 'var(--border)' },
+    { background: 'var(--border2)' },
   );
 
   return (
@@ -94,7 +94,7 @@ export const Stopwatch: React.FC = () => {
         fontVariantNumeric: 'tabular-nums',
         textAlign: 'center',
         margin: '16px 0',
-        color: isSwRunning ? '#6ee7b7' : '#e2e8f0',
+        color: isSwRunning ? 'var(--accent)' : 'var(--text2)',
         textShadow: isSwRunning ? '0 0 40px rgba(110,231,183,0.3)' : 'none',
         transition: 'color 300ms ease, text-shadow 300ms ease',
         lineHeight: 1,
@@ -118,9 +118,9 @@ export const Stopwatch: React.FC = () => {
             height: 56,
             minWidth: 56,
             borderRadius: '50%',
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            color: '#94a3b8',
+            background: 'var(--border)',
+            border: '1px solid var(--border2)',
+            color: 'var(--muted)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -159,7 +159,7 @@ export const Stopwatch: React.FC = () => {
             borderRadius: '50%',
             background: isSwRunning
               ? 'rgba(239,68,68,0.15)'
-              : 'linear-gradient(135deg, #6ee7b7, #34d399)',
+              : 'linear-gradient(135deg, var(--accent), #34d399)',
             border: isSwRunning ? '1px solid rgba(239,68,68,0.25)' : 'none',
             display: 'flex',
             alignItems: 'center',
@@ -180,8 +180,8 @@ export const Stopwatch: React.FC = () => {
           maxHeight: 80,
           overflowY: 'auto',
           scrollbarWidth: 'thin',
-          scrollbarColor: 'rgba(255,255,255,0.1) transparent',
-          borderTop: '1px solid rgba(255,255,255,0.05)',
+          scrollbarColor: 'var(--scrollbar-thumb) transparent',
+          borderTop: '1px solid var(--border)',
           paddingTop: 2,
         }}>
           {isSwRunning && (

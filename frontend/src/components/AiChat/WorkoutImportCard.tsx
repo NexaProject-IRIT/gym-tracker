@@ -42,24 +42,25 @@ export const WorkoutImportCard = ({ imports, onImport, imported, loading }: Prop
   return (
     <div style={{
       marginTop: 12,
-      border: '1px solid rgba(110,231,183,0.2)',
+      border: '1px solid var(--accent-a20)',
       borderRadius: 12,
-      background: 'rgba(110,231,183,0.04)',
+      background: 'var(--accent-a10)',
       overflow: 'hidden',
     }}>
       {/* Заголовок */}
       <div style={{
         padding: '10px 14px',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        borderBottom: '1px solid var(--border)',
         display: 'flex',
         alignItems: 'center',
         gap: 8,
+        color: 'var(--accent)',
       }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
           <path d="M12 2v10m0 0l-3-3m3 3l3-3M3 17l1.5 3h15L21 17"
-            stroke="#6ee7b7" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
-        <span style={{ color: '#6ee7b7', fontSize: 13, fontWeight: 600 }}>
+        <span style={{ fontSize: 13, fontWeight: 600 }}>
           Импорт из дневника — {pluralWorkouts(total)}
         </span>
       </div>
@@ -72,7 +73,7 @@ export const WorkoutImportCard = ({ imports, onImport, imported, loading }: Prop
             display: 'flex',
             alignItems: 'flex-start',
             gap: 10,
-            borderBottom: i < imports.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+            borderBottom: i < imports.length - 1 ? '1px solid var(--border)' : 'none',
           }}>
             {/* Цветная точка типа */}
             <div style={{
@@ -81,12 +82,12 @@ export const WorkoutImportCard = ({ imports, onImport, imported, loading }: Prop
             }} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{
-                color: '#e2e8f0', fontSize: 13, fontWeight: 500,
+                color: 'var(--text2)', fontSize: 13, fontWeight: 500,
                 whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
               }}>
                 {w.name}
               </div>
-              <div style={{ color: '#64748b', fontSize: 11, marginTop: 2 }}>
+              <div style={{ color: 'var(--dim)', fontSize: 11, marginTop: 2 }}>
                 {formatDate(w.date)}
                 {' · '}
                 {TYPE_LABELS[w.type] ?? 'Кастомная'}
@@ -103,10 +104,10 @@ export const WorkoutImportCard = ({ imports, onImport, imported, loading }: Prop
         {imported ? (
           <div style={{
             display: 'flex', alignItems: 'center', gap: 7,
-            color: '#6ee7b7', fontSize: 13, fontWeight: 600,
+            color: 'var(--accent)', fontSize: 13, fontWeight: 600,
           }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-              <path d="M5 13l4 4L19 7" stroke="#6ee7b7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             Тренировки добавлены в журнал
           </div>
@@ -121,8 +122,8 @@ export const WorkoutImportCard = ({ imports, onImport, imported, loading }: Prop
               borderRadius: 9,
               border: 'none',
               cursor: loading ? 'default' : 'pointer',
-              background: loading ? 'rgba(110,231,183,0.3)' : '#6ee7b7',
-              color: '#0f1419',
+              background: loading ? 'var(--accent-a30)' : 'var(--accent)',
+              color: 'var(--accent-fg)',
               fontSize: 13,
               fontWeight: 700,
               display: 'flex',

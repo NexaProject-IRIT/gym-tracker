@@ -43,8 +43,8 @@ export const NumberInput: React.FC<NumberInputProps> = ({
     borderRadius: 9,
     border: 'none',
     cursor: 'pointer',
-    background: 'rgba(255,255,255,0.07)',
-    color: '#94a3b8',
+    background: 'var(--border)',
+    color: 'var(--muted)',
     fontSize: 18,
     fontWeight: 300,
     display: 'flex',
@@ -60,17 +60,17 @@ export const NumberInput: React.FC<NumberInputProps> = ({
         display: 'flex',
         alignItems: 'center',
         gap: 6,
-        background: '#21252e',
+        background: 'var(--surface2)',
         borderRadius: 10,
-        border: '1px solid rgba(255,255,255,0.08)',
+        border: '1px solid var(--border)',
         padding: '4px 6px',
       }}
     >
       <button
         style={btnStyle}
         onClick={dec}
-        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.12)')}
-        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.07)')}
+        onMouseEnter={e => (e.currentTarget.style.background = 'var(--border2)')}
+        onMouseLeave={e => (e.currentTarget.style.background = 'var(--border)')}
       >
         −
       </button>
@@ -82,7 +82,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
         style={{
           flex: 1,
           background: 'transparent',
-          color: '#f1f5f9',
+          color: 'var(--text)',
           border: 'none',
           fontSize: 14,
           outline: 'none',
@@ -93,8 +93,8 @@ export const NumberInput: React.FC<NumberInputProps> = ({
       <button
         style={btnStyle}
         onClick={inc}
-        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.12)')}
-        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.07)')}
+        onMouseEnter={e => (e.currentTarget.style.background = 'var(--border2)')}
+        onMouseLeave={e => (e.currentTarget.style.background = 'var(--border)')}
       >
         +
       </button>

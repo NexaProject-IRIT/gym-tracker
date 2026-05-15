@@ -23,7 +23,6 @@ const TYPE_COLORS: Record<WorkoutSuggestion['type'], string> = {
   custom: '#A8E6CF',
 };
 
-// Одна строчка упражнения в формате «4 × 8 × 60 кг» / «20 мин» и т.п.
 const formatExerciseLine = (ex: WorkoutSuggestion['exercises'][number]): string => {
   const parts: string[] = [];
   if (ex.sets != null) parts.push(`${ex.sets}`);
@@ -45,8 +44,8 @@ export const WorkoutSuggestionCard = ({ suggestion, onAdd, added, loading }: Pro
   return (
     <div style={{
       marginTop: 12,
-      background: '#111318',
-      border: '1px solid rgba(110,231,183,0.25)',
+      background: 'var(--bg)',
+      border: '1px solid var(--accent-a25)',
       borderRadius: 12,
       padding: 14,
     }}>
@@ -60,13 +59,13 @@ export const WorkoutSuggestionCard = ({ suggestion, onAdd, added, loading }: Pro
           width: 8, height: 8, borderRadius: '50%',
           background: typeColor,
         }} />
-        <div style={{ color: '#f1f5f9', fontWeight: 600, fontSize: 14 }}>
+        <div style={{ color: 'var(--text)', fontWeight: 600, fontSize: 14 }}>
           {suggestion.name}
         </div>
         <div style={{
           marginLeft: 'auto',
           fontSize: 11,
-          color: '#64748b',
+          color: 'var(--dim)',
           textTransform: 'uppercase',
           letterSpacing: '0.05em',
         }}>
@@ -86,11 +85,11 @@ export const WorkoutSuggestionCard = ({ suggestion, onAdd, added, loading }: Pro
             alignItems: 'center',
             gap: 10,
             fontSize: 13,
-            color: '#cbd5e1',
+            color: 'var(--text3)',
           }}>
-            <span style={{ color: '#475569', minWidth: 16 }}>{i + 1}.</span>
+            <span style={{ color: 'var(--faint)', minWidth: 16 }}>{i + 1}.</span>
             <span style={{ flex: 1, wordBreak: 'break-word' }}>{ex.name}</span>
-            <span style={{ color: '#94a3b8', fontVariantNumeric: 'tabular-nums' }}>
+            <span style={{ color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>
               {formatExerciseLine(ex)}
             </span>
           </div>
@@ -107,8 +106,8 @@ export const WorkoutSuggestionCard = ({ suggestion, onAdd, added, loading }: Pro
           borderRadius: 10,
           border: 'none',
           cursor: added || loading ? 'default' : 'pointer',
-          background: added ? 'rgba(110,231,183,0.15)' : '#6ee7b7',
-          color: added ? '#6ee7b7' : '#0f1419',
+          background: added ? 'var(--accent-a10)' : 'var(--accent)',
+          color: added ? 'var(--accent)' : 'var(--accent-fg)',
           fontWeight: 600,
           fontSize: 13,
           display: 'flex',
@@ -121,7 +120,7 @@ export const WorkoutSuggestionCard = ({ suggestion, onAdd, added, loading }: Pro
         {added ? (
           <>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M5 13l4 4L19 7" stroke="#6ee7b7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             Тренировка добавлена
           </>
@@ -130,7 +129,7 @@ export const WorkoutSuggestionCard = ({ suggestion, onAdd, added, loading }: Pro
         ) : (
           <>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M12 5v14M5 12h14" stroke="#0f1419" strokeWidth="2.2" strokeLinecap="round"/>
+              <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
             </svg>
             Добавить тренировку
           </>

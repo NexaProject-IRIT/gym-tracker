@@ -20,7 +20,7 @@ const NumInput = ({ value, onChange, max, label }: NumInputProps) => {
 
   const handleBlur = () => {
     if (!ref.current) return;
-    ref.current.style.borderColor = 'rgba(255,255,255,0.08)';
+    ref.current.style.borderColor = 'var(--border)';
     ref.current.style.boxShadow = 'none';
   };
 
@@ -40,13 +40,13 @@ const NumInput = ({ value, onChange, max, label }: NumInputProps) => {
         onBlur={handleBlur}
         style={{
           width: 56,
-          background: '#111318',
-          border: '1px solid rgba(255,255,255,0.08)',
+          background: 'var(--bg)',
+          border: '1px solid var(--border)',
           borderRadius: 8,
           textAlign: 'center',
           fontSize: 24,
           fontWeight: 300,
-          color: '#f1f5f9',
+          color: 'var(--text)',
           padding: '8px 0',
           outline: 'none',
           fontVariantNumeric: 'tabular-nums',
@@ -55,7 +55,7 @@ const NumInput = ({ value, onChange, max, label }: NumInputProps) => {
       />
       <span style={{
         fontSize: 10,
-        color: '#64748b',
+        color: 'var(--dim)',
         textTransform: 'uppercase',
         letterSpacing: '1px',
         fontWeight: 500,
@@ -69,7 +69,7 @@ const NumInput = ({ value, onChange, max, label }: NumInputProps) => {
 const Separator = () => (
   <span style={{
     fontSize: 24,
-    color: '#64748b',
+    color: 'var(--dim)',
     lineHeight: 1,
     alignSelf: 'center',
     paddingBottom: 18,
@@ -101,7 +101,7 @@ export const Countdown: React.FC = () => {
         fontVariantNumeric: 'tabular-nums',
         textAlign: 'center',
         margin: '16px 0 12px',
-        color: isTmRunning ? '#6ee7b7' : '#e2e8f0',
+        color: isTmRunning ? 'var(--accent)' : 'var(--text2)',
         textShadow: isTmRunning ? '0 0 40px rgba(110,231,183,0.3)' : 'none',
         transition: 'color 300ms ease, text-shadow 300ms ease',
         lineHeight: 1,
@@ -132,7 +132,7 @@ export const Countdown: React.FC = () => {
       <div style={{ marginBottom: 6 }}>
         <p style={{
           fontSize: 10,
-          color: '#475569',
+          color: 'var(--faint)',
           textTransform: 'uppercase',
           letterSpacing: '1.5px',
           textAlign: 'center',
@@ -156,20 +156,20 @@ export const Countdown: React.FC = () => {
                 e.currentTarget.style.color = '#6ee7b7';
               }}
               onMouseLeave={e => {
-                e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
-                e.currentTarget.style.color = '#94a3b8';
+                e.currentTarget.style.background = 'var(--border)';
+                e.currentTarget.style.borderColor = 'var(--border2)';
+                e.currentTarget.style.color = 'var(--muted)';
               }}
               onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.95)'; }}
               onMouseUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
               style={{
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.08)',
+                background: 'var(--border)',
+                border: '1px solid var(--border2)',
                 borderRadius: 20,
                 padding: '6px 14px',
                 fontSize: 12,
                 fontWeight: 500,
-                color: '#94a3b8',
+                color: 'var(--muted)',
                 cursor: 'pointer',
                 transition: 'all 150ms ease',
                 minHeight: 40,
@@ -224,12 +224,12 @@ export const Countdown: React.FC = () => {
               }
             : canStart
             ? {
-                background: 'linear-gradient(135deg, #6ee7b7, #34d399)',
+                background: 'linear-gradient(135deg, var(--accent), #34d399)',
                 boxShadow: '0 4px 16px rgba(110,231,183,0.3)',
               }
             : {
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.08)',
+                background: 'var(--border)',
+                border: '1px solid var(--border2)',
                 opacity: 0.4,
               }
           ),
@@ -242,7 +242,7 @@ export const Countdown: React.FC = () => {
           </svg>
         ) : (
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M7 4l13 8-13 8V4z" fill={canStart ? '#0f172a' : '#64748b'} />
+            <path d="M7 4l13 8-13 8V4z" fill={canStart ? 'var(--accent-fg)' : 'var(--dim)'} />
           </svg>
         )}
       </button>

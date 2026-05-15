@@ -16,7 +16,6 @@ const SUGGESTED_PROMPTS = [
 export const AiChatPage = () => {
   const navigate = useNavigate();
 
-  // Берём стейт из контекста (живёт в MainLayout, не сбрасывается при навигации)
   const {
     messages,
     loading,
@@ -37,14 +36,10 @@ export const AiChatPage = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Автоскролл к низу при новых сообщениях
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, sending]);
 
-  // Автоподгон высоты textarea под содержимое (до 5 строк)
   useEffect(() => {
     const ta = textareaRef.current;
     if (!ta) return;
@@ -69,18 +64,14 @@ export const AiChatPage = () => {
     setAddingWorkoutForId(messageId);
     const newId = await addWorkoutFromSuggestion(messageId);
     setAddingWorkoutForId(null);
-    if (newId) {
-      setTimeout(() => navigate('/workouts'), 900);
-    }
+    if (newId) setTimeout(() => navigate('/workouts'), 900);
   };
 
   const handleImportWorkouts = async (messageId: string) => {
     setImportingForId(messageId);
     const count = await addWorkoutsFromImport(messageId);
     setImportingForId(null);
-    if (count > 0) {
-      setTimeout(() => navigate('/workouts'), 1200);
-    }
+    if (count > 0) setTimeout(() => navigate('/workouts'), 1200);
   };
 
   const handleClear = async () => {
@@ -93,24 +84,21 @@ export const AiChatPage = () => {
   return (
     <>
       <style>{`
-        .ai-textarea::placeholder { color: #475569; }
+        .ai-textarea::placeholder { color: var(--faint); }
         .ai-send-btn:hover:not(:disabled) { background: #86efac !important; }
-        .ai-prompt-chip:hover { background: rgba(110,231,183,0.12) !important; border-color: rgba(110,231,183,0.35) !important; }
+        .ai-prompt-chip:hover { background: var(--accent-a12) !important; border-color: var(--accent-a30) !important; }
 
         .ai-chat-root {
           height: 100dvh;
           min-height: -webkit-fill-available;
           display: flex;
           flex-direction: column;
-          background: #111318;
+          background: var(--bg);
           overflow: hidden;
         }
 
         @media (max-width: 767px) {
-          .ai-chat-root {
-            height: calc(100dvh - 56px);
-            min-height: 0;
-          }
+          .ai-chat-root { height: calc(100dvh - 56px); min-height: 0; }
         }
 
         .ai-messages-area {
@@ -124,8 +112,8 @@ export const AiChatPage = () => {
         .ai-input-bar {
           flex-shrink: 0;
           padding: 12px;
-          border-top: 1px solid rgba(255,255,255,0.06);
-          background: #1a1d24;
+          border-top: 1px solid var(--border);
+          background: var(--surface);
           padding-bottom: env(safe-area-inset-bottom, 0px);
         }
 
@@ -140,28 +128,28 @@ export const AiChatPage = () => {
         {/* Шапка */}
         <header style={{
           padding: '14px 16px',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          borderBottom: '1px solid var(--border)',
           display: 'flex',
           alignItems: 'center',
           gap: 12,
-          background: '#1a1d24',
+          background: 'var(--surface)',
           flexShrink: 0,
         }}>
           <div style={{
             width: 36, height: 36, borderRadius: 10,
-            background: 'rgba(110,231,183,0.12)',
-            border: '1px solid rgba(110,231,183,0.2)',
+            background: 'var(--accent-a12)',
+            border: '1px solid var(--accent-a20)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
           }}>
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
               <path d="M6.5 6.5h11M6.5 17.5h11M4 9.5v5M20 9.5v5M2 11v2M22 11v2"
-                stroke="#6ee7b7" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ color: '#f1f5f9', fontWeight: 600, fontSize: 15 }}>GymBot</div>
-            <div style={{ color: '#64748b', fontSize: 12 }}>Персональный ИИ-тренер</div>
+            <div style={{ color: 'var(--text)', fontWeight: 600, fontSize: 15 }}>GymBot</div>
+            <div style={{ color: 'var(--dim)', fontSize: 12 }}>Персональный ИИ-тренер</div>
           </div>
           {messages.length > 0 && (
             <button
@@ -169,8 +157,8 @@ export const AiChatPage = () => {
               onClick={() => setShowClearConfirm(true)}
               style={{
                 background: 'transparent',
-                border: '1px solid rgba(255,255,255,0.1)',
-                color: '#94a3b8',
+                border: '1px solid var(--border2)',
+                color: 'var(--muted)',
                 padding: '7px 11px',
                 borderRadius: 8,
                 cursor: 'pointer',
@@ -193,39 +181,34 @@ export const AiChatPage = () => {
         {/* Область сообщений */}
         <div className="ai-messages-area" ref={scrollRef}>
           {loading && (
-            <div style={{ color: '#64748b', fontSize: 13, textAlign: 'center', padding: 20 }}>
+            <div style={{ color: 'var(--dim)', fontSize: 13, textAlign: 'center', padding: 20 }}>
               Загружаю историю…
             </div>
           )}
 
           {isEmpty && (
             <div style={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '20px 0',
-              textAlign: 'center',
+              flex: 1, display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center',
+              padding: '20px 0', textAlign: 'center',
             }}>
               <div style={{
                 width: 60, height: 60, borderRadius: 16,
-                background: 'rgba(110,231,183,0.1)',
-                border: '1px solid rgba(110,231,183,0.2)',
+                background: 'var(--accent-a10)',
+                border: '1px solid var(--accent-a20)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 marginBottom: 14,
               }}>
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
                   <path d="M6.5 6.5h11M6.5 17.5h11M4 9.5v5M20 9.5v5M2 11v2M22 11v2"
-                    stroke="#6ee7b7" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                    stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
-              <h2 style={{ color: '#f1f5f9', fontSize: 18, margin: '0 0 8px', fontWeight: 600 }}>
+              <h2 style={{ color: 'var(--text)', fontSize: 18, margin: '0 0 8px', fontWeight: 600 }}>
                 Привет! Я GymBot
               </h2>
-              <p style={{ color: '#64748b', fontSize: 13, maxWidth: 400, margin: '0 0 20px', lineHeight: 1.5 }}>
-                Составлю тренировку, разберу технику, проанализирую твой прогресс
-                и подберу программу под цель. Спроси:
+              <p style={{ color: 'var(--dim)', fontSize: 13, maxWidth: 400, margin: '0 0 20px', lineHeight: 1.5 }}>
+                Составлю тренировку, разберу технику, проанализирую твой прогресс и подберу программу под цель. Спроси:
               </p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', maxWidth: 520 }}>
                 {SUGGESTED_PROMPTS.map(prompt => (
@@ -236,9 +219,9 @@ export const AiChatPage = () => {
                     onClick={() => sendMessage(prompt)}
                     disabled={sending}
                     style={{
-                      background: '#1a1d24',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      color: '#cbd5e1',
+                      background: 'var(--surface)',
+                      border: '1px solid var(--border)',
+                      color: 'var(--text3)',
                       padding: '9px 13px',
                       borderRadius: 10,
                       cursor: sending ? 'default' : 'pointer',
@@ -268,7 +251,6 @@ export const AiChatPage = () => {
           {sending && <TypingIndicator />}
         </div>
 
-        {/* Ошибка */}
         {error && (
           <div style={{
             padding: '9px 16px',
@@ -294,14 +276,14 @@ export const AiChatPage = () => {
           </div>
         )}
 
-        {/* Поле ввода — всегда прилипает к низу */}
+        {/* Поле ввода */}
         <div className="ai-input-bar">
           <div style={{
             display: 'flex',
             gap: 8,
             alignItems: 'flex-end',
-            background: '#111318',
-            border: '1px solid rgba(255,255,255,0.08)',
+            background: 'var(--bg)',
+            border: '1px solid var(--border)',
             borderRadius: 12,
             padding: '6px 6px 6px 12px',
           }}>
@@ -319,7 +301,7 @@ export const AiChatPage = () => {
                 background: 'transparent',
                 border: 'none',
                 outline: 'none',
-                color: '#e2e8f0',
+                color: 'var(--text2)',
                 fontSize: 14,
                 resize: 'none',
                 fontFamily: 'inherit',
@@ -337,8 +319,8 @@ export const AiChatPage = () => {
                 width: 34, height: 34, borderRadius: 9,
                 border: 'none',
                 cursor: (!input.trim() || sending) ? 'default' : 'pointer',
-                background: (!input.trim() || sending) ? 'rgba(110,231,183,0.25)' : '#6ee7b7',
-                color: '#0f1419',
+                background: (!input.trim() || sending) ? 'var(--accent-a25)' : 'var(--accent)',
+                color: 'var(--accent-fg)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 flexShrink: 0,
                 transition: 'background 0.15s',
@@ -349,13 +331,12 @@ export const AiChatPage = () => {
               </svg>
             </button>
           </div>
-          <div style={{ fontSize: 11, color: '#475569', textAlign: 'center', marginTop: 6 }}>
+          <div style={{ fontSize: 11, color: 'var(--faint)', textAlign: 'center', marginTop: 6 }}>
             Enter — отправить · Shift+Enter — перенос
           </div>
         </div>
       </div>
 
-      {/* Модалка подтверждения очистки */}
       {showClearConfirm && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 200,
@@ -364,15 +345,15 @@ export const AiChatPage = () => {
           padding: 20,
         }}>
           <div style={{
-            background: '#1a1d24',
-            border: '1px solid rgba(255,255,255,0.08)',
+            background: 'var(--surface)',
+            border: '1px solid var(--border2)',
             borderRadius: 14,
             padding: 24,
             maxWidth: 360,
             width: '100%',
           }}>
-            <h3 style={{ margin: '0 0 10px', color: '#f1f5f9', fontSize: 16 }}>Очистить историю чата?</h3>
-            <p style={{ color: '#94a3b8', fontSize: 13, lineHeight: 1.5, margin: '0 0 20px' }}>
+            <h3 style={{ margin: '0 0 10px', color: 'var(--text)', fontSize: 16 }}>Очистить историю чата?</h3>
+            <p style={{ color: 'var(--muted)', fontSize: 13, lineHeight: 1.5, margin: '0 0 20px' }}>
               Все сообщения будут удалены безвозвратно. Тренировки, добавленные из чата, останутся.
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
@@ -381,8 +362,8 @@ export const AiChatPage = () => {
                 onClick={() => setShowClearConfirm(false)}
                 style={{
                   flex: 1, padding: '10px', borderRadius: 10,
-                  background: 'transparent', border: '1px solid rgba(255,255,255,0.1)',
-                  color: '#cbd5e1', cursor: 'pointer', fontSize: 13,
+                  background: 'transparent', border: '1px solid var(--border2)',
+                  color: 'var(--text3)', cursor: 'pointer', fontSize: 13,
                 }}
               >
                 Отмена

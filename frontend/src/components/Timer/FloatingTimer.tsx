@@ -27,22 +27,22 @@ const playBeep = () => {
 
 const ClockIcon = ({ active }: { active: boolean }) => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-    <circle cx="12" cy="12" r="9" stroke={active ? '#6ee7b7' : '#64748b'} strokeWidth="1.8" />
-    <path d="M12 7v5l2.5 2.5" stroke={active ? '#6ee7b7' : '#64748b'} strokeWidth="1.8"
+    <circle cx="12" cy="12" r="9" stroke={active ? 'var(--accent)' : 'var(--dim)'} strokeWidth="1.8" />
+    <path d="M12 7v5l2.5 2.5" stroke={active ? 'var(--accent)' : 'var(--dim)'} strokeWidth="1.8"
       strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
 const PlayIcon = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-    <path d="M7 4l13 8-13 8V4z" fill="#6ee7b7" />
+    <path d="M7 4l13 8-13 8V4z" fill="var(--accent)" />
   </svg>
 );
 
 const PauseIcon = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-    <rect x="5" y="4" width="4" height="16" rx="1.5" fill="#6ee7b7" />
-    <rect x="15" y="4" width="4" height="16" rx="1.5" fill="#6ee7b7" />
+    <rect x="5" y="4" width="4" height="16" rx="1.5" fill="var(--accent)" />
+    <rect x="15" y="4" width="4" height="16" rx="1.5" fill="var(--accent)" />
   </svg>
 );
 
@@ -105,7 +105,7 @@ export const FloatingTimer: React.FC<{ isMobile: boolean }> = ({ isMobile }) => 
         .ft-play:hover { background: rgba(110,231,183,0.22) !important; transform: scale(1.05); }
         .ft-play:active { transform: scale(0.94) !important; }
         .ft-chevron { transition: transform 300ms cubic-bezier(0.34,1.56,0.64,1); }
-        .ft-tab-pill:hover { color: #cbd5e1 !important; }
+        .ft-tab-pill:hover { color: var(--text3) !important; }
         input[type=number]::-webkit-outer-spin-button,
         input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
@@ -124,7 +124,7 @@ export const FloatingTimer: React.FC<{ isMobile: boolean }> = ({ isMobile }) => 
         userSelect: 'none',
         width: 'calc(100vw - 32px)',
         maxWidth: 360,
-        background: 'rgba(26,29,36,0.92)',
+        background: 'var(--surface-glass)',
         backdropFilter: 'blur(24px) saturate(180%)',
         WebkitBackdropFilter: 'blur(24px) saturate(180%)',
         boxShadow: '0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(110,231,183,0.15)',
@@ -163,7 +163,7 @@ export const FloatingTimer: React.FC<{ isMobile: boolean }> = ({ isMobile }) => 
             {/* Mode switcher */}
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4 }}>
               <div style={{
-                background: '#111318',
+                background: 'var(--bg)',
                 borderRadius: 10,
                 padding: 3,
                 display: 'inline-flex',
@@ -177,12 +177,12 @@ export const FloatingTimer: React.FC<{ isMobile: boolean }> = ({ isMobile }) => 
                       padding: '7px 20px',
                       borderRadius: 8,
                       border: 'none',
-                      borderLeft: activeTab === tab ? '2px solid #6ee7b7' : '2px solid transparent',
+                      borderLeft: activeTab === tab ? `2px solid var(--accent)` : '2px solid transparent',
                       fontSize: 13,
                       fontWeight: 500,
                       cursor: 'pointer',
-                      background: activeTab === tab ? '#21252e' : 'transparent',
-                      color: activeTab === tab ? '#f1f5f9' : '#64748b',
+                      background: activeTab === tab ? 'var(--surface2)' : 'transparent',
+                      color: activeTab === tab ? 'var(--text)' : 'var(--dim)',
                       boxShadow: activeTab === tab ? '0 1px 3px rgba(0,0,0,0.3)' : 'none',
                       transition: 'background 200ms ease, color 200ms ease, box-shadow 200ms ease, border-color 200ms ease',
                     }}
@@ -218,7 +218,7 @@ export const FloatingTimer: React.FC<{ isMobile: boolean }> = ({ isMobile }) => 
               fontSize: 16,
               fontWeight: 600,
               letterSpacing: '0.5px',
-              color: isRunning ? '#6ee7b7' : '#f1f5f9',
+              color: isRunning ? 'var(--accent)' : 'var(--text)',
               textShadow: isRunning ? '0 0 20px rgba(110,231,183,0.4)' : 'none',
               transition: 'color 300ms ease, text-shadow 300ms ease',
             }}>
@@ -230,7 +230,7 @@ export const FloatingTimer: React.FC<{ isMobile: boolean }> = ({ isMobile }) => 
           <span style={{
             fontSize: 11,
             fontWeight: 500,
-            color: '#64748b',
+            color: 'var(--dim)',
             textTransform: 'uppercase',
             letterSpacing: '1.2px',
           }}>
@@ -252,8 +252,8 @@ export const FloatingTimer: React.FC<{ isMobile: boolean }> = ({ isMobile }) => 
                 height: 32,
                 minWidth: 32,
                 borderRadius: '50%',
-                background: 'rgba(110,231,183,0.12)',
-                border: '1px solid rgba(110,231,183,0.2)',
+                background: 'var(--accent-a12)',
+                border: '1px solid var(--accent-a20)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -291,7 +291,7 @@ export const FloatingTimer: React.FC<{ isMobile: boolean }> = ({ isMobile }) => 
                 fill="none"
                 style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
               >
-                <path d="M18 15l-6-6-6 6" stroke="#64748b" strokeWidth="1.8"
+                <path d="M18 15l-6-6-6 6" stroke="var(--dim)" strokeWidth="1.8"
                   strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>

@@ -32,9 +32,9 @@ export const WorkoutDetailPage = () => {
   if (!detailLoaded || loading || !workout) {
     return (
       <div style={{
-        position: 'fixed', inset: 0, background: '#111318',
+        position: 'fixed', inset: 0, background: 'var(--bg)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color: '#6ee7b7', fontSize: 14,
+        color: 'var(--accent)', fontSize: 14,
       }}>
         Загрузка...
       </div>

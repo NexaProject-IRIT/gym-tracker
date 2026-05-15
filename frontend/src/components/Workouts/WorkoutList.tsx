@@ -7,17 +7,6 @@ import { WORKOUT_TYPE_LABELS, WORKOUT_TYPE_COLORS } from '../../types/workout';
 import { WorkoutForm } from './WorkoutForm';
 
 const CSS = `
-  :root {
-    --bg: #111318;
-    --surface: #1a1d24;
-    --surface2: #21252e;
-    --border: rgba(255,255,255,0.07);
-    --text: #f1f5f9;
-    --text-muted: #64748b;
-    --text-faint: #334155;
-    --accent: #6ee7b7;
-    --accent-dim: rgba(110,231,183,0.12);
-  }
   input[type=number]::-webkit-inner-spin-button,
   input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
   input[type=number] { -moz-appearance: textfield; }
@@ -74,17 +63,17 @@ const WorkoutMenu: React.FC<{
   onDelete: () => void;
 }> = ({ onEdit, onRepeat, onDelete }) => {
   const items = [
-    { icon: <IconEdit />, label: 'Открыть', action: onEdit, color: '#94a3b8' },
-    { icon: <IconRepeat />, label: 'Повторить', action: onRepeat, color: '#94a3b8' },
+    { icon: <IconEdit />, label: 'Открыть', action: onEdit, color: 'var(--muted)' },
+    { icon: <IconRepeat />, label: 'Повторить', action: onRepeat, color: 'var(--muted)' },
     { icon: <IconTrash />, label: 'Удалить', action: onDelete, color: '#f87171' },
   ];
 
   return (
     <div style={{
       position: 'absolute', right: 0, top: 40, width: 180, zIndex: 10,
-      background: '#1e2330', borderRadius: 14, overflow: 'hidden',
-      border: '1px solid rgba(255,255,255,0.1)',
-      boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+      background: 'var(--surface2)', borderRadius: 14, overflow: 'hidden',
+      border: '1px solid var(--border2)',
+      boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
     }}>
       {items.map((item, i) => (
         <button
@@ -92,13 +81,13 @@ const WorkoutMenu: React.FC<{
           onClick={item.action}
           style={{
             width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-            padding: '11px 14px', background: '#1e2330', border: 'none', cursor: 'pointer',
-            borderBottom: i < items.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+            padding: '11px 14px', background: 'var(--surface2)', border: 'none', cursor: 'pointer',
+            borderBottom: i < items.length - 1 ? '1px solid var(--border)' : 'none',
             color: item.color, fontSize: 13, fontWeight: 500,
             transition: 'background 0.1s',
           }}
-          onMouseEnter={e => (e.currentTarget.style.background = '#252b3b')}
-          onMouseLeave={e => (e.currentTarget.style.background = '#1e2330')}
+          onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface3)')}
+          onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface2)')}
         >
           {item.icon}
           {item.label}
@@ -180,7 +169,7 @@ export const WorkoutList: React.FC = () => {
                   padding: '10px 16px', borderRadius: 12, border: `1px solid ${c.border}`,
                   background: c.bg, minWidth: 80,
                 }}>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: '#f1f5f9', lineHeight: 1 }}>{count}</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text)', lineHeight: 1 }}>{count}</div>
                   <div style={{ fontSize: 11, marginTop: 3, color: c.accent, fontWeight: 500 }}>
                     {WORKOUT_TYPE_LABELS[type].split('/')[0].trim()}
                   </div>
@@ -192,7 +181,7 @@ export const WorkoutList: React.FC = () => {
 
         {/* Loading */}
         {loading && (
-          <div style={{ textAlign: 'center', padding: 40, color: '#475569' }}>Загрузка...</div>
+          <div style={{ textAlign: 'center', padding: 40, color: 'var(--faint)' }}>Загрузка...</div>
         )}
 
         {/* Error */}
@@ -216,10 +205,10 @@ export const WorkoutList: React.FC = () => {
           {!loading && workouts.length === 0 ? (
             <div style={{ textAlign: 'center', paddingTop: 80 }}>
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style={{ margin: '0 auto 16px', display: 'block', opacity: 0.2 }}>
-                <path d="M6.5 6.5h11M6.5 17.5h11M4 9.5v5M20 9.5v5M2 11v2M22 11v2" stroke="#f1f5f9" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M6.5 6.5h11M6.5 17.5h11M4 9.5v5M20 9.5v5M2 11v2M22 11v2" stroke="var(--text)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              <p style={{ color: '#64748b', fontWeight: 500, margin: '0 0 4px' }}>Ещё нет тренировок</p>
-              <p style={{ color: '#334155', fontSize: 13, margin: 0 }}>Нажмите «Новая тренировка», чтобы начать</p>
+              <p style={{ color: 'var(--dim)', fontWeight: 500, margin: '0 0 4px' }}>Ещё нет тренировок</p>
+              <p style={{ color: 'var(--ghost)', fontSize: 13, margin: 0 }}>Нажмите «Новая тренировка», чтобы начать</p>
             </div>
           ) : (
             <div style={{
@@ -240,7 +229,7 @@ export const WorkoutList: React.FC = () => {
                     style={{
                       display: 'flex', alignItems: 'stretch', borderRadius: 16,
                       border: `1px solid ${c.border}`,
-                      background: `linear-gradient(135deg, ${c.bg} 0%, rgba(26,29,36,0.8) 100%)`,
+                      background: `linear-gradient(135deg, ${c.bg} 0%, var(--surface) 100%)`,
                       cursor: 'pointer', overflow: 'visible', position: 'relative',
                       transition: 'box-shadow 0.15s',
                     }}
@@ -256,11 +245,11 @@ export const WorkoutList: React.FC = () => {
                       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                       padding: '16px 14px', minWidth: 52, flexShrink: 0,
                     }}>
-                      <span style={{ fontSize: 22, fontWeight: 800, color: '#f1f5f9', lineHeight: 1 }}>{d.day}</span>
-                      <span style={{ fontSize: 11, color: '#64748b', marginTop: 2, textTransform: 'capitalize' }}>{d.month}</span>
-                      <span style={{ fontSize: 10, color: '#334155', marginTop: 1 }}>{d.year}</span>
+                      <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', lineHeight: 1 }}>{d.day}</span>
+                      <span style={{ fontSize: 11, color: 'var(--dim)', marginTop: 2, textTransform: 'capitalize' }}>{d.month}</span>
+                      <span style={{ fontSize: 10, color: 'var(--ghost)', marginTop: 1 }}>{d.year}</span>
                     </div>
-                    <div style={{ width: 1, margin: '12px 0', background: 'rgba(255,255,255,0.06)', flexShrink: 0 }} />
+                    <div style={{ width: 1, margin: '12px 0', background: 'var(--border)', flexShrink: 0 }} />
                     <div style={{ flex: 1, padding: '14px 12px', minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5 }}>
                         <WorkoutTypeIcon type={workout.type} color={c.accent} size={13} />
@@ -272,11 +261,11 @@ export const WorkoutList: React.FC = () => {
                           {WORKOUT_TYPE_LABELS[workout.type]}
                         </span>
                       </div>
-                      <p style={{ margin: '0 0 3px', fontSize: 14, fontWeight: 600, color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <p style={{ margin: '0 0 3px', fontSize: 14, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {workout.name}
                       </p>
                       {exCount > 0 && (
-                        <p style={{ margin: '3px 0 0', fontSize: 11, color: '#334155' }}>
+                        <p style={{ margin: '3px 0 0', fontSize: 11, color: 'var(--ghost)' }}>
                           {exCount} упражн.
                         </p>
                       )}
@@ -289,12 +278,12 @@ export const WorkoutList: React.FC = () => {
                         onClick={() => setOpenMenuId(isOpen ? null : workout.id)}
                         style={{
                           width: 32, height: 32, borderRadius: 8, border: 'none', cursor: 'pointer',
-                          background: isOpen ? 'rgba(255,255,255,0.08)' : 'transparent',
-                          color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          background: isOpen ? 'var(--border2)' : 'transparent',
+                          color: 'var(--dim)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                           transition: 'all 0.15s',
                         }}
-                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
-                        onMouseLeave={e => (e.currentTarget.style.background = isOpen ? 'rgba(255,255,255,0.08)' : 'transparent')}
+                        onMouseEnter={e => (e.currentTarget.style.background = 'var(--border2)')}
+                        onMouseLeave={e => (e.currentTarget.style.background = isOpen ? 'var(--border2)' : 'transparent')}
                       >
                         <IconDots />
                       </button>
@@ -329,8 +318,8 @@ export const WorkoutList: React.FC = () => {
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 width: '100%', padding: '14px 24px', borderRadius: 14, border: 'none',
-                background: 'linear-gradient(135deg, #6ee7b7, #34d399)',
-                color: '#064e3b', fontWeight: 700, fontSize: 14, cursor: 'pointer',
+                background: 'linear-gradient(135deg, var(--accent), #34d399)',
+                color: 'var(--accent-fg)', fontWeight: 700, fontSize: 14, cursor: 'pointer',
                 boxShadow: '0 4px 20px rgba(110,231,183,0.25)',
                 transition: 'transform 0.15s, box-shadow 0.15s',
               }}

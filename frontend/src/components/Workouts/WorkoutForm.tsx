@@ -106,7 +106,6 @@ export const WorkoutForm: React.FC<Props> = ({ onSave, onClose }) => {
   const [newTime, setNewTime] = useState('');
   const [newDistance, setNewDistance] = useState('');
 
-  // Autocomplete
   const [suggestions, setSuggestions] = useState<ExerciseSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const suggestionsRef = useRef<HTMLDivElement>(null);
@@ -148,7 +147,6 @@ export const WorkoutForm: React.FC<Props> = ({ onSave, onClose }) => {
     setSuggestions([]);
   };
 
-  // Close suggestions on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node)) {
@@ -207,21 +205,21 @@ export const WorkoutForm: React.FC<Props> = ({ onSave, onClose }) => {
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#111318', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'var(--bg)', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
       {/* Header */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '20px 24px 16px', position: 'sticky', top: 0,
-        background: 'rgba(17,19,24,0.95)', backdropFilter: 'blur(16px)',
-        borderBottom: '1px solid rgba(255,255,255,0.06)', zIndex: 10,
+        background: 'var(--bg)', backdropFilter: 'blur(16px)',
+        borderBottom: '1px solid var(--border)', zIndex: 10,
       }}>
         <button
           onClick={step === 'type' ? onClose : () => setStep('type')}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: 14, fontWeight: 500, padding: '6px 0' }}
+          style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'var(--dim)', cursor: 'pointer', fontSize: 14, fontWeight: 500, padding: '6px 0' }}
         >
           <IconBack /> {step === 'type' ? 'Отмена' : 'Назад'}
         </button>
-        <h2 style={{ color: '#f1f5f9', fontWeight: 700, fontSize: 16, margin: 0 }}>
+        <h2 style={{ color: 'var(--text)', fontWeight: 700, fontSize: 16, margin: 0 }}>
           {step === 'type' ? 'Новая тренировка' : 'Упражнения'}
         </h2>
         <div style={{ width: 80 }} />
@@ -231,7 +229,7 @@ export const WorkoutForm: React.FC<Props> = ({ onSave, onClose }) => {
         {/* Step 1: Type selection */}
         {step === 'type' && (
           <>
-            <p style={{ color: '#64748b', fontSize: 14, margin: '0 0 20px' }}>Выберите тип тренировки</p>
+            <p style={{ color: 'var(--dim)', fontSize: 14, margin: '0 0 20px' }}>Выберите тип тренировки</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {(Object.keys(TypeIcons) as WorkoutType[]).map(type => {
                 const col = WORKOUT_TYPE_COLORS[type];
@@ -256,10 +254,10 @@ export const WorkoutForm: React.FC<Props> = ({ onSave, onClose }) => {
                   >
                     <span style={{ color: col.accent }}>{TypeIcons[type]}</span>
                     <div style={{ flex: 1 }}>
-                      <div style={{ color: '#f1f5f9', fontWeight: 600, fontSize: 14, marginBottom: 2 }}>{WORKOUT_TYPE_LABELS[type]}</div>
-                      <div style={{ color: '#64748b', fontSize: 12 }}>{TYPE_DESCRIPTIONS[type]}</div>
+                      <div style={{ color: 'var(--text)', fontWeight: 600, fontSize: 14, marginBottom: 2 }}>{WORKOUT_TYPE_LABELS[type]}</div>
+                      <div style={{ color: 'var(--dim)', fontSize: 12 }}>{TYPE_DESCRIPTIONS[type]}</div>
                     </div>
-                    <span style={{ color: '#334155' }}><IconChevron /></span>
+                    <span style={{ color: 'var(--ghost)' }}><IconChevron /></span>
                   </button>
                 );
               })}
@@ -271,9 +269,9 @@ export const WorkoutForm: React.FC<Props> = ({ onSave, onClose }) => {
         {step === 'exercises' && selectedType && c && (
           <>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>Название тренировки</label>
+              <label style={{ fontSize: 11, color: 'var(--dim)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>Название тренировки</label>
               <input value={workoutName} onChange={e => setWorkoutName(e.target.value)}
-                style={{ width: '100%', background: '#1a1d24', color: '#f1f5f9', borderRadius: 12, padding: '11px 16px', border: '1px solid rgba(255,255,255,0.08)', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                style={{ width: '100%', background: 'var(--surface)', color: 'var(--text)', borderRadius: 12, padding: '11px 16px', border: '1px solid var(--border)', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
             </div>
 
             <div style={{ marginBottom: 24 }}>
@@ -294,15 +292,15 @@ export const WorkoutForm: React.FC<Props> = ({ onSave, onClose }) => {
                   <div key={ex.tempId} style={{
                     display: 'flex', alignItems: 'center', gap: 10,
                     padding: '12px 14px', borderRadius: 12,
-                    background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
+                    background: 'var(--border)', border: '1px solid var(--border2)',
                   }}>
-                    <span style={{ fontSize: 11, color: '#334155', width: 18 }}>{i + 1}</span>
+                    <span style={{ fontSize: 11, color: 'var(--ghost)', width: 18 }}>{i + 1}</span>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ color: '#f1f5f9', fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ex.name}</span>
-                        {!ex.isCustom && <span style={{ fontSize: 9, color: '#6ee7b7', background: 'rgba(110,231,183,0.1)', padding: '1px 6px', borderRadius: 8 }}>из базы</span>}
+                        <span style={{ color: 'var(--text)', fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ex.name}</span>
+                        {!ex.isCustom && <span style={{ fontSize: 9, color: 'var(--accent)', background: 'var(--accent-a10)', padding: '1px 6px', borderRadius: 8 }}>из базы</span>}
                       </div>
-                      <div style={{ color: '#475569', fontSize: 11, marginTop: 2 }}>
+                      <div style={{ color: 'var(--faint)', fontSize: 11, marginTop: 2 }}>
                         {ex.parameters.map(p => {
                           const val = ex[p as keyof DraftExercise];
                           if (!val || typeof val !== 'string') return null;
@@ -311,9 +309,9 @@ export const WorkoutForm: React.FC<Props> = ({ onSave, onClose }) => {
                       </div>
                     </div>
                     <button onClick={() => setExercises(prev => prev.filter(e => e.tempId !== ex.tempId))}
-                      style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer', padding: 4, display: 'flex' }}
+                      style={{ background: 'none', border: 'none', color: 'var(--faint)', cursor: 'pointer', padding: 4, display: 'flex' }}
                       onMouseEnter={e => (e.currentTarget.style.color = '#f87171')}
-                      onMouseLeave={e => (e.currentTarget.style.color = '#475569')}
+                      onMouseLeave={e => (e.currentTarget.style.color = 'var(--faint)')}
                     >
                       <IconX />
                     </button>
@@ -324,19 +322,19 @@ export const WorkoutForm: React.FC<Props> = ({ onSave, onClose }) => {
 
             {/* New exercise form */}
             {adding ? (
-              <div style={{ background: '#1a1d24', borderRadius: 16, padding: 16, border: '1px solid rgba(255,255,255,0.08)', marginBottom: 10 }}>
+              <div style={{ background: 'var(--surface)', borderRadius: 16, padding: 16, border: '1px solid var(--border)', marginBottom: 10 }}>
                 {/* Name input with autocomplete */}
                 <div style={{ position: 'relative', marginBottom: 12 }} ref={suggestionsRef}>
                   <input autoFocus value={newName} onChange={e => handleNameChange(e.target.value)}
                     placeholder="Название упражнения..."
-                    style={{ width: '100%', background: '#21252e', color: '#f1f5f9', borderRadius: 10, padding: '10px 14px', border: '1px solid rgba(255,255,255,0.08)', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
+                    style={{ width: '100%', background: 'var(--surface2)', color: 'var(--text)', borderRadius: 10, padding: '10px 14px', border: '1px solid var(--border)', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
                     onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
                   />
                   {showSuggestions && suggestions.length > 0 && (
                     <div style={{
                       position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
-                      background: '#1e2330', borderRadius: 12, overflow: 'hidden',
-                      border: '1px solid rgba(255,255,255,0.1)',
+                      background: 'var(--surface)', borderRadius: 12, overflow: 'hidden',
+                      border: '1px solid var(--border2)',
                       boxShadow: '0 12px 32px rgba(0,0,0,0.5)',
                       maxHeight: 200, overflowY: 'auto', marginTop: 4,
                     }}>
@@ -346,21 +344,21 @@ export const WorkoutForm: React.FC<Props> = ({ onSave, onClose }) => {
                           onClick={() => selectSuggestion(s)}
                           style={{
                             width: '100%', padding: '10px 14px', background: 'none', border: 'none',
-                            borderBottom: '1px solid rgba(255,255,255,0.05)',
+                            borderBottom: '1px solid var(--border)',
                             cursor: 'pointer', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 2,
                           }}
-                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'var(--border)')}
                           onMouseLeave={e => (e.currentTarget.style.background = 'none')}
                         >
-                          <span style={{ color: '#f1f5f9', fontSize: 13, fontWeight: 500 }}>{s.name}</span>
-                          {s.equipment && <span style={{ color: '#475569', fontSize: 11 }}>{s.equipment}</span>}
+                          <span style={{ color: 'var(--text)', fontSize: 13, fontWeight: 500 }}>{s.name}</span>
+                          {s.equipment && <span style={{ color: 'var(--faint)', fontSize: 11 }}>{s.equipment}</span>}
                         </button>
                       ))}
                     </div>
                   )}
                 </div>
                 {!newIsCustom && (
-                  <div style={{ fontSize: 11, color: '#6ee7b7', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <div style={{ fontSize: 11, color: 'var(--accent)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     Выбрано из базы знаний
                   </div>
@@ -370,9 +368,9 @@ export const WorkoutForm: React.FC<Props> = ({ onSave, onClose }) => {
                   {allParams.map(p => (
                     <button key={p} onClick={() => toggleParam(p)} style={{
                       padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 500, cursor: 'pointer', border: 'none',
-                      background: newParams.includes(p) ? 'rgba(110,231,183,0.15)' : 'rgba(255,255,255,0.04)',
-                      color: newParams.includes(p) ? '#6ee7b7' : '#64748b',
-                      outline: newParams.includes(p) ? '1px solid rgba(110,231,183,0.3)' : '1px solid rgba(255,255,255,0.07)',
+                      background: newParams.includes(p) ? 'var(--accent-a10)' : 'var(--border)',
+                      color: newParams.includes(p) ? 'var(--accent)' : 'var(--dim)',
+                      outline: newParams.includes(p) ? '1px solid var(--accent-a30)' : '1px solid var(--border2)',
                     }}>
                       {PARAMETER_LABELS[p].label}
                     </button>
@@ -388,14 +386,14 @@ export const WorkoutForm: React.FC<Props> = ({ onSave, onClose }) => {
                 </div>
 
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={resetNew} style={{ flex: 1, padding: '10px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', color: '#64748b', fontSize: 13, cursor: 'pointer', fontWeight: 500 }}>
+                  <button onClick={resetNew} style={{ flex: 1, padding: '10px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--border)', color: 'var(--dim)', fontSize: 13, cursor: 'pointer', fontWeight: 500 }}>
                     Отмена
                   </button>
                   <button onClick={addExercise} disabled={!newName.trim() || !newParams.length} style={{
                     flex: 1, padding: '10px', borderRadius: 10, border: 'none', cursor: 'pointer',
-                    background: newName.trim() && newParams.length ? 'rgba(110,231,183,0.15)' : 'rgba(255,255,255,0.04)',
-                    color: newName.trim() && newParams.length ? '#6ee7b7' : '#334155',
-                    outline: '1px solid rgba(110,231,183,0.2)', fontSize: 13, fontWeight: 600,
+                    background: newName.trim() && newParams.length ? 'var(--accent-a10)' : 'var(--border)',
+                    color: newName.trim() && newParams.length ? 'var(--accent)' : 'var(--ghost)',
+                    outline: '1px solid var(--accent-a20)', fontSize: 13, fontWeight: 600,
                   }}>
                     Добавить
                   </button>
@@ -406,12 +404,12 @@ export const WorkoutForm: React.FC<Props> = ({ onSave, onClose }) => {
                 onClick={() => setAdding(true)}
                 style={{
                   width: '100%', padding: '13px', borderRadius: 14, marginBottom: 10,
-                  border: '1px dashed rgba(255,255,255,0.1)', background: 'none', color: '#475569',
+                  border: '1px dashed var(--border2)', background: 'none', color: 'var(--faint)',
                   cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   transition: 'all 0.15s',
                 }}
-                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(110,231,183,0.3)'; (e.currentTarget as HTMLButtonElement).style.color = '#6ee7b7'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.1)'; (e.currentTarget as HTMLButtonElement).style.color = '#475569'; }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(110,231,183,0.3)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--accent)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border2)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--faint)'; }}
               >
                 <IconPlus /> Добавить упражнение
               </button>
@@ -425,7 +423,7 @@ export const WorkoutForm: React.FC<Props> = ({ onSave, onClose }) => {
         <div style={{
           position: 'fixed', bottom: 0, left: 0, right: 0,
           padding: '12px 24px 28px',
-          background: 'linear-gradient(to top, #111318 50%, transparent)',
+          background: 'linear-gradient(to top, var(--bg) 50%, transparent)',
           zIndex: 20,
         }}>
           <div style={{ maxWidth: 640, margin: '0 auto' }}>
@@ -434,8 +432,8 @@ export const WorkoutForm: React.FC<Props> = ({ onSave, onClose }) => {
               disabled={!workoutName.trim()}
               style={{
                 width: '100%', padding: '14px', borderRadius: 14, border: 'none', cursor: 'pointer',
-                background: workoutName.trim() && c ? `linear-gradient(135deg, ${c.accent}, ${c.accent}cc)` : 'rgba(255,255,255,0.05)',
-                color: workoutName.trim() ? '#0a0a0a' : '#334155',
+                background: workoutName.trim() && c ? `linear-gradient(135deg, ${c.accent}, ${c.accent}cc)` : 'var(--border)',
+                color: workoutName.trim() ? '#0a0a0a' : 'var(--ghost)',
                 fontWeight: 700, fontSize: 14, transition: 'opacity 0.15s',
                 boxShadow: workoutName.trim() && c ? `0 4px 20px ${c.accent}33` : 'none',
               }}
@@ -458,21 +456,21 @@ const TimeField: React.FC<{ value: string; onChange: (v: string) => void }> = ({
   const inc = (e: React.MouseEvent) => { e.preventDefault(); const n = displayVal + 1; onChange(String(unit === 'min' ? n * 60 : n)); };
   const handleChange = (raw: string) => { const n = parseInt(raw) || 0; onChange(String(unit === 'min' ? n * 60 : n)); };
   const switchUnit = (e: React.MouseEvent, u: 'sec' | 'min') => { e.preventDefault(); setUnit(u); };
-  const btnS: React.CSSProperties = { width: 28, height: 28, borderRadius: 7, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.07)', color: '#94a3b8', fontSize: 16, fontWeight: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.1s' };
+  const btnS: React.CSSProperties = { width: 28, height: 28, borderRadius: 7, border: 'none', cursor: 'pointer', background: 'var(--border2)', color: 'var(--muted)', fontSize: 16, fontWeight: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.1s' };
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-        <label style={{ fontSize: 10, color: '#475569' }}>Время</label>
-        <div style={{ display: 'flex', borderRadius: 6, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <label style={{ fontSize: 10, color: 'var(--faint)' }}>Время</label>
+        <div style={{ display: 'flex', borderRadius: 6, overflow: 'hidden', border: '1px solid var(--border)' }}>
           {(['sec', 'min'] as const).map(u => (
-            <button key={u} onClick={(e) => switchUnit(e, u)} style={{ padding: '2px 7px', fontSize: 10, border: 'none', cursor: 'pointer', fontWeight: 500, background: unit === u ? 'rgba(110,231,183,0.2)' : 'transparent', color: unit === u ? '#6ee7b7' : '#475569' }}>{u === 'sec' ? 'сек' : 'мин'}</button>
+            <button key={u} onClick={(e) => switchUnit(e, u)} style={{ padding: '2px 7px', fontSize: 10, border: 'none', cursor: 'pointer', fontWeight: 500, background: unit === u ? 'var(--accent-a20)' : 'transparent', color: unit === u ? 'var(--accent)' : 'var(--faint)' }}>{u === 'sec' ? 'сек' : 'мин'}</button>
           ))}
         </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#21252e', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', padding: '3px 4px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--surface2)', borderRadius: 8, border: '1px solid var(--border)', padding: '3px 4px' }}>
         <button style={btnS} onClick={dec}>−</button>
         <input type="number" min="0" value={displayVal || ''} onChange={e => handleChange(e.target.value)}
-          style={{ flex: 1, background: 'transparent', color: '#f1f5f9', border: 'none', fontSize: 13, outline: 'none', textAlign: 'center', minWidth: 0 } as React.CSSProperties}
+          style={{ flex: 1, background: 'transparent', color: 'var(--text)', border: 'none', fontSize: 13, outline: 'none', textAlign: 'center', minWidth: 0 } as React.CSSProperties}
         />
         <button style={btnS} onClick={inc}>+</button>
       </div>
@@ -486,14 +484,14 @@ const SmallField: React.FC<{ label: string; value: string; onChange: (v: string)
   const fmt = (n: number) => isInt ? String(Math.round(n)) : String(parseFloat(n.toFixed(1)));
   const dec = () => onChange(fmt(Math.max(0, parseFloat(value || '0') - stepNum)));
   const inc = () => onChange(fmt(parseFloat(value || '0') + stepNum));
-  const btnS: React.CSSProperties = { width: 28, height: 28, borderRadius: 7, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.07)', color: '#94a3b8', fontSize: 16, fontWeight: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.1s' };
+  const btnS: React.CSSProperties = { width: 28, height: 28, borderRadius: 7, border: 'none', cursor: 'pointer', background: 'var(--border2)', color: 'var(--muted)', fontSize: 16, fontWeight: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.1s' };
   return (
     <div>
-      <label style={{ fontSize: 10, color: '#475569', display: 'block', marginBottom: 4 }}>{label}</label>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#21252e', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', padding: '3px 4px' }}>
+      <label style={{ fontSize: 10, color: 'var(--faint)', display: 'block', marginBottom: 4 }}>{label}</label>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--surface2)', borderRadius: 8, border: '1px solid var(--border)', padding: '3px 4px' }}>
         <button style={btnS} onClick={e => { e.preventDefault(); dec(); }}>−</button>
         <input type="number" min="0" value={value} onChange={e => onChange(e.target.value)}
-          style={{ flex: 1, background: 'transparent', color: '#f1f5f9', border: 'none', fontSize: 13, outline: 'none', textAlign: 'center', minWidth: 0 } as React.CSSProperties}
+          style={{ flex: 1, background: 'transparent', color: 'var(--text)', border: 'none', fontSize: 13, outline: 'none', textAlign: 'center', minWidth: 0 } as React.CSSProperties}
         />
         <button style={btnS} onClick={e => { e.preventDefault(); inc(); }}>+</button>
       </div>

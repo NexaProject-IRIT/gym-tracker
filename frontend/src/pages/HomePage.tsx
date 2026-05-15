@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 
 const IconDumbbell = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M6.5 6.5h11M6.5 17.5h11M4 9.5v5M20 9.5v5M2 11v2M22 11v2"/>
   </svg>
 );
@@ -19,12 +19,11 @@ const IconChart = () => (
 );
 
 const IconWorkouts = () => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M6.5 6.5h11M6.5 17.5h11M4 9.5v5M20 9.5v5M2 11v2M22 11v2"/>
   </svg>
 );
 
-// Иконки шагов «Как начать»
 const IconUser = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="8" r="4"/><path d="M4 20v-1a8 8 0 0116 0v1"/>
@@ -82,23 +81,14 @@ export const HomePage = () => {
   const isLoggedIn = !!localStorage.getItem('token');
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#111318',
-      color: '#f1f5f9',
-    }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
 
       {/* Hero */}
-      <div style={{
-        padding: '80px 24px 72px',
-        maxWidth: 720,
-        margin: '0 auto',
-        textAlign: 'center',
-      }}>
+      <div style={{ padding: '80px 24px 72px', maxWidth: 720, margin: '0 auto', textAlign: 'center' }}>
         <div style={{
           width: 72, height: 72, borderRadius: 20,
-          background: 'rgba(110,231,183,0.12)',
-          border: '1px solid rgba(110,231,183,0.25)',
+          background: 'var(--accent-a12)',
+          border: '1px solid var(--accent-a25)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           margin: '0 auto 28px',
         }}>
@@ -110,20 +100,14 @@ export const HomePage = () => {
           fontWeight: 800,
           margin: '0 0 18px',
           lineHeight: 1.12,
-          background: 'linear-gradient(135deg, #f1f5f9 0%, #6ee7b7 100%)',
+          background: 'linear-gradient(135deg, var(--text) 0%, var(--accent) 100%)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
         }}>
           Умный дневник<br />тренировок
         </h1>
 
-        <p style={{
-          color: '#64748b',
-          fontSize: 17,
-          lineHeight: 1.65,
-          maxWidth: 440,
-          margin: '0 auto 36px',
-        }}>
+        <p style={{ color: 'var(--dim)', fontSize: 17, lineHeight: 1.65, maxWidth: 440, margin: '0 auto 36px' }}>
           Записывайте тренировки, отслеживайте прогресс и пользуйтесь базой упражнений — всё в одном месте.
         </p>
 
@@ -132,8 +116,8 @@ export const HomePage = () => {
             onClick={() => navigate(isLoggedIn ? '/workouts' : '/register')}
             style={{
               padding: '14px 32px', borderRadius: 14,
-              background: 'linear-gradient(135deg, #6ee7b7, #34d399)',
-              border: 'none', color: '#052e16',
+              background: 'linear-gradient(135deg, var(--accent), #34d399)',
+              border: 'none', color: 'var(--accent-fg)',
               fontWeight: 700, fontSize: 15, cursor: 'pointer',
               transition: 'opacity 0.15s',
             }}
@@ -147,12 +131,12 @@ export const HomePage = () => {
             style={{
               padding: '14px 28px', borderRadius: 14,
               background: 'transparent',
-              border: '1px solid rgba(255,255,255,0.12)',
-              color: '#94a3b8', fontWeight: 600, fontSize: 15, cursor: 'pointer',
+              border: '1px solid var(--border3)',
+              color: 'var(--muted)', fontWeight: 600, fontSize: 15, cursor: 'pointer',
               transition: 'border-color 0.15s, color 0.15s',
             }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(110,231,183,0.4)'; e.currentTarget.style.color = '#6ee7b7'; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = '#94a3b8'; }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent-a30)'; e.currentTarget.style.color = 'var(--accent)'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border3)'; e.currentTarget.style.color = 'var(--muted)'; }}
           >
             Открыть тренировки
           </button>
@@ -160,22 +144,15 @@ export const HomePage = () => {
       </div>
 
       {/* Три основные функции */}
-      <div style={{
-        padding: '0 24px 72px',
-        maxWidth: 720, margin: '0 auto',
-      }}>
+      <div style={{ padding: '0 24px 72px', maxWidth: 720, margin: '0 auto' }}>
         <div style={{
-          fontSize: 11, fontWeight: 700, color: '#334155',
+          fontSize: 11, fontWeight: 700, color: 'var(--ghost)',
           textTransform: 'uppercase', letterSpacing: '0.1em',
           textAlign: 'center', marginBottom: 32,
         }}>
           Что умеет GymLog
         </div>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-          gap: 14,
-        }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 14 }}>
           {features.map(({ icon, title, desc, to, color, border, accent }) => (
             <button
               key={to}
@@ -208,90 +185,82 @@ export const HomePage = () => {
                 {icon}
               </div>
               <div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: '#f1f5f9', marginBottom: 6 }}>{title}</div>
-                <div style={{ fontSize: 13, color: '#64748b', lineHeight: 1.55 }}>{desc}</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>{title}</div>
+                <div style={{ fontSize: 13, color: 'var(--dim)', lineHeight: 1.55 }}>{desc}</div>
               </div>
             </button>
           ))}
         </div>
       </div>
 
-      {/* Как начать — три шага */}
+      {/* Как начать */}
       <div style={{
         padding: '56px 24px 72px',
-        background: '#1a1d24',
-        borderTop: '1px solid rgba(255,255,255,0.05)',
-        borderBottom: '1px solid rgba(255,255,255,0.05)',
+        background: 'var(--surface)',
+        borderTop: '1px solid var(--border)',
+        borderBottom: '1px solid var(--border)',
       }}>
         <div style={{ maxWidth: 720, margin: '0 auto' }}>
           <div style={{
-            fontSize: 11, fontWeight: 700, color: '#334155',
+            fontSize: 11, fontWeight: 700, color: 'var(--ghost)',
             textTransform: 'uppercase', letterSpacing: '0.1em',
             textAlign: 'center', marginBottom: 8,
           }}>
             Как начать
           </div>
-          <h2 style={{ textAlign: 'center', fontSize: 24, fontWeight: 800, color: '#f1f5f9', margin: '0 0 40px' }}>
+          <h2 style={{ textAlign: 'center', fontSize: 24, fontWeight: 800, color: 'var(--text)', margin: '0 0 40px' }}>
             Три шага до первой тренировки
           </h2>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-            gap: 16,
-          }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16 }}>
             {steps.map((step, i) => (
               <div key={i} style={{
-                background: '#111318',
-                border: '1px solid rgba(255,255,255,0.07)',
+                background: 'var(--bg)',
+                border: '1px solid var(--border)',
                 borderRadius: 18, padding: '24px 20px',
                 position: 'relative',
               }}>
                 <div style={{
                   position: 'absolute', top: 20, right: 20,
-                  fontSize: 11, fontWeight: 800, color: '#1e293b',
+                  fontSize: 11, fontWeight: 800, color: 'var(--ghost)',
                 }}>
                   {String(i + 1).padStart(2, '0')}
                 </div>
                 <div style={{
                   width: 40, height: 40, borderRadius: 12,
-                  background: 'rgba(110,231,183,0.1)',
-                  border: '1px solid rgba(110,231,183,0.2)',
+                  background: 'var(--accent-a10)',
+                  border: '1px solid var(--accent-a20)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: '#6ee7b7', marginBottom: 16,
+                  color: 'var(--accent)', marginBottom: 16,
                 }}>
                   {step.icon}
                 </div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9', marginBottom: 8 }}>{step.title}</div>
-                <div style={{ fontSize: 13, color: '#64748b', lineHeight: 1.55 }}>{step.desc}</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>{step.title}</div>
+                <div style={{ fontSize: 13, color: 'var(--dim)', lineHeight: 1.55 }}>{step.desc}</div>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Промо-блок «Попробовать» */}
-      <div style={{
-        padding: '72px 24px 80px',
-        maxWidth: 720, margin: '0 auto',
-        textAlign: 'center',
-      }}>
+      {/* Промо-блок */}
+      <div style={{ padding: '72px 24px 80px', maxWidth: 720, margin: '0 auto', textAlign: 'center' }}>
         <div style={{
-          background: 'linear-gradient(135deg, rgba(110,231,183,0.08) 0%, rgba(52,211,153,0.04) 100%)',
-          border: '1px solid rgba(110,231,183,0.2)',
+          background: 'var(--accent-a10)',
+          border: '1px solid var(--accent-a20)',
           borderRadius: 24, padding: '48px 32px',
         }}>
-          <h2 style={{ fontSize: 26, fontWeight: 800, color: '#f1f5f9', margin: '0 0 14px', lineHeight: 1.2 }}>
+          <h2 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text)', margin: '0 0 14px', lineHeight: 1.2 }}>
             Начните уже сегодня
           </h2>
-          <p style={{ color: '#64748b', fontSize: 15, lineHeight: 1.6, maxWidth: 380, margin: '0 auto 32px' }}>
+          <p style={{ color: 'var(--dim)', fontSize: 15, lineHeight: 1.6, maxWidth: 380, margin: '0 auto 32px' }}>
             Регистрация займёт меньше минуты. Первая тренировка — сразу после.
           </p>
           <button
             onClick={() => navigate(isLoggedIn ? '/workouts' : '/register')}
             style={{
               padding: '14px 36px', borderRadius: 14,
-              background: 'linear-gradient(135deg, #6ee7b7, #34d399)',
-              border: 'none', color: '#052e16',
+              background: 'linear-gradient(135deg, var(--accent), #34d399)',
+              border: 'none', color: 'var(--accent-fg)',
               fontWeight: 700, fontSize: 15, cursor: 'pointer',
               transition: 'opacity 0.15s',
             }}

@@ -13,50 +13,49 @@ interface Props {
   importingWorkouts: boolean;
 }
 
-// Кастомные компоненты для стилизации под тёмную тему
 const MD_COMPONENTS: Components = {
   p: ({ children }) => (
-    <p style={{ margin: '0 0 8px', color: '#cbd5e1', lineHeight: 1.65, wordBreak: 'break-word' }}>
+    <p style={{ margin: '0 0 8px', color: 'var(--text3)', lineHeight: 1.65, wordBreak: 'break-word' }}>
       {children}
     </p>
   ),
   h1: ({ children }) => (
-    <h1 style={{ fontSize: 18, fontWeight: 700, color: '#f1f5f9', margin: '16px 0 6px', lineHeight: 1.3 }}>
+    <h1 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', margin: '16px 0 6px', lineHeight: 1.3 }}>
       {children}
     </h1>
   ),
   h2: ({ children }) => (
-    <h2 style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9', margin: '14px 0 5px', lineHeight: 1.3 }}>
+    <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: '14px 0 5px', lineHeight: 1.3 }}>
       {children}
     </h2>
   ),
   h3: ({ children }) => (
-    <h3 style={{ fontSize: 15, fontWeight: 700, color: '#f1f5f9', margin: '12px 0 4px', lineHeight: 1.3 }}>
+    <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', margin: '12px 0 4px', lineHeight: 1.3 }}>
       {children}
     </h3>
   ),
   h4: ({ children }) => (
-    <h4 style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', margin: '10px 0 4px', lineHeight: 1.3 }}>
+    <h4 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text2)', margin: '10px 0 4px', lineHeight: 1.3 }}>
       {children}
     </h4>
   ),
   h5: ({ children }) => (
-    <h5 style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0', margin: '8px 0 3px', lineHeight: 1.3 }}>
+    <h5 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text2)', margin: '8px 0 3px', lineHeight: 1.3 }}>
       {children}
     </h5>
   ),
   h6: ({ children }) => (
-    <h6 style={{ fontSize: 13, fontWeight: 600, color: '#94a3b8', margin: '8px 0 3px', lineHeight: 1.3 }}>
+    <h6 style={{ fontSize: 13, fontWeight: 600, color: 'var(--muted)', margin: '8px 0 3px', lineHeight: 1.3 }}>
       {children}
     </h6>
   ),
   ul: ({ children }) => (
-    <ul style={{ margin: '6px 0', paddingLeft: 20, color: '#cbd5e1' }}>
+    <ul style={{ margin: '6px 0', paddingLeft: 20, color: 'var(--text3)' }}>
       {children}
     </ul>
   ),
   ol: ({ children }) => (
-    <ol style={{ margin: '6px 0', paddingLeft: 22, color: '#cbd5e1' }}>
+    <ol style={{ margin: '6px 0', paddingLeft: 22, color: 'var(--text3)' }}>
       {children}
     </ol>
   ),
@@ -66,12 +65,12 @@ const MD_COMPONENTS: Components = {
     </li>
   ),
   strong: ({ children }) => (
-    <strong style={{ fontWeight: 700, color: '#f1f5f9' }}>
+    <strong style={{ fontWeight: 700, color: 'var(--text)' }}>
       {children}
     </strong>
   ),
   em: ({ children }) => (
-    <em style={{ fontStyle: 'italic', color: '#e2e8f0' }}>
+    <em style={{ fontStyle: 'italic', color: 'var(--text2)' }}>
       {children}
     </em>
   ),
@@ -83,8 +82,8 @@ const MD_COMPONENTS: Components = {
           display: 'block',
           fontFamily: 'monospace',
           fontSize: 13,
-          background: 'rgba(0,0,0,0.3)',
-          color: '#6ee7b7',
+          background: 'var(--surface3)',
+          color: 'var(--accent)',
           padding: '10px 14px',
           borderRadius: 8,
           overflowX: 'auto',
@@ -99,8 +98,8 @@ const MD_COMPONENTS: Components = {
       <code style={{
         fontFamily: 'monospace',
         fontSize: '0.88em',
-        background: 'rgba(110,231,183,0.1)',
-        color: '#6ee7b7',
+        background: 'var(--accent-a10)',
+        color: 'var(--accent)',
         padding: '2px 6px',
         borderRadius: 4,
       }}>
@@ -113,8 +112,8 @@ const MD_COMPONENTS: Components = {
       margin: '8px 0',
       borderRadius: 8,
       overflow: 'hidden',
-      background: 'rgba(0,0,0,0.3)',
-      border: '1px solid rgba(255,255,255,0.06)',
+      background: 'var(--surface3)',
+      border: '1px solid var(--border)',
     }}>
       {children}
     </pre>
@@ -123,15 +122,15 @@ const MD_COMPONENTS: Components = {
     <blockquote style={{
       margin: '8px 0',
       paddingLeft: 12,
-      borderLeft: '3px solid rgba(110,231,183,0.4)',
-      color: '#94a3b8',
+      borderLeft: '3px solid var(--accent-a30)',
+      color: 'var(--muted)',
       fontStyle: 'italic',
     }}>
       {children}
     </blockquote>
   ),
   hr: () => (
-    <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.08)', margin: '10px 0' }} />
+    <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '10px 0' }} />
   ),
   table: ({ children }) => (
     <div style={{ overflowX: 'auto', margin: '8px 0' }}>
@@ -139,7 +138,7 @@ const MD_COMPONENTS: Components = {
         borderCollapse: 'collapse',
         width: '100%',
         fontSize: 13,
-        color: '#cbd5e1',
+        color: 'var(--text3)',
       }}>
         {children}
       </table>
@@ -148,11 +147,11 @@ const MD_COMPONENTS: Components = {
   th: ({ children }) => (
     <th style={{
       padding: '7px 12px',
-      background: 'rgba(255,255,255,0.05)',
-      borderBottom: '1px solid rgba(255,255,255,0.1)',
+      background: 'var(--border)',
+      borderBottom: '1px solid var(--border2)',
       textAlign: 'left',
       fontWeight: 600,
-      color: '#e2e8f0',
+      color: 'var(--text2)',
       whiteSpace: 'nowrap',
     }}>
       {children}
@@ -161,7 +160,7 @@ const MD_COMPONENTS: Components = {
   td: ({ children }) => (
     <td style={{
       padding: '6px 12px',
-      borderBottom: '1px solid rgba(255,255,255,0.05)',
+      borderBottom: '1px solid var(--border)',
     }}>
       {children}
     </td>
@@ -171,13 +170,14 @@ const MD_COMPONENTS: Components = {
 const BotAvatar = () => (
   <div style={{
     width: 32, height: 32, borderRadius: 10, flexShrink: 0,
-    background: 'rgba(110,231,183,0.12)',
-    border: '1px solid rgba(110,231,183,0.2)',
+    background: 'var(--accent-a12)',
+    border: '1px solid var(--accent-a20)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
+    color: 'var(--accent)',
   }}>
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
       <path d="M6.5 6.5h11M6.5 17.5h11M4 9.5v5M20 9.5v5M2 11v2M22 11v2"
-        stroke="#6ee7b7" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+        stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   </div>
 );
@@ -190,8 +190,8 @@ export const MessageBubble = ({ message, onAddWorkout, addingWorkout, onImportWo
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
         <div style={{
           maxWidth: '80%',
-          background: '#6ee7b7',
-          color: '#0f1419',
+          background: 'var(--accent)',
+          color: 'var(--accent-fg)',
           padding: '10px 14px',
           borderRadius: '16px 16px 4px 16px',
           fontSize: 14,
@@ -211,8 +211,8 @@ export const MessageBubble = ({ message, onAddWorkout, addingWorkout, onImportWo
       <div style={{
         flex: 1,
         minWidth: 0,
-        background: '#1a1d24',
-        border: '1px solid rgba(255,255,255,0.06)',
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
         padding: '12px 14px',
         borderRadius: '4px 16px 16px 16px',
         fontSize: 14,

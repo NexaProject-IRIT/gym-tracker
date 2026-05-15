@@ -69,34 +69,32 @@ export const LoginPage = () => {
 
   return (
     <div style={{
-      minHeight: '100vh', background: '#111318',
+      minHeight: '100vh', background: 'var(--bg)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '24px',
     }}>
       <div style={{ width: '100%', maxWidth: 400 }}>
 
-        {/* Логотип */}
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <div style={{
             width: 56, height: 56, borderRadius: 16,
-            background: 'rgba(110,231,183,0.12)',
-            border: '1px solid rgba(110,231,183,0.2)',
+            background: 'var(--accent-a12)',
+            border: '1px solid var(--accent-a20)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             margin: '0 auto 16px',
           }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path d="M6.5 6.5h11M6.5 17.5h11M4 9.5v5M20 9.5v5M2 11v2M22 11v2"
-                stroke="#6ee7b7" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
-          <h1 style={{ color: '#f1f5f9', fontSize: 24, fontWeight: 800, margin: '0 0 6px' }}>GymLog</h1>
-          <p style={{ color: '#475569', fontSize: 14, margin: 0 }}>Войдите в свой аккаунт</p>
+          <h1 style={{ color: 'var(--text)', fontSize: 24, fontWeight: 800, margin: '0 0 6px' }}>GymLog</h1>
+          <p style={{ color: 'var(--faint)', fontSize: 14, margin: 0 }}>Войдите в свой аккаунт</p>
         </div>
 
-        {/* Форма */}
         <div style={{
-          background: '#1a1d24', borderRadius: 20,
-          border: '1px solid rgba(255,255,255,0.07)',
+          background: 'var(--surface)', borderRadius: 20,
+          border: '1px solid var(--border)',
           padding: '28px',
         }}>
           <Field
@@ -117,7 +115,7 @@ export const LoginPage = () => {
             rightEl={
               <button
                 onClick={() => setShowPassword(s => !s)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569', padding: 0, fontSize: 16 }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--faint)', padding: 0, fontSize: 16 }}
               >
                 {showPassword ? <IconEyeOff /> : <IconEye />}
               </button>
@@ -139,17 +137,17 @@ export const LoginPage = () => {
             disabled={loading}
             style={{
               width: '100%', padding: '14px', borderRadius: 12, border: 'none',
-              background: loading ? 'rgba(110,231,183,0.4)' : 'linear-gradient(135deg, #6ee7b7, #34d399)',
-              color: '#052e16', fontWeight: 700, fontSize: 15, cursor: loading ? 'default' : 'pointer',
+              background: loading ? 'var(--accent-a30)' : 'linear-gradient(135deg, var(--accent), #34d399)',
+              color: 'var(--accent-fg)', fontWeight: 700, fontSize: 15, cursor: loading ? 'default' : 'pointer',
               marginTop: 8, transition: 'opacity 0.15s',
             }}
           >
             {loading ? 'Вход...' : 'Войти'}
           </button>
 
-          <p style={{ textAlign: 'center', marginTop: 20, fontSize: 14, color: '#475569' }}>
+          <p style={{ textAlign: 'center', marginTop: 20, fontSize: 14, color: 'var(--faint)' }}>
             Нет аккаунта?{' '}
-            <Link to="/register" style={{ color: '#6ee7b7', textDecoration: 'none', fontWeight: 600 }}>
+            <Link to="/register" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>
               Зарегистрироваться
             </Link>
           </p>
@@ -171,7 +169,7 @@ const Field = ({
   rightEl?: React.ReactNode;
 }) => (
   <div style={{ marginBottom: 16 }}>
-    <label style={{ fontSize: 12, color: '#64748b', fontWeight: 500, display: 'block', marginBottom: 6 }}>
+    <label style={{ fontSize: 12, color: 'var(--dim)', fontWeight: 500, display: 'block', marginBottom: 6 }}>
       {label}
     </label>
     <div style={{ position: 'relative' }}>
@@ -181,14 +179,14 @@ const Field = ({
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
         style={{
-          width: '100%', background: '#21252e', color: '#f1f5f9',
+          width: '100%', background: 'var(--surface2)', color: 'var(--text)',
           borderRadius: 10, padding: rightEl ? '10px 40px 10px 14px' : '10px 14px',
-          border: `1px solid ${error ? 'rgba(248,113,113,0.5)' : 'rgba(255,255,255,0.08)'}`,
+          border: `1px solid ${error ? 'rgba(248,113,113,0.5)' : 'var(--border)'}`,
           fontSize: 14, outline: 'none', boxSizing: 'border-box',
           transition: 'border-color 0.15s',
         }}
-        onFocus={e => (e.target.style.borderColor = error ? 'rgba(248,113,113,0.7)' : 'rgba(110,231,183,0.4)')}
-        onBlur={e => (e.target.style.borderColor = error ? 'rgba(248,113,113,0.5)' : 'rgba(255,255,255,0.08)')}
+        onFocus={e => (e.target.style.borderColor = error ? 'rgba(248,113,113,0.7)' : 'var(--accent-a25)')}
+        onBlur={e => (e.target.style.borderColor = error ? 'rgba(248,113,113,0.5)' : 'var(--border)')}
       />
       {rightEl && (
         <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)' }}>
