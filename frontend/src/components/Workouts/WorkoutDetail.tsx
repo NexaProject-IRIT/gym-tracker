@@ -1,8 +1,10 @@
 // src/components/Workouts/WorkoutDetail.tsx
 import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import type { Workout, WorkoutExercise, WorkoutType, ParameterType, Exercise } from '../../types/workout';
 import { WORKOUT_TYPE_LABELS, WORKOUT_TYPE_COLORS, DEFAULT_PARAMS_FOR_TYPE, PARAMETER_LABELS } from '../../types/workout';
 import { ExerciseModal } from '../KnowledgeBase/ExerciseModal';
+import { authedFetch } from '../../utils/api';
 
 interface Props {
   workout: Workout;
@@ -336,9 +338,11 @@ const Field: React.FC<{ label: string; value: string; onChange: (v: string) => v
 export const WorkoutDetail: React.FC<Props> = ({
   workout, onClose, onUpdate, onDelete, onRepeat, onUpdateExercise, onDeleteExercise, onAddExercise, onToggleDone,
 }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingExercise, setEditingExercise] = useState<WorkoutExercise | null>(null);
-  const [showAddExercise, setShowAddExercise] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState(workout.name);
@@ -350,20 +354,36 @@ export const WorkoutDetail: React.FC<Props> = ({
   const [infoExercise, setInfoExercise] = useState<Exercise | null>(null);
   const [infoLoading, setInfoLoading] = useState(false);
 
+  // Открытость оверлеев привязана к истории — закрытие через navigate(-1)
+  const currentModal = (location.state as { modal?: string } | null)?.modal;
+  const isEditExerciseOpen = currentModal === 'edit-exercise';
+  const showAddExercise = currentModal === 'add-exercise';
+  const isInfoExerciseOpen = currentModal === 'info-exercise';
+
+  const openEditExercise = (ex: WorkoutExercise) => {
+    setEditingExercise(ex);
+    navigate('.', { state: { modal: 'edit-exercise' } });
+  };
+  const closeEditExercise = () => navigate(-1);
+
+  const openAddExercise = () => navigate('.', { state: { modal: 'add-exercise' } });
+  const closeAddExercise = () => navigate(-1);
+
   const openExerciseInfo = async (ex: WorkoutExercise) => {
     if (!ex.exerciseId) return;
+    navigate('.', { state: { modal: 'info-exercise' } });
     setInfoLoading(true);
     try {
-      const token = localStorage.getItem('token') ?? '';
-      const res = await fetch(`/exercises/?exercise_id=${ex.exerciseId}`, {
-        headers: { Authorization: `Token ${token}` },
-      });
+      const res = await authedFetch(`/exercises/?exercise_id=${ex.exerciseId}`);
       if (res.ok) {
         const data = await res.json();
         const detail = Array.isArray(data) ? data[0] : data;
         if (detail) setInfoExercise(detail as Exercise);
+        else navigate(-1);
+      } else {
+        navigate(-1);
       }
-    } catch {}
+    } catch { navigate(-1); }
     setInfoLoading(false);
   };
 
@@ -395,7 +415,7 @@ export const WorkoutDetail: React.FC<Props> = ({
   const handleDragEnd = () => { setDragIndex(null); setDragOverIndex(null); };
 
   const c = WORKOUT_TYPE_COLORS[workout.type];
-  const formatDate = (iso: string) => new Date(iso).toLocaleDateString('ru-RU', { day: '2-digit', month: 'long', year: 'numeric' });
+  const formatDate = (iso: string) => { const [y, m, d] = iso.slice(0, 10).split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('ru-RU', { day: '2-digit', month: 'long', year: 'numeric' }); };
 
   return (
     <div style={{
@@ -513,7 +533,7 @@ export const WorkoutDetail: React.FC<Props> = ({
         {/* Дата */}
         {editingDate && isEditMode ? (
           <input type="date" autoFocus value={dateValue} onChange={e => setDateValue(e.target.value)}
-            onBlur={() => { onUpdate({ date: new Date(dateValue).toISOString() }); setEditingDate(false); }}
+            onBlur={() => { onUpdate({ date: dateValue }); setEditingDate(false); }}
             style={{ fontSize: 14, color: 'var(--dim)', background: 'transparent', border: 'none', borderBottom: '1px solid var(--border2)', outline: 'none', marginBottom: 28 }} />
         ) : (
           <p
@@ -657,7 +677,7 @@ export const WorkoutDetail: React.FC<Props> = ({
                   cursor: isEditMode ? 'default' : 'default',
                   transition: 'background 0.15s, border-color 0.15s, opacity 0.15s',
                 }}
-                onClick={() => isEditMode && setEditingExercise(ex)}
+                onClick={() => isEditMode && openEditExercise(ex)}
               >
                 {isEditMode && (
                   <div
@@ -746,7 +766,7 @@ export const WorkoutDetail: React.FC<Props> = ({
 
         {isEditMode && (
           <button
-            onClick={() => setShowAddExercise(true)}
+            onClick={openAddExercise}
             style={{
               width: '100%', marginTop: 10, padding: '13px', borderRadius: 14,
               border: '1px dashed var(--border2)', background: 'none', color: 'var(--faint)',
@@ -763,19 +783,19 @@ export const WorkoutDetail: React.FC<Props> = ({
 
       <div style={{ height: 160, flexShrink: 0 }} />
 
-      {editingExercise && (
+      {isEditExerciseOpen && editingExercise && (
         <ExerciseEditModal
           exercise={editingExercise}
           onSave={u => onUpdateExercise(editingExercise.id, u)}
-          onDelete={() => { onDeleteExercise(editingExercise.id); setEditingExercise(null); }}
-          onClose={() => setEditingExercise(null)}
+          onDelete={() => { onDeleteExercise(editingExercise.id); closeEditExercise(); }}
+          onClose={closeEditExercise}
         />
       )}
       {showAddExercise && (
         <AddExerciseModal
           workoutType={workout.type}
           onAdd={onAddExercise}
-          onClose={() => setShowAddExercise(false)}
+          onClose={closeAddExercise}
         />
       )}
 
@@ -792,7 +812,7 @@ export const WorkoutDetail: React.FC<Props> = ({
         </div>
       )}
 
-      <ExerciseModal exercise={infoExercise} onClose={() => setInfoExercise(null)} zIndex={300} />
+      <ExerciseModal exercise={isInfoExerciseOpen ? infoExercise : null} onClose={() => navigate(-1)} zIndex={300} />
     </div>
   );
 };

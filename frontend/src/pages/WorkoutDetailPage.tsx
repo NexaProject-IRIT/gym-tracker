@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useWorkoutsApi } from '../hooks/useWorkoutsApi';
+import { useWorkoutsContext } from '../contexts/WorkoutsContext';
 import { WorkoutDetail } from '../components/Workouts/WorkoutDetail';
 
 export const WorkoutDetailPage = () => {
@@ -11,7 +11,7 @@ export const WorkoutDetailPage = () => {
     fetchWorkouts, fetchWorkoutDetail,
     updateWorkout, deleteWorkout, repeatWorkout,
     addExercise, updateExercise, deleteExercise, toggleExerciseDone,
-  } = useWorkoutsApi();
+  } = useWorkoutsContext();
 
   const [detailLoaded, setDetailLoaded] = useState(false);
 
@@ -19,11 +19,14 @@ export const WorkoutDetailPage = () => {
     if (!id) { navigate('/workouts', { replace: true }); return; }
     setDetailLoaded(false);
     (async () => {
-      await fetchWorkouts();
+      // Only fetch the list if it hasn't been loaded yet (e.g. direct URL navigation).
+      // fetchWorkoutDetail upserts into the list, so the list fetch is not needed otherwise.
+      if (workouts.length === 0) await fetchWorkouts();
       const w = await fetchWorkoutDetail(id);
       if (!w) navigate('/workouts', { replace: true });
       else setDetailLoaded(true);
     })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   // Sync: after mutations the hook updates workouts state — derive from it
@@ -44,9 +47,9 @@ export const WorkoutDetailPage = () => {
   return (
     <WorkoutDetail
       workout={workout}
-      onClose={() => navigate('/workouts')}
+      onClose={() => navigate('/workouts', { replace: true })}
       onUpdate={u => updateWorkout(workout.id, u)}
-      onDelete={() => { deleteWorkout(workout.id); navigate('/workouts'); }}
+      onDelete={() => { deleteWorkout(workout.id); navigate('/workouts', { replace: true }); }}
       onRepeat={() => repeatWorkout(workout.id)}
       onUpdateExercise={(exId, u) => updateExercise(workout.id, exId, u)}
       onDeleteExercise={exId => deleteExercise(workout.id, exId)}

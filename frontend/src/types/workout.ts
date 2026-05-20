@@ -49,7 +49,6 @@ export interface WorkoutExercise {
   isDone?: boolean;
   parameters: ParameterType[];
   order?: number;
-  note?: string;
 }
 
 /**

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { AiChatProvider } from '../../contexts/AiChatContext';
+import { WorkoutsProvider } from '../../contexts/WorkoutsContext';
 import { FloatingTimer } from '../Timer/FloatingTimer';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -125,11 +126,11 @@ export const MainLayout = () => {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
         *, *::before, *::after { box-sizing: border-box; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
         .nav-link { text-decoration: none; display: block; }
       `}</style>
 
+      <WorkoutsProvider>
       <AiChatProvider>
         <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
 
@@ -247,6 +248,7 @@ export const MainLayout = () => {
 
         <FloatingTimer isMobile={isMobile} />
       </AiChatProvider>
+      </WorkoutsProvider>
     </>
   );
 };

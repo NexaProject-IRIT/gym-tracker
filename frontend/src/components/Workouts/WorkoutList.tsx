@@ -1,8 +1,8 @@
 // src/components/Workouts/WorkoutList.tsx
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useWorkoutsApi } from '../../hooks/useWorkoutsApi';
-import type { Workout, WorkoutType } from '../../types/workout';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useWorkoutsContext } from '../../contexts/WorkoutsContext';
+import type { WorkoutType } from '../../types/workout';
 import { WORKOUT_TYPE_LABELS, WORKOUT_TYPE_COLORS } from '../../types/workout';
 import { WorkoutForm } from './WorkoutForm';
 
@@ -49,7 +49,8 @@ const IconTrash = () => (
 );
 
 function formatDate(iso: string) {
-  const d = new Date(iso);
+  const [y, m, day] = iso.slice(0, 10).split('-').map(Number);
+  const d = new Date(y, m - 1, day);
   return {
     day: d.toLocaleDateString('ru-RU', { day: '2-digit' }),
     month: d.toLocaleDateString('ru-RU', { month: 'short' }).replace('.', ''),
@@ -113,13 +114,17 @@ const WorkoutTypeIcon: React.FC<{ type: WorkoutType; color: string; size?: numbe
 
 export const WorkoutList: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     workouts, loading, error, fetchWorkouts,
     addWorkout, deleteWorkout, repeatWorkout,
-  } = useWorkoutsApi();
+  } = useWorkoutsContext();
   useEffect(() => { fetchWorkouts(); }, [fetchWorkouts]);
 
-  const [showForm, setShowForm] = useState(false);
+  // Состояние формы синхронизировано с историей: открыта, пока в location.state есть модалка
+  const showForm = (location.state as { modal?: string } | null)?.modal === 'form';
+  const openForm = () => navigate('.', { state: { modal: 'form' } });
+  const closeForm = () => navigate(-1);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
 
@@ -264,7 +269,11 @@ export const WorkoutList: React.FC = () => {
                       <p style={{ margin: '0 0 3px', fontSize: 14, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {workout.name}
                       </p>
-                      {exCount > 0 && (
+                      {workout.notes ? (
+                        <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--dim)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {workout.notes.length > 60 ? workout.notes.slice(0, 60) + '…' : workout.notes}
+                        </p>
+                      ) : exCount > 0 && (
                         <p style={{ margin: '3px 0 0', fontSize: 11, color: 'var(--ghost)' }}>
                           {exCount} упражн.
                         </p>
@@ -314,7 +323,7 @@ export const WorkoutList: React.FC = () => {
         }}>
           <div style={{ maxWidth: 900, margin: '0 auto' }}>
             <button
-              onClick={() => setShowForm(true)}
+              onClick={openForm}
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 width: '100%', padding: '14px 24px', borderRadius: 14, border: 'none',
@@ -347,9 +356,9 @@ export const WorkoutList: React.FC = () => {
                 color: WORKOUT_TYPE_COLORS[data.type].accent,
                 exercises: data.exercises.map(e => ({ ...e, id: `ex_${Date.now()}_${Math.random().toString(36).slice(2, 5)}` })),
               });
-              setShowForm(false);
+              closeForm();
             }}
-            onClose={() => setShowForm(false)}
+            onClose={closeForm}
           />
         )}
       </div>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAiChatContext } from '../contexts/AiChatContext';
+import { useWorkoutsContext } from '../contexts/WorkoutsContext';
 import { MessageBubble } from '../components/AiChat/MessageBubble';
 import { TypingIndicator } from '../components/AiChat/TypingIndicator';
 
@@ -15,6 +16,7 @@ const SUGGESTED_PROMPTS = [
 
 export const AiChatPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const {
     messages,
@@ -28,8 +30,10 @@ export const AiChatPage = () => {
     setError,
   } = useAiChatContext();
 
+  const { fetchWorkouts } = useWorkoutsContext();
+
   const [input, setInput] = useState('');
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const showClearConfirm = (location.state as { modal?: string } | null)?.modal === 'confirm';
   const [addingWorkoutForId, setAddingWorkoutForId] = useState<string | null>(null);
   const [importingForId, setImportingForId] = useState<string | null>(null);
 
@@ -63,19 +67,25 @@ export const AiChatPage = () => {
   const handleAddWorkout = async (messageId: string) => {
     setAddingWorkoutForId(messageId);
     const newId = await addWorkoutFromSuggestion(messageId);
+    if (newId) {
+      await fetchWorkouts();
+      navigate('/workouts');
+    }
     setAddingWorkoutForId(null);
-    if (newId) setTimeout(() => navigate('/workouts'), 900);
   };
 
   const handleImportWorkouts = async (messageId: string) => {
     setImportingForId(messageId);
     const count = await addWorkoutsFromImport(messageId);
+    if (count > 0) {
+      await fetchWorkouts();
+      navigate('/workouts');
+    }
     setImportingForId(null);
-    if (count > 0) setTimeout(() => navigate('/workouts'), 1200);
   };
 
   const handleClear = async () => {
-    setShowClearConfirm(false);
+    navigate(-1);
     await clearHistory();
   };
 
@@ -154,7 +164,7 @@ export const AiChatPage = () => {
           {messages.length > 0 && (
             <button
               type="button"
-              onClick={() => setShowClearConfirm(true)}
+              onClick={() => navigate('.', { state: { modal: 'confirm' } })}
               style={{
                 background: 'transparent',
                 border: '1px solid var(--border2)',
@@ -359,7 +369,7 @@ export const AiChatPage = () => {
             <div style={{ display: 'flex', gap: 10 }}>
               <button
                 type="button"
-                onClick={() => setShowClearConfirm(false)}
+                onClick={() => navigate(-1)}
                 style={{
                   flex: 1, padding: '10px', borderRadius: 10,
                   background: 'transparent', border: '1px solid var(--border2)',

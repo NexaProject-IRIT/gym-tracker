@@ -16,7 +16,7 @@ class Workout(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='workouts')
     name = models.CharField(max_length=255)
     type = models.CharField(max_length=20, choices=WORKOUT_TYPES)
-    date = models.DateTimeField()
+    date = models.DateField()
     color = models.CharField(max_length=7, blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import type { CSSProperties } from 'react';
 import type { Exercise } from '../../types/workout';
 
@@ -63,11 +64,26 @@ interface Props {
 }
 
 export const ExerciseModal = ({ exercise, onClose, zIndex = 50 }: Props) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [techniqueIdx, setTechniqueIdx] = useState(0);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const touchStartX = useRef(0);
+  const prevExerciseIdRef = useRef<string | undefined>(undefined);
+  if (prevExerciseIdRef.current !== exercise?.id) {
+    prevExerciseIdRef.current = exercise?.id;
+    if (techniqueIdx !== 0) setTechniqueIdx(0);
+  }
 
-  useEffect(() => { setTechniqueIdx(0); }, [exercise?.id]);
+  const isLightboxOpen = (location.state as { lightbox?: boolean } | null)?.lightbox === true;
+
+  const openLightbox = (src: string) => {
+    setLightboxSrc(src);
+    // Сохраняем modal:'exercise', чтобы ExerciseGrid не закрыл модалку
+    navigate('.', { state: { modal: 'exercise', lightbox: true } });
+  };
+
+  const closeLightbox = () => navigate(-1);
 
   if (!exercise) return null;
 
@@ -201,7 +217,7 @@ export const ExerciseModal = ({ exercise, onClose, zIndex = 50 }: Props) => {
                   <img
                     src={techniques[techniqueIdx]}
                     alt={`Техника ${techniqueIdx + 1}`}
-                    onClick={() => setLightboxSrc(techniques[techniqueIdx])}
+                    onClick={() => openLightbox(techniques[techniqueIdx])}
                     onTouchStart={e => { touchStartX.current = e.touches[0].clientX; }}
                     onTouchEnd={e => {
                       const delta = e.changedTouches[0].clientX - touchStartX.current;
@@ -268,19 +284,18 @@ export const ExerciseModal = ({ exercise, onClose, zIndex = 50 }: Props) => {
       </div>
 
       {/* Fullscreen lightbox */}
-      {lightboxSrc && (
+      {isLightboxOpen && lightboxSrc && (
         <div
           style={{
             position: 'fixed', inset: 0, zIndex: zIndex + 50,
             background: 'rgba(0,0,0,0.95)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}
-          onClick={() => setLightboxSrc(null)}
+          onClick={closeLightbox}
         >
           <img
             src={lightboxSrc}
             alt="Техника"
-            onClick={e => e.stopPropagation()}
             style={{
               maxWidth: '100vw', maxHeight: '100vh',
               objectFit: 'contain',
@@ -288,7 +303,7 @@ export const ExerciseModal = ({ exercise, onClose, zIndex = 50 }: Props) => {
             }}
           />
           <button
-            onClick={() => setLightboxSrc(null)}
+            onClick={closeLightbox}
             style={{ ...frostedCircle, position: 'absolute', top: 14, right: 14 }}
           >
             <IconClose />

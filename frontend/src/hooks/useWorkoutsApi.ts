@@ -109,8 +109,10 @@ export const useWorkoutsApi = () => {
       if (!res.ok) return null;
       const data = await res.json();
       const w = normalizeWorkout(data);
-      // Update in local state too
-      setWorkouts(prev => prev.map(existing => existing.id === id ? w : existing));
+      setWorkouts(prev => {
+        const exists = prev.some(existing => existing.id === id);
+        return exists ? prev.map(existing => existing.id === id ? w : existing) : [...prev, w];
+      });
       return w;
     } catch {
       return null;
@@ -132,16 +134,12 @@ export const useWorkoutsApi = () => {
         }),
       });
       if (!res.ok) {
-        // ИСПРАВЛЕНО: читаем тело как текст сначала, чтобы не падать на HTML 500
         const rawBody = await res.text();
         let errMessage = `Ошибка ${res.status}`;
         try {
           const errData = JSON.parse(rawBody);
-          errMessage = JSON.stringify(errData);
-        } catch {
-          // Бэкенд вернул HTML (500 debug page) — берём первые 200 символов для диагностики
-          errMessage = `Ошибка ${res.status}: ${rawBody.slice(0, 200)}`;
-        }
+          errMessage = errData.detail || errData.error || errData.message || errMessage;
+        } catch { /* HTML 500 — оставляем "Ошибка N" */ }
         throw new Error(errMessage);
       }
       const created = normalizeWorkout(await res.json());
@@ -209,7 +207,7 @@ export const useWorkoutsApi = () => {
     const copy: Omit<Workout, 'id'> = {
       name: original.name + ' (копия)',
       type: original.type,
-      date: new Date().toISOString(),
+      date: new Date().toLocaleDateString('en-CA'),
       color: original.color,
       exercises: exercises.map(({ id: _id, ...rest }) => rest as WorkoutExercise),
     };

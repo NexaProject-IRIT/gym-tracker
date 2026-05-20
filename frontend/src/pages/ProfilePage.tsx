@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { NumberInput } from '../components/UI/NumberInput';
 import { authedFetch, clearTokens } from '../utils/api';
 
@@ -85,12 +85,13 @@ const ConfirmModal = ({
 
 export const ProfilePage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [clearing, setClearing] = useState(false);
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const showClearConfirm = (location.state as { modal?: string } | null)?.modal === 'confirm';
   const [profile, setProfile] = useState<ProfileData>({ username: '', displayName: '', age: '', weight: '', height: '', goal: '' });
   const [draft, setDraft] = useState<ProfileData>(profile);
   const [usernameError, setUsernameError] = useState<string | null>(null);
@@ -206,7 +207,7 @@ export const ProfilePage = () => {
   };
 
   const handleClearHistory = async () => {
-    setShowClearConfirm(false);
+    navigate(-1);
     setClearing(true);
     try {
       const res = await authedFetch('/workouts/clear/', { method: 'DELETE' });
@@ -395,7 +396,7 @@ export const ProfilePage = () => {
           {exporting ? 'Экспорт...' : 'Экспорт тренировок (.txt)'}
         </button>
 
-        <button onClick={() => setShowClearConfirm(true)} disabled={clearing} style={{
+        <button onClick={() => navigate('.', { state: { modal: 'confirm' } })} disabled={clearing} style={{
           width: '100%', padding: '14px', borderRadius: 12, border: 'none',
           background: 'rgba(248,113,113,0.08)', color: '#f87171', fontWeight: 600, fontSize: 14, cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -422,7 +423,7 @@ export const ProfilePage = () => {
         <ConfirmModal
           message="Вы уверены? Все тренировки будут удалены без возможности восстановления."
           onConfirm={handleClearHistory}
-          onCancel={() => setShowClearConfirm(false)}
+          onCancel={() => navigate(-1)}
         />
       )}
     </div>

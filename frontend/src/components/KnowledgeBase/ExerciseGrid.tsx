@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { SearchBar } from './SearchBar';
 import { TagFilter } from './TagFilter';
@@ -15,6 +16,9 @@ interface Equipment {
 }
 
 export const ExerciseGrid = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [allExercises, setAllExercises] = useState<Exercise[]>([]);
   const [equipment, setEquipment] = useState<Equipment[]>([]);
@@ -24,6 +28,13 @@ export const ExerciseGrid = () => {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [selectedEquipment, setSelectedEquipment] = useState<string | null>(null);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+  const isExerciseOpen = (location.state as { modal?: string } | null)?.modal === 'exercise';
+
+  const openExercise = (exercise: Exercise) => {
+    setSelectedExercise(exercise);
+    navigate('.', { state: { modal: 'exercise' } });
+  };
+  const closeExercise = () => navigate(-1);
 
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -195,7 +206,7 @@ export const ExerciseGrid = () => {
               padding: '0 16px 16px',
             }}>
               {exercises.map((ex) => (
-                <ExerciseCard key={ex.id} exercise={ex} onClick={setSelectedExercise} />
+                <ExerciseCard key={ex.id} exercise={ex} onClick={openExercise} />
               ))}
             </div>
           </>
@@ -203,8 +214,8 @@ export const ExerciseGrid = () => {
       )}
 
       <ExerciseModal
-        exercise={selectedExercise}
-        onClose={() => setSelectedExercise(null)}
+        exercise={isExerciseOpen ? selectedExercise : null}
+        onClose={closeExercise}
       />
     </div>
   );

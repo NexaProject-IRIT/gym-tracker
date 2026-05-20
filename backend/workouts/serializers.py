@@ -66,6 +66,7 @@ class WorkoutCreateSerializer(serializers.ModelSerializer):
 
         for idx, ex_data in enumerate(exercises_data):
             ex_data.pop('uid', None)
+            ex_data.pop('order', None)
             exercise_id = ex_data.pop('exercise_id', None)
             custom_name = ex_data.pop('custom_name', None)
             is_custom = ex_data.pop('is_custom', False)
@@ -105,6 +106,7 @@ class WorkoutUpdateSerializer(serializers.ModelSerializer):
 
             for idx, ex_data in enumerate(exercises_data):
                 incoming_uid = ex_data.pop('uid', '') or ''
+                ex_data.pop('order', None)
                 exercise_id = ex_data.pop('exercise_id', None)
                 custom_name = ex_data.pop('custom_name', None)
                 is_custom = ex_data.pop('is_custom', False)

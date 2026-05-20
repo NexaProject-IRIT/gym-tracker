@@ -1,12 +1,11 @@
 from rest_framework import viewsets
 from rest_framework.decorators import action
-from .serializers import ExerciseCreateSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
 from .models import Exercise, Equipment
 from .serializers import (
-    ExerciseSerializer, ExerciseListSerializer,
+    ExerciseSerializer, ExerciseListSerializer, ExerciseCreateSerializer,
     EquipmentSerializer, EquipmentListSerializer
 )
 from rapidfuzz import fuzz, process
@@ -31,9 +30,9 @@ class ExerciseListView(APIView):
         if equipment:
             queryset = queryset.filter(equipment__icontains=equipment)
         if muscle:
-            queryset = queryset.filter(target_muscles__contains=[muscle])
+            queryset = queryset.filter(target_muscles__contains=[muscle.lower()])
         if tag:
-            queryset = queryset.filter(tags__contains=[tag])
+            queryset = queryset.filter(tags__contains=[tag.lower()])
         if search and search.strip():
             exercises_list = list(queryset)
             if exercises_list:
@@ -76,7 +75,7 @@ class ExerciseListView(APIView):
             return Response(serializer.data)
 
     def post(self, request):
-        serializer = ExerciseSerializer(data=request.data)
+        serializer = ExerciseCreateSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)

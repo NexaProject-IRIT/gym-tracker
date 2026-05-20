@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { WorkoutType, WorkoutExercise, ParameterType } from '../../types/workout';
 import { WORKOUT_TYPE_LABELS, WORKOUT_TYPE_COLORS, DEFAULT_PARAMS_FOR_TYPE, PARAMETER_LABELS } from '../../types/workout';
+import { authedFetch } from '../../utils/api';
 
 interface Props {
   onSave: (data: { name: string; type: WorkoutType; date: string; notes: string; exercises: Omit<WorkoutExercise, 'id'>[] }) => void;
@@ -87,12 +88,258 @@ const IconChevron = () => (
     <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
+const IconChevronLeft = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+    <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+const IconChevronRight = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+    <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+const IconCalendar = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+    <rect x="3" y="5" width="18" height="16" rx="2.5" stroke="currentColor" strokeWidth="1.7"/>
+    <path d="M3 10h18" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
+    <path d="M8 3v4M16 3v4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
+  </svg>
+);
+const IconNote = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+    <path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
+  </svg>
+);
+
+const MONTHS_RU = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+const MONTHS_RU_GEN = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+const WEEKDAYS_RU = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+
+function parseISODate(s: string): Date {
+  const [y, m, d] = s.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+function toISODate(d: Date): string {
+  return d.toLocaleDateString('en-CA');
+}
+function isSameDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+function humanDate(d: Date): string {
+  const today = new Date();
+  const yesterday = new Date(); yesterday.setDate(today.getDate() - 1);
+  if (isSameDay(d, today)) return `Сегодня · ${d.getDate()} ${MONTHS_RU_GEN[d.getMonth()]}`;
+  if (isSameDay(d, yesterday)) return `Вчера · ${d.getDate()} ${MONTHS_RU_GEN[d.getMonth()]}`;
+  return `${d.getDate()} ${MONTHS_RU_GEN[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+const DatePicker: React.FC<{ value: string; onChange: (v: string) => void; accentColor: string }> = ({ value, onChange, accentColor }) => {
+  const [open, setOpen] = useState(false);
+  const selected = parseISODate(value);
+  const [viewMonth, setViewMonth] = useState(() => new Date(selected.getFullYear(), selected.getMonth(), 1));
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+
+  useEffect(() => {
+    if (!open) return;
+    setViewMonth(new Date(selected.getFullYear(), selected.getMonth(), 1));
+    const handler = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    document.addEventListener('keydown', esc);
+    return () => {
+      document.removeEventListener('mousedown', handler);
+      document.removeEventListener('keydown', esc);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  const firstOfMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1);
+  const startOffset = (firstOfMonth.getDay() + 6) % 7;
+  const gridStart = new Date(firstOfMonth);
+  gridStart.setDate(firstOfMonth.getDate() - startOffset);
+  const days: Date[] = Array.from({ length: 42 }, (_, i) => {
+    const d = new Date(gridStart);
+    d.setDate(gridStart.getDate() + i);
+    return d;
+  });
+
+  const pick = (d: Date) => {
+    onChange(toISODate(d));
+    setOpen(false);
+  };
+
+  return (
+    <div ref={wrapRef} style={{ position: 'relative' }}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: '100%', background: 'var(--surface)', color: 'var(--text)',
+          borderRadius: 12, padding: '11px 16px',
+          border: `1px solid ${open ? accentColor : 'var(--border)'}`,
+          boxShadow: open ? `0 0 0 3px ${accentColor}22` : 'none',
+          fontSize: 14, outline: 'none', cursor: 'pointer', textAlign: 'left',
+          display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'inherit',
+          transition: 'border-color 0.15s, box-shadow 0.15s',
+        }}
+      >
+        <span style={{ color: open ? accentColor : 'var(--text-faint)', display: 'flex', transition: 'color 0.15s' }}><IconCalendar /></span>
+        <span style={{ flex: 1 }}>{humanDate(selected)}</span>
+        <span style={{ color: 'var(--ghost)', display: 'flex', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.18s' }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </span>
+      </button>
+
+      {open && (
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0,
+          background: 'var(--surface2)', borderRadius: 14, padding: 10,
+          border: '1px solid var(--border2)',
+          boxShadow: '0 14px 32px rgba(0,0,0,0.45)',
+          zIndex: 100,
+          animation: 'datepicker-in 0.16s ease-out',
+        }}>
+          <style>{`
+            @keyframes datepicker-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+            .dp-cell:hover:not(.dp-sel) { background: var(--surface3) !important; }
+            .dp-nav:hover { background: var(--surface3) !important; color: var(--text) !important; }
+          `}</style>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <button type="button" className="dp-nav"
+              onClick={() => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() - 1, 1))}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--dim)', width: 26, height: 26, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.12s, color 0.12s' }}
+            ><IconChevronLeft /></button>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.2px' }}>
+              {MONTHS_RU[viewMonth.getMonth()]} <span style={{ color: 'var(--dim)', fontWeight: 500 }}>{viewMonth.getFullYear()}</span>
+            </div>
+            <button type="button" className="dp-nav"
+              onClick={() => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 1))}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--dim)', width: 26, height: 26, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.12s, color 0.12s' }}
+            ><IconChevronRight /></button>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1, marginBottom: 4 }}>
+            {WEEKDAYS_RU.map((d, i) => (
+              <div key={d} style={{
+                textAlign: 'center', fontSize: 9, fontWeight: 600, padding: '2px 0',
+                color: i >= 5 ? 'var(--ghost)' : 'var(--dim)',
+                textTransform: 'uppercase', letterSpacing: '0.04em',
+              }}>{d}</div>
+            ))}
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1 }}>
+            {days.map((d, i) => {
+              const inMonth = d.getMonth() === viewMonth.getMonth();
+              const isSel = isSameDay(d, selected);
+              const isToday = isSameDay(d, today);
+              const isWeekend = (d.getDay() === 0 || d.getDay() === 6);
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  className={`dp-cell${isSel ? ' dp-sel' : ''}`}
+                  onClick={() => pick(d)}
+                  style={{
+                    height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: isSel ? accentColor : 'transparent',
+                    color: isSel ? '#0a0a0a' : !inMonth ? 'var(--ghost)' : isWeekend ? 'var(--text-muted)' : 'var(--text)',
+                    opacity: inMonth ? 1 : 0.55,
+                    border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 12,
+                    fontWeight: isSel ? 700 : isToday ? 700 : 500,
+                    position: 'relative', outline: 'none', fontFamily: 'inherit', padding: 0,
+                    transition: 'background 0.1s, color 0.1s',
+                  }}
+                >
+                  {d.getDate()}
+                  {isToday && !isSel && (
+                    <span style={{
+                      position: 'absolute', bottom: 4, left: '50%', transform: 'translateX(-50%)',
+                      width: 3, height: 3, borderRadius: '50%', background: accentColor,
+                    }} />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          <div style={{ display: 'flex', gap: 5, marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--border)' }}>
+            <button type="button"
+              onClick={() => { const y = new Date(); y.setDate(y.getDate() - 1); pick(y); }}
+              style={{
+                flex: 1, padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)',
+                background: 'var(--surface)', color: 'var(--text-muted)', fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                fontFamily: 'inherit', transition: 'background 0.12s, border-color 0.12s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface3)'; e.currentTarget.style.borderColor = 'var(--border2)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
+            >Вчера</button>
+            <button type="button"
+              onClick={() => pick(new Date())}
+              style={{
+                flex: 1, padding: '6px 10px', borderRadius: 8,
+                border: `1px solid ${accentColor}55`,
+                background: `${accentColor}1f`, color: accentColor, fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                fontFamily: 'inherit', transition: 'background 0.12s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = `${accentColor}33`; }}
+              onMouseLeave={e => { e.currentTarget.style.background = `${accentColor}1f`; }}
+            >Сегодня</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const NotesField: React.FC<{ value: string; onChange: (v: string) => void; accentColor: string }> = ({ value, onChange, accentColor }) => {
+  const [focused, setFocused] = useState(false);
+  const max = 500;
+  return (
+    <div style={{
+      position: 'relative',
+      background: 'var(--surface)',
+      borderRadius: 12,
+      border: `1px solid ${focused ? accentColor : 'var(--border)'}`,
+      boxShadow: focused ? `0 0 0 3px ${accentColor}22` : 'none',
+      transition: 'border-color 0.15s, box-shadow 0.15s',
+    }}>
+      <textarea
+        value={value}
+        onChange={e => onChange(e.target.value.slice(0, max))}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        placeholder="Как прошла тренировка, ощущения, цели…"
+        rows={3}
+        style={{
+          width: '100%', background: 'transparent', color: 'var(--text)',
+          borderRadius: 12, padding: '12px 14px 26px',
+          border: 'none', fontSize: 14, outline: 'none', boxSizing: 'border-box',
+          resize: 'none', fontFamily: 'inherit', minHeight: 92, lineHeight: 1.5,
+          display: 'block',
+        }}
+      />
+      <div style={{
+        position: 'absolute', bottom: 8, right: 12, fontSize: 11,
+        color: value.length >= max ? accentColor : 'var(--ghost)',
+        fontVariantNumeric: 'tabular-nums', pointerEvents: 'none', userSelect: 'none',
+        fontWeight: 500,
+      }}>
+        {value.length}/{max}
+      </div>
+    </div>
+  );
+};
 
 export const WorkoutForm: React.FC<Props> = ({ onSave, onClose }) => {
   const [step, setStep] = useState<Step>('type');
   const [selectedType, setSelectedType] = useState<WorkoutType | null>(null);
   const [workoutName, setWorkoutName] = useState('');
-  const [notes] = useState('');
+  const [workoutDate, setWorkoutDate] = useState(() => new Date().toLocaleDateString('en-CA'));
+  const [notes, setNotes] = useState('');
   const [exercises, setExercises] = useState<DraftExercise[]>([]);
   const [adding, setAdding] = useState(false);
 
@@ -123,7 +370,7 @@ export const WorkoutForm: React.FC<Props> = ({ onSave, onClose }) => {
     if (value.trim().length >= 2) {
       debounceRef.current = window.setTimeout(async () => {
         try {
-          const res = await fetch(`/exercises/search/?q=${encodeURIComponent(value.trim())}`);
+          const res = await authedFetch(`/exercises/search/?q=${encodeURIComponent(value.trim())}`);
           if (res.ok) {
             const data = await res.json();
             setSuggestions(data);
@@ -189,7 +436,7 @@ export const WorkoutForm: React.FC<Props> = ({ onSave, onClose }) => {
   const handleSave = () => {
     if (!selectedType || !workoutName.trim()) return;
     onSave({
-      name: workoutName.trim(), type: selectedType, date: new Date().toISOString(), notes: notes.trim(),
+      name: workoutName.trim(), type: selectedType, date: workoutDate, notes: notes.trim(),
       exercises: exercises.map(e => ({
         name: e.name,
         exerciseId: e.exerciseId,
@@ -272,6 +519,18 @@ export const WorkoutForm: React.FC<Props> = ({ onSave, onClose }) => {
               <label style={{ fontSize: 11, color: 'var(--dim)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>Название тренировки</label>
               <input value={workoutName} onChange={e => setWorkoutName(e.target.value)}
                 style={{ width: '100%', background: 'var(--surface)', color: 'var(--text)', borderRadius: 12, padding: '11px 16px', border: '1px solid var(--border)', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ fontSize: 11, color: 'var(--dim)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>Дата</label>
+              <DatePicker value={workoutDate} onChange={setWorkoutDate} accentColor={c.accent} />
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ fontSize: 11, color: 'var(--dim)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                <IconNote /> Заметки
+              </label>
+              <NotesField value={notes} onChange={setNotes} accentColor={c.accent} />
             </div>
 
             <div style={{ marginBottom: 24 }}>

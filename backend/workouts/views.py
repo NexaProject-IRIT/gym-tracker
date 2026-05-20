@@ -208,17 +208,17 @@ class WorkoutViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def stats(self, request):
         user = request.user
-        now = timezone.now()
-        start_of_month = datetime(now.year, now.month, 1, tzinfo=now.tzinfo)
+        today = timezone.localdate()
+        start_of_month = today.replace(day=1)
         total = Workout.objects.filter(user=user).count()
-        this_month = Workout.objects.filter(user=user, date__gte=start_of_month, date__lte=now).count()
+        this_month = Workout.objects.filter(user=user, date__gte=start_of_month, date__lte=today).count()
         return Response({"total": total, "this_month": this_month})
 
     @action(detail=False, methods=['delete'])
     def clear(self, request):
         user = request.user
         deleted_count, _ = Workout.objects.filter(user=user).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({'deleted': deleted_count}, status=status.HTTP_200_OK)
 
 
 class BulkImportView(APIView):

@@ -60,7 +60,7 @@ def sync_equipment_to_db(equipment_items):
 
             defaults = {
                 "description": item.get("description", ""),
-                "tags": item.get("tags", []),
+                "tags": [t.lower() for t in item.get("tags", [])],
                 "image": build_image_url(item.get("image", "")),
                 "source_file": item.get("source_file", ""),
             }
@@ -137,8 +137,8 @@ def sync_exercises_to_db():
             defaults = {
                 "description": exercise_data.get("description", ""),
                 "equipment": equipment_name,
-                "tags": exercise_data.get("tags", []),
-                "target_muscles": exercise_data.get("targetMuscles", []),
+                "tags": [t.lower() for t in exercise_data.get("tags", [])],
+                "target_muscles": [m.lower() for m in exercise_data.get("targetMuscles", [])],
                 "difficulty": exercise_data.get("difficulty", ""),
                 "images": build_images_dict(exercise_data.get("images", {})),
                 "source_file": exercise_data.get("source_file", ""),
