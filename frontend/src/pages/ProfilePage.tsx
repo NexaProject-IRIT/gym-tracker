@@ -1,35 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { NumberInput } from '../components/UI/NumberInput';
 import { authedFetch, clearTokens } from '../utils/api';
-
-type Goal =
-  | 'lose_weight'
-  | 'gain_muscle'
-  | 'recomposition'
-  | 'improve_endurance'
-  | 'increase_strength'
-  | 'maintain';
-
-const GOAL_LABELS: Record<Goal, string> = {
-  lose_weight: 'Похудение',
-  gain_muscle: 'Набор мышц',
-  recomposition: 'Рекомпозиция',
-  improve_endurance: 'Выносливость',
-  increase_strength: 'Сила',
-  maintain: 'Поддержание формы',
-};
-
-const GOAL_OPTIONS = Object.entries(GOAL_LABELS) as [Goal, string][];
-
-interface ProfileData {
-  username: string;
-  displayName: string;
-  age: string;
-  weight: string;
-  height: string;
-  goal: Goal | '';
-}
+import { PersonalDataCard, type ProfileData, type Goal, GOAL_LABELS } from '../components/Profile/PersonalDataCard';
+import { DataActionsCard } from '../components/Profile/DataActionsCard';
+import { ConfirmModal } from '../components/Profile/ConfirmModal';
 
 interface Stats {
   total: number;
@@ -53,35 +27,17 @@ const IconPerson = () => (
   </svg>
 );
 
-const ConfirmModal = ({
-  message, onConfirm, onCancel,
-}: { message: string; onConfirm: () => void; onCancel: () => void }) => (
-  <div style={{
-    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    zIndex: 1000, padding: 24,
-  }}>
-    <div style={{
-      background: 'var(--surface)', borderRadius: 20,
-      border: '1px solid var(--border2)',
-      padding: 28, maxWidth: 360, width: '100%',
-    }}>
-      <p style={{ color: 'var(--text)', fontSize: 15, margin: '0 0 24px', lineHeight: 1.5 }}>{message}</p>
-      <div style={{ display: 'flex', gap: 10 }}>
-        <button onClick={onCancel} style={{
-          flex: 1, padding: '12px', borderRadius: 12,
-          border: '1px solid var(--border2)', background: 'transparent',
-          color: 'var(--muted)', fontWeight: 600, fontSize: 14, cursor: 'pointer',
-        }}>Отмена</button>
-        <button onClick={onConfirm} style={{
-          flex: 1, padding: '12px', borderRadius: 12, border: 'none',
-          background: 'rgba(248,113,113,0.15)',
-          color: '#f87171', fontWeight: 700, fontSize: 14, cursor: 'pointer',
-        }}>Удалить</button>
-      </div>
-    </div>
-  </div>
-);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function readProfileFromResponse(data: any): ProfileData {
+  return {
+    username: data.username ?? '',
+    displayName: data.display_name ?? data.username ?? '',
+    age: data.age != null ? String(data.age) : '',
+    weight: data.weight != null ? String(data.weight) : '',
+    height: data.height != null ? String(data.height) : '',
+    goal: (data.goal as Goal) || '',
+  };
+}
 
 export const ProfilePage = () => {
   const navigate = useNavigate();
@@ -97,16 +53,6 @@ export const ProfilePage = () => {
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [stats, setStats] = useState<Stats>({ total: 0, this_month: 0 });
   const [statsLoaded, setStatsLoaded] = useState(false);
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const readProfileFromResponse = (data: any): ProfileData => ({
-    username: data.username ?? '',
-    displayName: data.display_name ?? data.username ?? '',
-    age: data.age != null ? String(data.age) : '',
-    weight: data.weight != null ? String(data.weight) : '',
-    height: data.height != null ? String(data.height) : '',
-    goal: (data.goal as Goal) || '',
-  });
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -227,18 +173,6 @@ export const ProfilePage = () => {
     { label: 'Этот месяц', value: statsLoaded ? String(stats.this_month) : '—' },
   ];
 
-  type NumericField = 'age' | 'weight' | 'height';
-  const numericFields: { field: NumericField; label: string; step: number; min: number; max: number }[] = [
-    { field: 'age',    label: 'Возраст',   step: 1,   min: 10, max: 120 },
-    { field: 'weight', label: 'Вес (кг)',  step: 0.5, min: 20, max: 500 },
-    { field: 'height', label: 'Рост (см)', step: 1,   min: 50, max: 280 },
-  ];
-
-  const rowStyle: React.CSSProperties = {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    padding: '14px 0', borderBottom: '1px solid var(--border)',
-  };
-
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', padding: '48px 24px', maxWidth: 600, margin: '0 auto' }}>
 
@@ -269,145 +203,25 @@ export const ProfilePage = () => {
         ))}
       </div>
 
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, marginBottom: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <div style={{ color: 'var(--ghost)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            Личные данные
-          </div>
-          {!isEditing ? (
-            <button onClick={handleEdit} style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '6px 14px', borderRadius: 20, border: 'none',
-              background: 'var(--accent-a10)', color: 'var(--accent)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
-            }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Редактировать
-            </button>
-          ) : (
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={handleCancel} style={{
-                padding: '6px 14px', borderRadius: 20, border: '1px solid var(--border2)',
-                background: 'transparent', color: 'var(--dim)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
-              }}>Отмена</button>
-              <button onClick={handleSave} disabled={saving} style={{
-                padding: '6px 14px', borderRadius: 20, border: 'none',
-                background: 'linear-gradient(135deg, var(--accent), #34d399)',
-                color: 'var(--accent-fg)', fontSize: 12, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.6 : 1,
-              }}>{saving ? 'Сохраняем...' : 'Сохранить'}</button>
-            </div>
-          )}
-        </div>
+      <PersonalDataCard
+        profile={profile}
+        draft={draft}
+        isEditing={isEditing}
+        saving={saving}
+        saveError={saveError}
+        usernameError={usernameError}
+        onEdit={handleEdit}
+        onSave={handleSave}
+        onCancel={handleCancel}
+        onDraftChange={setDraft}
+      />
 
-        {saveError && (
-          <div style={{
-            background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.3)',
-            borderRadius: 8, padding: '8px 12px', marginBottom: 12, color: '#f87171', fontSize: 12,
-          }}>
-            {saveError}
-          </div>
-        )}
-
-        <div style={rowStyle}>
-          <span style={{ color: 'var(--muted)', fontSize: 14 }}>Логин</span>
-          {isEditing ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-              <input type="text" value={draft.username} onChange={e => setDraft(d => ({ ...d, username: e.target.value }))}
-                placeholder="Логин" style={{
-                  background: 'var(--surface2)', color: 'var(--text)',
-                  border: `1px solid ${usernameError ? 'rgba(248,113,113,0.5)' : 'var(--border2)'}`,
-                  borderRadius: 8, padding: '6px 10px', fontSize: 14, outline: 'none', width: 150, textAlign: 'right',
-                }}
-              />
-              {usernameError && <span style={{ fontSize: 11, color: '#f87171' }}>{usernameError}</span>}
-            </div>
-          ) : (
-            <span style={{ color: 'var(--text)', fontSize: 14 }}>@{profile.username}</span>
-          )}
-        </div>
-
-        <div style={rowStyle}>
-          <span style={{ color: 'var(--muted)', fontSize: 14 }}>Отображаемое имя</span>
-          {isEditing ? (
-            <input type="text" value={draft.displayName} onChange={e => setDraft(d => ({ ...d, displayName: e.target.value }))}
-              placeholder="Как вас называть" style={{
-                background: 'var(--surface2)', color: 'var(--text)', border: '1px solid var(--border2)',
-                borderRadius: 8, padding: '6px 10px', fontSize: 14, outline: 'none', width: 150, textAlign: 'right',
-              }}
-            />
-          ) : (
-            <span style={{ color: profile.displayName !== profile.username ? 'var(--text)' : 'var(--ghost)', fontSize: 14 }}>
-              {profile.displayName !== profile.username ? profile.displayName : '— не задано'}
-            </span>
-          )}
-        </div>
-
-        {numericFields.map(({ field, label, step, min, max }) => (
-          <div key={field} style={rowStyle}>
-            <span style={{ color: 'var(--muted)', fontSize: 14 }}>{label}</span>
-            {isEditing ? (
-              <div style={{ width: 170 }}>
-                <NumberInput value={draft[field]} onChange={v => setDraft(d => ({ ...d, [field]: v }))} step={step} min={min} max={max} />
-              </div>
-            ) : (
-              <span style={{ color: profile[field] ? 'var(--text)' : 'var(--ghost)', fontSize: 14 }}>{profile[field] || '— не указано'}</span>
-            )}
-          </div>
-        ))}
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0' }}>
-          <span style={{ color: 'var(--muted)', fontSize: 14 }}>Цель</span>
-          {isEditing ? (
-            <select value={draft.goal} onChange={e => setDraft(d => ({ ...d, goal: e.target.value as Goal }))}
-              style={{
-                background: 'var(--surface2)', color: draft.goal ? 'var(--text)' : 'var(--faint)',
-                border: '1px solid var(--border2)',
-                borderRadius: 8, padding: '6px 10px', fontSize: 14, outline: 'none', width: 180, cursor: 'pointer',
-              }}
-            >
-              <option value="">— не указано</option>
-              {GOAL_OPTIONS.map(([key, label]) => (
-                <option key={key} value={key}>{label}</option>
-              ))}
-            </select>
-          ) : (
-            <span style={{ color: profile.goal ? 'var(--text)' : 'var(--ghost)', fontSize: 14 }}>
-              {profile.goal ? GOAL_LABELS[profile.goal] : '— не указано'}
-            </span>
-          )}
-        </div>
-      </div>
-
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, marginBottom: 16 }}>
-        <div style={{ color: 'var(--ghost)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>
-          Данные
-        </div>
-
-        <button onClick={handleExport} disabled={exporting} style={{
-          width: '100%', padding: '14px', borderRadius: 12, border: 'none',
-          background: 'var(--accent-a10)', color: 'var(--accent)', fontWeight: 600, fontSize: 14, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-          transition: 'background 0.15s', opacity: exporting ? 0.6 : 1, marginBottom: 10,
-        }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          {exporting ? 'Экспорт...' : 'Экспорт тренировок (.txt)'}
-        </button>
-
-        <button onClick={() => navigate('.', { state: { modal: 'confirm' } })} disabled={clearing} style={{
-          width: '100%', padding: '14px', borderRadius: 12, border: 'none',
-          background: 'rgba(248,113,113,0.08)', color: '#f87171', fontWeight: 600, fontSize: 14, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-          transition: 'background 0.15s', opacity: clearing ? 0.6 : 1,
-        }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M3 6h18M8 6V4h8v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          {clearing ? 'Очищаем...' : 'Очистить историю'}
-        </button>
-      </div>
+      <DataActionsCard
+        exporting={exporting}
+        clearing={clearing}
+        onExport={handleExport}
+        onClearRequest={() => navigate('.', { state: { modal: 'confirm' } })}
+      />
 
       <button onClick={handleLogout} style={{
         width: '100%', padding: '14px', borderRadius: 12,
