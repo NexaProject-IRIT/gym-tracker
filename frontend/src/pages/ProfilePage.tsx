@@ -4,6 +4,7 @@ import { authedFetch, clearTokens } from '../utils/api';
 import { apiFetch, ApiError } from '../lib/api';
 import { PersonalDataCard, type ProfileData, type Goal, GOAL_LABELS } from '../components/Profile/PersonalDataCard';
 import { DataActionsCard } from '../components/Profile/DataActionsCard';
+import { ThemeSettingsCard } from '../components/Profile/ThemeSettingsCard';
 import { ConfirmModal } from '../components/Profile/ConfirmModal';
 
 interface Stats {
@@ -217,6 +218,8 @@ export const ProfilePage = () => {
         onCancel={handleCancel}
         onDraftChange={setDraft}
       />
+
+      <ThemeSettingsCard />
 
       <DataActionsCard
         exporting={exporting}

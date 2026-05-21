@@ -3,7 +3,6 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { AiChatProvider } from '../../contexts/AiChatContext';
 import { WorkoutsProvider } from '../../contexts/WorkoutsContext';
 import { FloatingTimer } from '../Timer/FloatingTimer';
-import { useTheme } from '../../contexts/ThemeContext';
 
 const SIDEBAR_WIDTH = 220;
 
@@ -45,25 +44,20 @@ const IconAi = ({ active }: { active: boolean }) => (
   </svg>
 );
 
-const IconSun = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="5"/>
-    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-  </svg>
-);
+type NavItem = {
+  to: string;
+  label: string;        // отображается в десктоп-сайдбаре
+  mobileLabel?: string; // более короткая версия для мобильного таб-бара (по необходимости)
+  icon: (a: boolean) => React.ReactNode;
+  end: boolean;
+};
 
-const IconMoon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-  </svg>
-);
-
-const NAV_ITEMS = [
-  { to: '/',          label: 'Главная',         icon: (a: boolean) => <IconHome active={a} />,     end: true  },
-  { to: '/workouts',  label: 'Тренировки',      icon: (a: boolean) => <IconDumbbell active={a} />, end: false },
-  { to: '/knowledge', label: 'База тренировок', icon: (a: boolean) => <IconBook active={a} />,     end: false },
-  { to: '/ai',        label: 'ИИ-тренер',       icon: (a: boolean) => <IconAi active={a} />,       end: false },
-  { to: '/profile',   label: 'Профиль',         icon: (a: boolean) => <IconUser active={a} />,     end: false },
+const NAV_ITEMS: NavItem[] = [
+  { to: '/',          label: 'Главная',         icon: (a) => <IconHome active={a} />,     end: true  },
+  { to: '/workouts',  label: 'Тренировки',      icon: (a) => <IconDumbbell active={a} />, end: false },
+  { to: '/ai',        label: 'ИИ-тренер',       icon: (a) => <IconAi active={a} />,       end: false },
+  { to: '/knowledge', label: 'База тренировок', mobileLabel: 'База', icon: (a) => <IconBook active={a} />, end: false },
+  { to: '/profile',   label: 'Профиль',         icon: (a) => <IconUser active={a} />,     end: false },
 ];
 
 const Logo = () => (
@@ -85,34 +79,6 @@ const Logo = () => (
     </div>
   </div>
 );
-
-const ThemeToggle = ({ isMobile }: { isMobile: boolean }) => {
-  const { isDark, toggleTheme } = useTheme();
-  return (
-    <button
-      onClick={toggleTheme}
-      title={isDark ? 'Светлая тема' : 'Тёмная тема'}
-      style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        width: isMobile ? 36 : 32, height: isMobile ? 36 : 32,
-        borderRadius: 8, border: '1px solid var(--border2)',
-        background: 'var(--surface2)', color: 'var(--muted)',
-        cursor: 'pointer', flexShrink: 0,
-        transition: 'background 0.15s, color 0.15s',
-      }}
-      onMouseEnter={e => {
-        (e.currentTarget as HTMLButtonElement).style.color = 'var(--accent)';
-        (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--accent-a20)';
-      }}
-      onMouseLeave={e => {
-        (e.currentTarget as HTMLButtonElement).style.color = 'var(--muted)';
-        (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border2)';
-      }}
-    >
-      {isDark ? <IconSun /> : <IconMoon />}
-    </button>
-  );
-};
 
 export const MainLayout = () => {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
@@ -194,15 +160,18 @@ export const MainLayout = () => {
                 ))}
               </nav>
 
-              <div style={{ padding: '0 18px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--ghost)', fontSize: 11 }}>MVP v0.1</span>
-                <ThemeToggle isMobile={false} />
+              <div style={{
+                padding: '0 18px 6px',
+                color: 'var(--ghost)', fontSize: 11,
+                textAlign: 'center',
+              }}>
+                MVP v0.1
               </div>
             </aside>
           )}
 
           {/* Основной контент */}
-          <main style={{ flex: 1, minWidth: 0, paddingBottom: isMobile ? 56 : 0 }}>
+          <main style={{ flex: 1, minWidth: 0, paddingBottom: isMobile ? 68 : 0 }}>
             <Outlet />
           </main>
         </div>
@@ -211,38 +180,42 @@ export const MainLayout = () => {
         {isMobile && (
           <nav style={{
             position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
-            background: 'var(--surface)',
-            backdropFilter: 'blur(20px)',
+            background: 'var(--surface-glass)',
+            backdropFilter: 'blur(20px) saturate(140%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(140%)',
             borderTop: '1px solid var(--border)',
             paddingBottom: 'env(safe-area-inset-bottom, 0px)',
             display: 'flex',
-            alignItems: 'center',
+            alignItems: 'stretch',
           }}>
-            {NAV_ITEMS.map(({ to, label, icon, end }) => (
-              <NavLink key={to} to={to} end={end} className="nav-link" style={{ flex: 1 }}>
+            {NAV_ITEMS.map(({ to, label, mobileLabel, icon, end }) => (
+              <NavLink key={to} to={to} end={end} className="nav-link" style={{ flex: 1, minWidth: 0 }}>
                 {({ isActive }) => (
                   <div style={{
                     display: 'flex', flexDirection: 'column', alignItems: 'center',
-                    justifyContent: 'center', gap: 3, padding: '10px 0',
+                    justifyContent: 'center', gap: 4, padding: '8px 4px 6px',
                     cursor: 'pointer',
+                    transition: 'color 0.15s',
                   }}>
                     {icon(isActive)}
-                    {isActive && (
-                      <span style={{
-                        fontSize: 9, fontWeight: 600,
-                        color: 'var(--accent)',
-                        letterSpacing: '0.02em',
-                      }}>
-                        {label}
-                      </span>
-                    )}
+                    <span style={{
+                      fontSize: 10.5,
+                      fontWeight: isActive ? 600 : 500,
+                      color: isActive ? 'var(--accent)' : 'var(--dim)',
+                      letterSpacing: '-0.005em',
+                      lineHeight: 1.1,
+                      maxWidth: '100%',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      transition: 'color 0.15s',
+                    }}>
+                      {mobileLabel ?? label}
+                    </span>
                   </div>
                 )}
               </NavLink>
             ))}
-            <div style={{ paddingRight: 8 }}>
-              <ThemeToggle isMobile={true} />
-            </div>
           </nav>
         )}
 
