@@ -1,277 +1,901 @@
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useWorkoutsContext } from '../contexts/WorkoutsContext';
+import { apiFetch } from '../lib/api';
 
-const IconDumbbell = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M6.5 6.5h11M6.5 17.5h11M4 9.5v5M20 9.5v5M2 11v2M22 11v2"/>
-  </svg>
-);
-
-const IconBook = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#63b3ed" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
-  </svg>
-);
-
-const IconChart = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
-  </svg>
-);
-
-const IconWorkouts = () => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M6.5 6.5h11M6.5 17.5h11M4 9.5v5M20 9.5v5M2 11v2M22 11v2"/>
-  </svg>
-);
-
-const IconUser = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="8" r="4"/><path d="M4 20v-1a8 8 0 0116 0v1"/>
-  </svg>
-);
-const IconPlus = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 5v14M5 12h14"/>
-  </svg>
-);
-const IconTrend = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
-  </svg>
-);
-
-const features = [
-  {
-    icon: <IconDumbbell />,
-    title: 'Тренировки',
-    desc: 'Ведите дневник, добавляйте упражнения из базы или свои, отслеживайте прогресс по весу и повторениям.',
-    to: '/workouts',
-    color: 'rgba(110,231,183,0.08)',
-    border: 'rgba(110,231,183,0.2)',
-    accent: '#6ee7b7',
-  },
-  {
-    icon: <IconBook />,
-    title: 'База упражнений',
-    desc: 'Справочник упражнений с описанием техники, целевыми мышцами и фото. Фильтры по группам мышц.',
-    to: '/knowledge',
-    color: 'rgba(99,179,237,0.08)',
-    border: 'rgba(99,179,237,0.2)',
-    accent: '#63b3ed',
-  },
-  {
-    icon: <IconChart />,
-    title: 'Статистика',
-    desc: 'Количество тренировок, объём за месяц и динамика нагрузки — всё в профиле.',
-    to: '/profile',
-    color: 'rgba(196,181,253,0.08)',
-    border: 'rgba(196,181,253,0.2)',
-    accent: '#c4b5fd',
-  },
+// ─── мотивационные фразы (40 шт., стабильный выбор по дню года) ────────────
+const QUOTES: { text: string; tag: string }[] = [
+  { text: 'Сила не приходит из физических возможностей. Она исходит из несгибаемой воли.', tag: 'Махатма Ганди' },
+  { text: 'Тело достигает того, во что верит разум.', tag: 'мотивация дня' },
+  { text: 'Боль, которую ты чувствуешь сегодня, — это сила, которую ты почувствуешь завтра.', tag: 'мотивация дня' },
+  { text: 'Каждое повторение приближает тебя к версии лучшего себя.', tag: 'мотивация дня' },
+  { text: 'Дисциплина — это выбирать то, чего хочешь сильнее всего, вместо того, что хочешь прямо сейчас.', tag: 'мотивация дня' },
+  { text: 'Не считай дни — заставь дни считаться.', tag: 'Мохаммед Али' },
+  { text: 'Никогда не пропускай понедельник.', tag: 'фитнес-правило' },
+  { text: 'Тренировка длится час, твой день — двадцать четыре.', tag: 'мотивация дня' },
+  { text: 'Лучшее время начать было вчера. Второе лучшее — сейчас.', tag: 'мотивация дня' },
+  { text: 'Сильное тело строится из маленьких ежедневных решений.', tag: 'мотивация дня' },
+  { text: 'Ты не устал — ты ленив. Это разные вещи.', tag: 'мотивация дня' },
+  { text: 'Никто не пожалел о тренировке после неё.', tag: 'мотивация дня' },
+  { text: 'Прогресс важнее совершенства.', tag: 'мотивация дня' },
+  { text: 'Если устал — отдохни, а не сдавайся.', tag: 'Бэнкси' },
+  { text: 'Мышцы не растут от мыслей о подходе.', tag: 'мотивация дня' },
+  { text: 'Самое тяжёлое в тренировке — начать её.', tag: 'мотивация дня' },
+  { text: 'Тело — это инструмент. Затачивай его регулярно.', tag: 'мотивация дня' },
+  { text: 'Сегодняшняя версия тебя должна быть сильнее вчерашней.', tag: 'мотивация дня' },
+  { text: 'Привычка — это новый талант.', tag: 'мотивация дня' },
+  { text: 'Маленькие усилия каждый день побеждают огромный рывок раз в месяц.', tag: 'мотивация дня' },
+  { text: 'Зеркало не врёт. Но врёт мозг, который не хочет идти в зал.', tag: 'мотивация дня' },
+  { text: 'Хочешь — найдёшь способ. Не хочешь — найдёшь оправдание.', tag: 'мотивация дня' },
+  { text: 'Сильные люди не появляются за день. Они появляются за тысячу дней.', tag: 'мотивация дня' },
+  { text: 'Сначала ты ведёшь дневник тренировок. Потом он ведёт тебя.', tag: 'мотивация дня' },
+  { text: 'Пот — это жир, плачущий о пощаде.', tag: 'мотивация дня' },
+  { text: 'Каждое движение — голос за того, кем ты хочешь стать.', tag: 'мотивация дня' },
+  { text: 'Усталость уйдёт. Гордость останется.', tag: 'мотивация дня' },
+  { text: 'Ты сильнее, чем твой последний отказ.', tag: 'мотивация дня' },
+  { text: 'Сначала тяжело. Потом ритм. Потом — образ жизни.', tag: 'мотивация дня' },
+  { text: 'Тренировка — это инвестиция, а не расход времени.', tag: 'мотивация дня' },
+  { text: 'Лучший подход — следующий.', tag: 'мотивация дня' },
+  { text: 'Большие изменения начинаются с одного отжимания.', tag: 'мотивация дня' },
+  { text: 'Слабые желания дают слабые результаты.', tag: 'Наполеон Хилл' },
+  { text: 'Боль временна. Бросить — навсегда.', tag: 'Лэнс Армстронг' },
+  { text: 'Тело отзеркаливает то, что ты в него вкладываешь.', tag: 'мотивация дня' },
+  { text: 'Каждый день — новая страница. Не оставляй её пустой.', tag: 'мотивация дня' },
+  { text: 'Никакого «потом». Только «сейчас».', tag: 'мотивация дня' },
+  { text: 'Двигайся ежедневно, даже когда не хочется. Особенно когда не хочется.', tag: 'мотивация дня' },
+  { text: 'Лёгкий день в зале лучше идеального дня на диване.', tag: 'мотивация дня' },
+  { text: 'Если ты не делаешь это сегодня — почему оно случится завтра?', tag: 'мотивация дня' },
 ];
 
-const steps = [
-  { icon: <IconUser />, title: 'Создайте аккаунт', desc: 'Укажите параметры тела и выберите цель — похудение, набор мышц или выносливость.' },
-  { icon: <IconPlus />, title: 'Добавьте тренировку', desc: 'Выберите тип, добавьте упражнения из базы или создайте свои. Поддержка подходов, веса, времени.' },
-  { icon: <IconTrend />, title: 'Следите за прогрессом', desc: 'Смотрите статистику в профиле, экспортируйте историю тренировок.' },
-];
+const WEEKDAY_LABELS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+const MONTH_SHORT = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+const MONTH_FULL = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+const WEEKDAY_FULL = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
+const MILESTONES = [5, 10, 25, 50, 100, 200, 500, 1000];
 
+const fmtDate = (d: Date): string => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
+const dayOfYear = (d: Date): number => {
+  const start = new Date(d.getFullYear(), 0, 0);
+  return Math.floor((d.getTime() - start.getTime()) / 86_400_000);
+};
+
+const getMondayOf = (d: Date): Date => {
+  const r = new Date(d);
+  r.setHours(0, 0, 0, 0);
+  const dow = r.getDay();
+  const offset = (dow + 6) % 7;
+  r.setDate(r.getDate() - offset);
+  return r;
+};
+
+const greetingFor = (hour: number): string => {
+  if (hour < 5) return 'Доброй ночи';
+  if (hour < 12) return 'Доброе утро';
+  if (hour < 18) return 'Добрый день';
+  if (hour < 23) return 'Добрый вечер';
+  return 'Доброй ночи';
+};
+
+// ─── SVG-иконки ────────────────────────────────────────────────────────────
+
+const IconSun = ({ size = 18 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="4" />
+    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+  </svg>
+);
+const IconMoon = ({ size = 18 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+  </svg>
+);
+const IconCoffee = ({ size = 18 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 8h1a3 3 0 0 1 0 6h-1M3 8h15v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z" />
+    <path d="M6 2v3M10 2v3M14 2v3" />
+  </svg>
+);
+const IconSparkle = ({ size = 16 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8" />
+  </svg>
+);
+const IconPlus = ({ size = 18 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <path d="M12 5v14M5 12h14" />
+  </svg>
+);
+const IconRepeat = ({ size = 16 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 2l4 4-4 4M21 6H9a4 4 0 0 0-4 4v0M7 22l-4-4 4-4M3 18h12a4 4 0 0 0 4-4v0" />
+  </svg>
+);
+const IconArrowRight = ({ size = 14 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M5 12h14M13 5l7 7-7 7" />
+  </svg>
+);
+const IconFlame = ({ size = 14 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2s4 4 4 8a4 4 0 0 1-8 0c0-1 .3-2 1-3 .5 1 1.5 1 2 0 0-2-1-3-1-5 1 0 2 0 2 0z" />
+    <path d="M9 14a5 5 0 1 0 6 0c-.2 1.5-1.4 2.5-3 2.5s-2.8-1-3-2.5z" />
+  </svg>
+);
+const IconTrophy = ({ size = 14 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 4h12v4a6 6 0 0 1-12 0V4z" />
+    <path d="M6 6H3v2a3 3 0 0 0 3 3M18 6h3v2a3 3 0 0 1-3 3" />
+    <path d="M12 14v4M8 21h8M10 18h4" />
+  </svg>
+);
+const IconCheck = ({ size = 14 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 12l5 5L20 6" />
+  </svg>
+);
+
+// ─── шаблоны для приветствия (иконка времени суток) ───────────────────────
+const greetingIconFor = (hour: number) => {
+  if (hour < 5) return <IconMoon size={18} />;
+  if (hour < 11) return <IconCoffee size={18} />;
+  if (hour < 18) return <IconSun size={18} />;
+  return <IconMoon size={18} />;
+};
+
+// ─── главный компонент ───────────────────────────────────────────────────
 export const HomePage = () => {
   const navigate = useNavigate();
-  const isLoggedIn = !!localStorage.getItem('token');
+  const { workouts, loading, fetchWorkouts, repeatWorkout } = useWorkoutsContext();
+  const [now] = useState(() => new Date());
+  const [userName, setUserName] = useState<string>(() => {
+    try {
+      const u = JSON.parse(localStorage.getItem('user') || '{}');
+      return u.display_name || u.username || '';
+    } catch { return ''; }
+  });
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  const [hoveredCell, setHoveredCell] = useState<number | null>(null);
+  const [hoveredBar, setHoveredBar] = useState<number | null>(null);
+  const [repeatingId, setRepeatingId] = useState<string | null>(null);
+
+  useEffect(() => { fetchWorkouts(); }, [fetchWorkouts]);
+
+  useEffect(() => {
+    const h = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', h);
+    return () => window.removeEventListener('resize', h);
+  }, []);
+
+  useEffect(() => {
+    apiFetch<{ username?: string; display_name?: string }>('/auth/profile/')
+      .then(d => {
+        const n = d.display_name || d.username || '';
+        if (n) setUserName(n);
+        localStorage.setItem('user', JSON.stringify(d));
+      })
+      .catch(() => {});
+  }, []);
+
+  // ─── деривативные данные ────────────────────────────────────────────
+  const hour = now.getHours();
+  const greeting = greetingFor(hour);
+  const greetingIcon = greetingIconFor(hour);
+  const quote = QUOTES[dayOfYear(now) % QUOTES.length];
+  const dateLabel = `${now.getDate()} ${MONTH_FULL[now.getMonth()]}, ${WEEKDAY_FULL[now.getDay()]}`;
+
+  const workoutsByDate = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const w of workouts) {
+      if (!w.date) continue;
+      const key = w.date.slice(0, 10);
+      map.set(key, (map.get(key) ?? 0) + 1);
+    }
+    return map;
+  }, [workouts]);
+
+  const mondayThisWeek = useMemo(() => getMondayOf(now), [now]);
+
+  // 5-недельная сетка (7 колонок × 5 строк), правый нижний угол = сегодня
+  const gridCells = useMemo(() => {
+    const cells: { date: Date; key: string; count: number; isToday: boolean; isFuture: boolean }[] = [];
+    const startDate = new Date(mondayThisWeek);
+    startDate.setDate(mondayThisWeek.getDate() - 28);
+    const todayKey = fmtDate(now);
+    for (let i = 0; i < 35; i++) {
+      const d = new Date(startDate);
+      d.setDate(startDate.getDate() + i);
+      const key = fmtDate(d);
+      cells.push({
+        date: d,
+        key,
+        count: workoutsByDate.get(key) ?? 0,
+        isToday: key === todayKey,
+        isFuture: d.getTime() > now.getTime() && key !== todayKey,
+      });
+    }
+    return cells;
+  }, [mondayThisWeek, workoutsByDate, now]);
+
+  // 8 последних недель — для барчарта
+  const weeklyBars = useMemo(() => {
+    const bars: { weekStart: Date; count: number; isCurrent: boolean }[] = [];
+    for (let w = 7; w >= 0; w--) {
+      const weekStart = new Date(mondayThisWeek);
+      weekStart.setDate(mondayThisWeek.getDate() - w * 7);
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 7);
+      let count = 0;
+      for (const wk of workouts) {
+        if (!wk.date) continue;
+        const wd = new Date(wk.date);
+        if (wd >= weekStart && wd < weekEnd) count++;
+      }
+      bars.push({ weekStart, count, isCurrent: w === 0 });
+    }
+    return bars;
+  }, [workouts, mondayThisWeek]);
+
+  // Недельный стрик (текущая неделя без тренировок — не сбрасывает)
+  const weeklyStreak = useMemo(() => {
+    let streak = 0;
+    for (let w = 0; w < 200; w++) {
+      const ws = new Date(mondayThisWeek);
+      ws.setDate(mondayThisWeek.getDate() - w * 7);
+      const we = new Date(ws);
+      we.setDate(ws.getDate() + 7);
+      const has = workouts.some(wk => {
+        if (!wk.date) return false;
+        const wd = new Date(wk.date);
+        return wd >= ws && wd < we;
+      });
+      if (has) streak++;
+      else if (w === 0) continue;
+      else break;
+    }
+    return streak;
+  }, [workouts, mondayThisWeek]);
+
+  const totalWorkouts = workouts.length;
+  const nextMilestone = MILESTONES.find(m => m > totalWorkouts) ?? null;
+  const milestoneRemaining = nextMilestone != null ? nextMilestone - totalWorkouts : null;
+  const milestoneProgress = nextMilestone != null
+    ? Math.min(1, totalWorkouts / nextMilestone) : 1;
+
+  const lastWorkout = useMemo(() => {
+    if (!workouts.length) return null;
+    return [...workouts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+  }, [workouts]);
+
+  const maxBar = Math.max(1, ...weeklyBars.map(b => b.count));
+
+  const onStartNew = () => navigate('/workouts', { state: { modal: 'form' } });
+
+  const onRepeatLast = async () => {
+    if (!lastWorkout || repeatingId) return;
+    setRepeatingId(lastWorkout.id);
+    const newId = await repeatWorkout(lastWorkout.id);
+    setRepeatingId(null);
+    if (newId) navigate(`/workouts/${newId}`);
+  };
+
+  // ─── стили (инлайн в JSX ниже) ─────────────────────────────────────
+  const wrapMaxWidth = 760;
+  const sidePad = isMobile ? 20 : 32;
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
+    <>
+      <style>{`
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+        @keyframes pulseDot {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.4); opacity: 0.4; }
+        }
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .dash-fade { animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+        .dash-press { transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s; }
+        .dash-press:active { transform: scale(0.98); }
+        .dash-cta:hover { box-shadow: 0 12px 36px var(--accent-a30); transform: translateY(-1px); }
+        .dash-cta:active { transform: translateY(0) scale(0.99); }
+        .dash-cell-hover { transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1); }
+        .dash-cell-hover:hover { transform: scale(1.18); z-index: 2; }
+        .dash-bar { transition: opacity 0.15s; }
+        .dash-bar:hover { opacity: 0.85; }
+        .dash-skel { background: linear-gradient(90deg, var(--surface2) 0%, var(--surface) 50%, var(--surface2) 100%); background-size: 200% 100%; animation: shimmer 1.6s linear infinite; }
+      `}</style>
 
-      {/* Hero */}
-      <div style={{ padding: '80px 24px 72px', maxWidth: 720, margin: '0 auto', textAlign: 'center' }}>
+      <div style={{
+        minHeight: '100vh',
+        background: 'var(--bg)',
+        color: 'var(--text)',
+        paddingBottom: 80,
+      }}>
         <div style={{
-          width: 72, height: 72, borderRadius: 20,
-          background: 'var(--accent-a12)',
-          border: '1px solid var(--accent-a25)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          margin: '0 auto 28px',
+          maxWidth: wrapMaxWidth,
+          margin: '0 auto',
+          padding: `${isMobile ? 28 : 44}px ${sidePad}px 0`,
         }}>
-          <IconWorkouts />
-        </div>
 
-        <h1 style={{
-          fontSize: 'clamp(32px, 5vw, 48px)',
-          fontWeight: 800,
-          margin: '0 0 18px',
-          lineHeight: 1.12,
-          background: 'linear-gradient(135deg, var(--text) 0%, var(--accent) 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-        }}>
-          Умный дневник<br />тренировок
-        </h1>
-
-        <p style={{ color: 'var(--dim)', fontSize: 17, lineHeight: 1.65, maxWidth: 440, margin: '0 auto 36px' }}>
-          Записывайте тренировки, отслеживайте прогресс и пользуйтесь базой упражнений — всё в одном месте.
-        </p>
-
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button
-            onClick={() => navigate(isLoggedIn ? '/workouts' : '/register')}
-            style={{
-              padding: '14px 32px', borderRadius: 14,
-              background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
-              border: 'none', color: 'var(--accent-fg)',
-              fontWeight: 700, fontSize: 15, cursor: 'pointer',
-              transition: 'opacity 0.15s',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
-            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+          {/* ── ШАПКА ── приветствие + дата ── */}
+          <header
+            className="dash-fade"
+            style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 22 }}
           >
-            Начать →
-          </button>
-          <button
-            onClick={() => navigate('/workouts')}
-            style={{
-              padding: '14px 28px', borderRadius: 14,
-              background: 'transparent',
-              border: '1px solid var(--border3)',
-              color: 'var(--muted)', fontWeight: 600, fontSize: 15, cursor: 'pointer',
-              transition: 'border-color 0.15s, color 0.15s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent-a30)'; e.currentTarget.style.color = 'var(--accent)'; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border3)'; e.currentTarget.style.color = 'var(--muted)'; }}
-          >
-            Открыть тренировки
-          </button>
-        </div>
-      </div>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                color: 'var(--muted)', fontSize: 12, fontWeight: 500,
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                padding: '5px 10px 5px 8px',
+                borderRadius: 999,
+                marginBottom: 12,
+              }}>
+                <span style={{ color: 'var(--accent)' }}>{greetingIcon}</span>
+                <span style={{ letterSpacing: '0.01em' }}>{dateLabel}</span>
+              </div>
+              <h1 style={{
+                margin: 0,
+                fontSize: isMobile ? 30 : 38,
+                fontWeight: 700,
+                letterSpacing: '-0.03em',
+                lineHeight: 1.05,
+                color: 'var(--text)',
+              }}>
+                {greeting},
+                <br />
+                <span style={{
+                  background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}>{userName || 'спортсмен'}</span>
+              </h1>
+            </div>
+          </header>
 
-      {/* Три основные функции */}
-      <div style={{ padding: '0 24px 72px', maxWidth: 720, margin: '0 auto' }}>
-        <div style={{
-          fontSize: 11, fontWeight: 700, color: 'var(--ghost)',
-          textTransform: 'uppercase', letterSpacing: '0.1em',
-          textAlign: 'center', marginBottom: 32,
-        }}>
-          Что умеет GymLog
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 14 }}>
-          {features.map(({ icon, title, desc, to, color, border, accent }) => (
+          {/* ── ЦИТАТА ── */}
+          <div
+            className="dash-fade"
+            style={{
+              position: 'relative',
+              background: 'var(--surface)',
+              border: '1px solid var(--border2)',
+              borderRadius: 20,
+              padding: isMobile ? '18px 18px 18px 20px' : '20px 22px',
+              marginBottom: 24,
+              animationDelay: '60ms',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), 0 8px 28px rgba(0,0,0,0.18)',
+              overflow: 'hidden',
+            }}
+          >
+            {/* левая акцентная полоса */}
+            <div style={{
+              position: 'absolute', top: 16, bottom: 16, left: 0,
+              width: 3, borderRadius: 4,
+              background: 'linear-gradient(180deg, var(--accent), var(--accent2))',
+            }} />
+            <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+              <div style={{
+                flexShrink: 0,
+                width: 28, height: 28, borderRadius: 8,
+                background: 'var(--accent-a12)',
+                border: '1px solid var(--accent-a20)',
+                color: 'var(--accent)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <IconSparkle size={14} />
+              </div>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{
+                  fontSize: isMobile ? 14.5 : 15,
+                  fontWeight: 500,
+                  lineHeight: 1.5,
+                  color: 'var(--text2)',
+                  letterSpacing: '-0.005em',
+                }}>
+                  {quote.text}
+                </div>
+                <div style={{
+                  marginTop: 8,
+                  fontSize: 11,
+                  color: 'var(--ghost)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  fontWeight: 600,
+                }}>
+                  — {quote.tag}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── QUICK ACTIONS ── */}
+          <div className="dash-fade" style={{ marginBottom: 28, animationDelay: '120ms' }}>
             <button
-              key={to}
-              onClick={() => navigate(to)}
+              onClick={onStartNew}
+              className="dash-press dash-cta"
               style={{
-                background: color,
-                border: `1px solid ${border}`,
-                borderRadius: 18,
-                padding: '22px 20px',
-                textAlign: 'left',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+                width: '100%', padding: isMobile ? '18px 22px' : '20px 26px',
+                borderRadius: 18, border: 'none',
+                background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%)',
+                color: 'var(--accent-fg)',
+                fontWeight: 700, fontSize: isMobile ? 15.5 : 16,
                 cursor: 'pointer',
-                transition: 'transform 0.15s, box-shadow 0.15s',
-                display: 'flex', flexDirection: 'column', gap: 14,
+                boxShadow: '0 8px 28px var(--accent-a25), inset 0 1px 0 rgba(255,255,255,0.18)',
+                letterSpacing: '-0.005em',
               }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-3px)';
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 8px 28px ${border}`;
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)';
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = 'none';
+            >
+              <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{
+                  width: 30, height: 30, borderRadius: 10,
+                  background: 'rgba(255,255,255,0.22)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                }}>
+                  <IconPlus size={16} />
+                </span>
+                Начать тренировку
+              </span>
+              <IconArrowRight size={16} />
+            </button>
+
+            {lastWorkout && (
+              <button
+                onClick={onRepeatLast}
+                disabled={!!repeatingId}
+                className="dash-press"
+                style={{
+                  marginTop: 10,
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+                  width: '100%', padding: '13px 18px',
+                  borderRadius: 14,
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border2)',
+                  color: 'var(--text3)',
+                  fontWeight: 500, fontSize: 13.5,
+                  cursor: repeatingId ? 'wait' : 'pointer',
+                  opacity: repeatingId ? 0.6 : 1,
+                  letterSpacing: '-0.005em',
+                }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                  <span style={{ color: 'var(--accent)', display: 'flex' }}><IconRepeat size={15} /></span>
+                  <span style={{
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>
+                    Повторить: <span style={{ color: 'var(--text)', fontWeight: 600 }}>{lastWorkout.name || 'последнюю'}</span>
+                  </span>
+                </span>
+                <span style={{ color: 'var(--ghost)', fontSize: 12 }}>
+                  {new Date(lastWorkout.date).getDate()} {MONTH_SHORT[new Date(lastWorkout.date).getMonth()]}
+                </span>
+              </button>
+            )}
+          </div>
+
+          {/* ── СТАТИСТИКА (3 числа без карточек) ── */}
+          <div
+            className="dash-fade"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              borderTop: '1px solid var(--border)',
+              borderBottom: '1px solid var(--border)',
+              marginBottom: 36,
+              animationDelay: '180ms',
+            }}
+          >
+            <StatCell
+              icon={<IconFlame size={14} />}
+              label="недельный стрик"
+              value={weeklyStreak}
+              unit={weeklyStreak === 1 ? 'нед' : 'нед'}
+              accent="#fb923c"
+              loading={loading && !workouts.length}
+              borderRight
+            />
+            <StatCell
+              icon={<IconCheck size={14} />}
+              label="всего тренировок"
+              value={totalWorkouts}
+              accent="var(--accent)"
+              loading={loading && !workouts.length}
+              borderRight
+            />
+            <StatCell
+              icon={<IconTrophy size={14} />}
+              label={nextMilestone ? `до ${nextMilestone}` : 'мастер'}
+              value={milestoneRemaining ?? 0}
+              unit={milestoneRemaining ? 'осталось' : ''}
+              accent="#c4b5fd"
+              loading={loading && !workouts.length}
+              progress={milestoneProgress}
+            />
+          </div>
+
+          {/* ── СЕТКА АКТИВНОСТИ ── */}
+          <section className="dash-fade" style={{ marginBottom: 36, animationDelay: '240ms' }}>
+            <div style={{
+              display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+              marginBottom: 14,
+            }}>
+              <h2 style={{
+                margin: 0, fontSize: 13, fontWeight: 700,
+                color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em',
+              }}>
+                Активность · 5 недель
+              </h2>
+              <div className="num-mono" style={{ fontSize: 11.5, color: 'var(--ghost)' }}>
+                {gridCells.filter(c => !c.isFuture && c.count > 0).length} из {gridCells.filter(c => !c.isFuture).length} дней
+              </div>
+            </div>
+
+            {/* подписи дней недели */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(7, 1fr)',
+              gap: isMobile ? 6 : 8,
+              marginBottom: 8,
+            }}>
+              {WEEKDAY_LABELS.map((d, i) => (
+                <div key={d} className="num-mono" style={{
+                  textAlign: 'center', fontSize: 10.5, fontWeight: 500,
+                  color: (i === 5 || i === 6) ? 'var(--faint)' : 'var(--dim)',
+                  letterSpacing: '0.04em',
+                }}>{d}</div>
+              ))}
+            </div>
+
+            {/* клетки */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(7, 1fr)',
+              gap: isMobile ? 6 : 8,
+              position: 'relative',
+            }}>
+              {gridCells.map((cell, i) => {
+                const hovered = hoveredCell === i;
+                const tone = cell.isFuture
+                  ? 'rgba(255,255,255,0.025)'
+                  : cell.count === 0
+                    ? 'var(--surface2)'
+                    : cell.count === 1
+                      ? 'var(--accent-a25)'
+                      : 'var(--accent)';
+                const border = cell.isToday
+                  ? '1.5px solid var(--accent)'
+                  : cell.isFuture
+                    ? '1px dashed var(--border)'
+                    : `1px solid ${cell.count > 0 ? 'var(--accent-a30)' : 'var(--border)'}`;
+                return (
+                  <div
+                    key={cell.key}
+                    className="dash-cell-hover"
+                    onMouseEnter={() => setHoveredCell(i)}
+                    onMouseLeave={() => setHoveredCell(null)}
+                    style={{
+                      aspectRatio: '1 / 1',
+                      borderRadius: isMobile ? 8 : 10,
+                      background: tone,
+                      border,
+                      position: 'relative',
+                      cursor: cell.isFuture ? 'default' : 'pointer',
+                    }}
+                  >
+                    {cell.isToday && (
+                      <div style={{
+                        position: 'absolute',
+                        right: 4, top: 4,
+                        width: 5, height: 5, borderRadius: '50%',
+                        background: cell.count > 0 ? 'var(--accent-fg)' : 'var(--accent)',
+                        animation: 'pulseDot 2.4s ease-in-out infinite',
+                      }} />
+                    )}
+                    {hovered && !cell.isFuture && (
+                      <div style={{
+                        position: 'absolute',
+                        bottom: 'calc(100% + 6px)',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        background: 'var(--text)',
+                        color: 'var(--bg)',
+                        fontSize: 11,
+                        fontWeight: 600,
+                        padding: '5px 9px',
+                        borderRadius: 7,
+                        whiteSpace: 'nowrap',
+                        pointerEvents: 'none',
+                        zIndex: 5,
+                        letterSpacing: '-0.005em',
+                      }}>
+                        {cell.date.getDate()} {MONTH_SHORT[cell.date.getMonth()]}
+                        {' · '}
+                        <span style={{ color: cell.count > 0 ? '#fbbf24' : 'currentColor', opacity: cell.count > 0 ? 1 : 0.6 }}>
+                          {cell.count > 0 ? `${cell.count} трен.` : 'отдых'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* легенда */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
+              gap: 6, marginTop: 12, fontSize: 10.5, color: 'var(--ghost)',
+              letterSpacing: '0.04em',
+            }}>
+              <span>меньше</span>
+              {[ 'var(--surface2)', 'var(--accent-a25)', 'var(--accent)' ].map((c, i) => (
+                <div key={i} style={{
+                  width: 11, height: 11, borderRadius: 3, background: c,
+                  border: i === 0 ? '1px solid var(--border)' : `1px solid var(--accent-a30)`,
+                }} />
+              ))}
+              <span>больше</span>
+            </div>
+          </section>
+
+          {/* ── BAR CHART ── */}
+          <section className="dash-fade" style={{ marginBottom: 24, animationDelay: '300ms' }}>
+            <div style={{
+              display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+              marginBottom: 16,
+            }}>
+              <h2 style={{
+                margin: 0, fontSize: 13, fontWeight: 700,
+                color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em',
+              }}>
+                Тренировок в неделю · 8 нед
+              </h2>
+              <div className="num-mono" style={{ fontSize: 11.5, color: 'var(--ghost)' }}>
+                ⌀ {(weeklyBars.reduce((s, b) => s + b.count, 0) / 8).toFixed(1)} / нед
+              </div>
+            </div>
+
+            <WeeklyBarChart
+              bars={weeklyBars}
+              maxValue={maxBar}
+              hoveredIdx={hoveredBar}
+              onHover={setHoveredBar}
+              isMobile={isMobile}
+            />
+          </section>
+
+          {/* ── ПОДСКАЗКА если ноль тренировок ── */}
+          {!loading && totalWorkouts === 0 && (
+            <div
+              className="dash-fade"
+              style={{
+                background: 'var(--accent-a10)',
+                border: '1px dashed var(--accent-a30)',
+                borderRadius: 16,
+                padding: 18,
+                display: 'flex', gap: 12, alignItems: 'center',
+                animationDelay: '360ms',
               }}
             >
               <div style={{
-                width: 44, height: 44, borderRadius: 12,
-                background: `${accent}18`,
-                border: `1px solid ${accent}30`,
+                width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                background: 'var(--accent-a20)', color: 'var(--accent)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
-                {icon}
+                <IconSparkle size={18} />
               </div>
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>{title}</div>
-                <div style={{ fontSize: 13, color: 'var(--dim)', lineHeight: 1.55 }}>{desc}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 2 }}>
+                  Запиши первую тренировку
+                </div>
+                <div style={{ fontSize: 12.5, color: 'var(--dim)', lineHeight: 1.5 }}>
+                  Дашборд оживёт сразу — статистика, активность и график за неделю
+                </div>
               </div>
-            </button>
-          ))}
+            </div>
+          )}
+
         </div>
       </div>
+    </>
+  );
+};
 
-      {/* Как начать */}
-      <div style={{
-        padding: '56px 24px 72px',
-        background: 'var(--surface)',
-        borderTop: '1px solid var(--border)',
-        borderBottom: '1px solid var(--border)',
-      }}>
-        <div style={{ maxWidth: 720, margin: '0 auto' }}>
-          <div style={{
-            fontSize: 11, fontWeight: 700, color: 'var(--ghost)',
-            textTransform: 'uppercase', letterSpacing: '0.1em',
-            textAlign: 'center', marginBottom: 8,
-          }}>
-            Как начать
-          </div>
-          <h2 style={{ textAlign: 'center', fontSize: 24, fontWeight: 800, color: 'var(--text)', margin: '0 0 40px' }}>
-            Три шага до первой тренировки
-          </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16 }}>
-            {steps.map((step, i) => (
-              <div key={i} style={{
-                background: 'var(--bg)',
-                border: '1px solid var(--border)',
-                borderRadius: 18, padding: '24px 20px',
-                position: 'relative',
-              }}>
-                <div style={{
-                  position: 'absolute', top: 20, right: 20,
-                  fontSize: 11, fontWeight: 800, color: 'var(--ghost)',
-                }}>
-                  {String(i + 1).padStart(2, '0')}
-                </div>
-                <div style={{
-                  width: 40, height: 40, borderRadius: 12,
-                  background: 'var(--accent-a10)',
-                  border: '1px solid var(--accent-a20)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: 'var(--accent)', marginBottom: 16,
-                }}>
-                  {step.icon}
-                </div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>{step.title}</div>
-                <div style={{ fontSize: 13, color: 'var(--dim)', lineHeight: 1.55 }}>{step.desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Промо-блок */}
-      <div style={{ padding: '72px 24px 80px', maxWidth: 720, margin: '0 auto', textAlign: 'center' }}>
-        <div style={{
-          background: 'var(--accent-a10)',
-          border: '1px solid var(--accent-a20)',
-          borderRadius: 24, padding: '48px 32px',
+// ─── StatCell ─────────────────────────────────────────────────────────────
+interface StatCellProps {
+  icon: React.ReactNode;
+  label: string;
+  value: number;
+  unit?: string;
+  accent: string;
+  loading?: boolean;
+  borderRight?: boolean;
+  progress?: number; // 0..1 — рисует тонкую полосу снизу
+}
+const StatCell = ({ icon, label, value, unit, accent, loading, borderRight, progress }: StatCellProps) => (
+  <div style={{
+    padding: '14px 14px 16px',
+    borderRight: borderRight ? '1px solid var(--border)' : 'none',
+    position: 'relative',
+    minWidth: 0,
+  }}>
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 6,
+      fontSize: 10.5, fontWeight: 600,
+      color: 'var(--ghost)',
+      textTransform: 'uppercase', letterSpacing: '0.08em',
+      marginBottom: 8,
+    }}>
+      <span style={{ color: accent }}>{icon}</span>
+      <span style={{
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+      }}>{label}</span>
+    </div>
+    {loading ? (
+      <div className="dash-skel" style={{ height: 28, width: '60%', borderRadius: 6 }} />
+    ) : (
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+        <span className="num-mono" style={{
+          fontSize: 26, fontWeight: 700, color: 'var(--text)',
+          letterSpacing: '-0.04em', lineHeight: 1,
         }}>
-          <h2 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text)', margin: '0 0 14px', lineHeight: 1.2 }}>
-            Начните уже сегодня
-          </h2>
-          <p style={{ color: 'var(--dim)', fontSize: 15, lineHeight: 1.6, maxWidth: 380, margin: '0 auto 32px' }}>
-            Регистрация займёт меньше минуты. Первая тренировка — сразу после.
-          </p>
-          <button
-            onClick={() => navigate(isLoggedIn ? '/workouts' : '/register')}
-            style={{
-              padding: '14px 36px', borderRadius: 14,
-              background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
-              border: 'none', color: 'var(--accent-fg)',
-              fontWeight: 700, fontSize: 15, cursor: 'pointer',
-              transition: 'opacity 0.15s',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
-            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-          >
-            Попробовать →
-          </button>
-        </div>
+          {value}
+        </span>
+        {unit && (
+          <span style={{ fontSize: 11, color: 'var(--dim)', fontWeight: 500 }}>{unit}</span>
+        )}
+      </div>
+    )}
+    {progress != null && (
+      <div style={{
+        position: 'absolute', left: 14, right: 14, bottom: 4,
+        height: 2, borderRadius: 2,
+        background: 'var(--border)',
+        overflow: 'hidden',
+      }}>
+        <div style={{
+          width: `${progress * 100}%`,
+          height: '100%',
+          background: accent,
+          transition: 'width 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+        }} />
+      </div>
+    )}
+  </div>
+);
+
+// ─── WeeklyBarChart (чистый SVG) ──────────────────────────────────────────
+interface BarData { weekStart: Date; count: number; isCurrent: boolean }
+interface WeeklyBarChartProps {
+  bars: BarData[];
+  maxValue: number;
+  hoveredIdx: number | null;
+  onHover: (i: number | null) => void;
+  isMobile: boolean;
+}
+const WeeklyBarChart = ({ bars, maxValue, hoveredIdx, onHover, isMobile }: WeeklyBarChartProps) => {
+  const W = 100;
+  const H = isMobile ? 36 : 32;
+  const barW = (W - (bars.length - 1) * 1.4) / bars.length;
+  const heightFor = (c: number) => Math.max(c > 0 ? 4 : 1.5, (c / maxValue) * H);
+
+  return (
+    <div style={{ position: 'relative' }}>
+      {/* baseline + gridlines */}
+      <svg viewBox={`0 -2 ${W} ${H + 8}`} width="100%" preserveAspectRatio="none" style={{ display: 'block', height: isMobile ? 130 : 140 }}>
+        {/* gridline на максимуме */}
+        <line x1="0" y1="0" x2={W} y2="0"
+          stroke="var(--border)" strokeWidth="0.15" strokeDasharray="0.6,0.8" vectorEffect="non-scaling-stroke" />
+        <line x1="0" y1={H / 2} x2={W} y2={H / 2}
+          stroke="var(--border)" strokeWidth="0.15" strokeDasharray="0.6,0.8" vectorEffect="non-scaling-stroke" />
+
+        {bars.map((b, i) => {
+          const h = heightFor(b.count);
+          const x = i * (barW + 1.4);
+          const y = H - h;
+          const hov = hoveredIdx === i;
+          const fill = b.count === 0
+            ? 'var(--surface3)'
+            : b.isCurrent
+              ? 'var(--accent)'
+              : 'var(--accent-a30)';
+          return (
+            <g key={i}
+              onMouseEnter={() => onHover(i)}
+              onMouseLeave={() => onHover(null)}
+              className="dash-bar"
+              style={{ cursor: 'pointer' }}
+            >
+              {/* hit area */}
+              <rect x={x - 0.3} y={-2} width={barW + 0.6} height={H + 4} fill="transparent" />
+              <rect
+                x={x}
+                y={y}
+                width={barW}
+                height={h}
+                rx={Math.min(1.2, barW / 3)}
+                fill={fill}
+                opacity={hov ? 1 : (b.count === 0 ? 0.45 : 0.92)}
+                style={{ transition: 'opacity 0.15s' }}
+              />
+              {b.isCurrent && (
+                <rect
+                  x={x}
+                  y={y}
+                  width={barW}
+                  height={h}
+                  rx={Math.min(1.2, barW / 3)}
+                  fill="none"
+                  stroke="var(--accent-fg)"
+                  strokeWidth="0.12"
+                  opacity="0.18"
+                  vectorEffect="non-scaling-stroke"
+                />
+              )}
+            </g>
+          );
+        })}
+      </svg>
+
+      {/* подписи под барами */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: `repeat(${bars.length}, 1fr)`,
+        gap: 0,
+        marginTop: 6,
+      }}>
+        {bars.map((b, i) => {
+          const hov = hoveredIdx === i;
+          const dateStr = `${b.weekStart.getDate()} ${MONTH_SHORT[b.weekStart.getMonth()]}`;
+          return (
+            <div key={i} className="num-mono" style={{
+              textAlign: 'center',
+              fontSize: 10,
+              color: hov ? 'var(--text)' : (b.isCurrent ? 'var(--accent)' : 'var(--ghost)'),
+              fontWeight: b.isCurrent ? 700 : 500,
+              transition: 'color 0.15s',
+              letterSpacing: '-0.01em',
+            }}>
+              {b.isCurrent ? 'сейчас' : dateStr}
+            </div>
+          );
+        })}
       </div>
 
+      {/* tooltip числа над активным баром */}
+      {hoveredIdx !== null && (
+        <div style={{
+          position: 'absolute',
+          left: `${(hoveredIdx + 0.5) / bars.length * 100}%`,
+          top: -28,
+          transform: 'translateX(-50%)',
+          background: 'var(--text)',
+          color: 'var(--bg)',
+          padding: '5px 9px',
+          borderRadius: 7,
+          fontSize: 11,
+          fontWeight: 600,
+          whiteSpace: 'nowrap',
+          pointerEvents: 'none',
+          letterSpacing: '-0.005em',
+        }}>
+          <span className="num-mono">{bars[hoveredIdx].count}</span>
+          {' '}
+          {bars[hoveredIdx].count === 1 ? 'тренировка' : bars[hoveredIdx].count < 5 && bars[hoveredIdx].count !== 0 ? 'тренировки' : 'тренировок'}
+        </div>
+      )}
     </div>
   );
 };

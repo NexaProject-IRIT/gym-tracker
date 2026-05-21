@@ -126,7 +126,7 @@ export const MainLayout = () => {
   return (
     <>
       <style>{`
-        *, *::before, *::after { box-sizing: border-box; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+        *, *::before, *::after { box-sizing: border-box; font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif; }
         .nav-link { text-decoration: none; display: block; }
       `}</style>
 
