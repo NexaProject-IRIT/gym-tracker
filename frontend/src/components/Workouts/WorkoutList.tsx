@@ -3,13 +3,17 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useWorkoutsContext } from '../../contexts/WorkoutsContext';
 import { WORKOUT_TYPE_COLORS } from '../../types/workout';
 import { WorkoutForm } from './WorkoutForm';
-import { WorkoutCard } from './WorkoutCard';
+import { WorkoutCard, WorkoutCardSkeleton } from './WorkoutCard';
 import { StatsRow } from './StatsRow';
 
 const CSS = `
   input[type=number]::-webkit-inner-spin-button,
   input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
   input[type=number] { -moz-appearance: textfield; }
+  @keyframes sk-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
 `;
 
 const IconPlus = () => (
@@ -65,9 +69,6 @@ export const WorkoutList: React.FC = () => {
 
         {workouts.length > 0 && <StatsRow workouts={workouts} />}
 
-        {loading && (
-          <div style={{ textAlign: 'center', padding: 40, color: 'var(--faint)' }}>Загрузка...</div>
-        )}
         {error && (
           <div style={{ textAlign: 'center', padding: 20, color: '#f87171', fontSize: 13 }}>{error}</div>
         )}
@@ -80,7 +81,11 @@ export const WorkoutList: React.FC = () => {
           flex: 1, padding: '0 32px', paddingBottom: 100,
           maxWidth: 900, width: '100%', margin: '0 auto',
         }}>
-          {!loading && workouts.length === 0 ? (
+          {loading ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 12 }}>
+              {Array.from({ length: 6 }).map((_, i) => <WorkoutCardSkeleton key={i} />)}
+            </div>
+          ) : workouts.length === 0 ? (
             <div style={{ textAlign: 'center', paddingTop: 80 }}>
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style={{ margin: '0 auto 16px', display: 'block', opacity: 0.2 }}>
                 <path d="M6.5 6.5h11M6.5 17.5h11M4 9.5v5M20 9.5v5M2 11v2M22 11v2" stroke="var(--text)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -89,11 +94,7 @@ export const WorkoutList: React.FC = () => {
               <p style={{ color: 'var(--ghost)', fontSize: 13, margin: 0 }}>Нажмите «Новая тренировка», чтобы начать</p>
             </div>
           ) : (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
-              gap: 12,
-            }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 12 }}>
               {[...workouts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(workout => (
                 <WorkoutCard
                   key={workout.id}

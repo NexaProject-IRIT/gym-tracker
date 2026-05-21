@@ -1,3 +1,4 @@
+import React from 'react';
 import type { Exercise } from '../../types/workout';
 
 interface Props {
@@ -15,6 +16,26 @@ const IconDumbbell = () => (
   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--ghost)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M6 4v16M18 4v16M6 8H2v8h4M18 8h4v8h-4M6 8h12v8H6z"/>
   </svg>
+);
+
+const skBase: React.CSSProperties = {
+  background: 'linear-gradient(90deg, var(--surface) 25%, var(--border2) 50%, var(--surface) 75%)',
+  backgroundSize: '200% 100%',
+  animation: 'sk-shimmer 1.4s ease-in-out infinite',
+  borderRadius: 6,
+};
+
+export const ExerciseCardSkeleton: React.FC = () => (
+  <div style={{ background: 'var(--surface)', borderRadius: 12, border: '1px solid var(--border)', overflow: 'hidden' }}>
+    <div style={{ aspectRatio: '1 / 1', width: '100%', overflow: 'hidden' }}>
+      <div style={{ ...skBase, width: '100%', height: '100%', borderRadius: 0 }} />
+    </div>
+    <div style={{ padding: '10px 10px 12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ ...skBase, width: '82%', height: 13 }} />
+      <div style={{ ...skBase, width: '60%', height: 13 }} />
+      <div style={{ ...skBase, width: '48%', height: 11, marginTop: 2 }} />
+    </div>
+  </div>
 );
 
 export const ExerciseCard = ({ exercise, onClick }: Props) => {

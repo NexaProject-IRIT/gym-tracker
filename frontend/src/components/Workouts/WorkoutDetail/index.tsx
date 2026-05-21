@@ -538,18 +538,33 @@ export const WorkoutDetail: React.FC<Props> = ({
         />
       )}
 
-      {infoLoading && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ animation: 'spin 1s linear infinite' }}>
-              <circle cx="12" cy="12" r="10" stroke="var(--accent-a20)" strokeWidth="2"/>
-              <path d="M12 2a10 10 0 0 1 10 10" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-            <span style={{ color: 'var(--dim)', fontSize: 13, fontWeight: 500 }}>Загрузка...</span>
+      {infoLoading && (() => {
+        const skBase: React.CSSProperties = {
+          background: 'linear-gradient(90deg, var(--surface) 25%, var(--border2) 50%, var(--surface) 75%)',
+          backgroundSize: '200% 100%',
+          animation: 'sk-shimmer 1.4s ease-in-out infinite',
+          borderRadius: 6,
+        };
+        return (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+            <style>{`@keyframes sk-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }`}</style>
+            <div style={{ width: '100%', height: '100dvh', background: 'var(--bg)', overflowY: 'hidden', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ ...skBase, width: '100%', height: 260, borderRadius: 0, flexShrink: 0 }} />
+              <div style={{ padding: '20px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
+                  <div style={{ ...skBase, width: 80, height: 26, borderRadius: 20 }} />
+                  <div style={{ ...skBase, width: 100, height: 26, borderRadius: 20 }} />
+                </div>
+                <div style={{ ...skBase, width: '68%', height: 26 }} />
+                <div style={{ ...skBase, width: '88%', height: 14 }} />
+                <div style={{ ...skBase, width: '72%', height: 14 }} />
+                <div style={{ ...skBase, width: '80%', height: 14 }} />
+                <div style={{ ...skBase, width: '58%', height: 14 }} />
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       <ExerciseModal exercise={isInfoExerciseOpen ? infoExercise : null} onClose={() => navigate(-1)} zIndex={300} />
     </div>

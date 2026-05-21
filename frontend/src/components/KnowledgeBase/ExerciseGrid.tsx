@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { SearchBar } from './SearchBar';
 import { TagFilter } from './TagFilter';
 import { ExerciseModal } from './ExerciseModal';
-import { ExerciseCard } from './ExerciseCard';
+import { ExerciseCard, ExerciseCardSkeleton } from './ExerciseCard';
 import { EquipmentCard } from './EquipmentCard';
 import type { Exercise } from '../../types/workout';
 import { apiFetch } from '../../lib/api';
@@ -22,6 +22,7 @@ export const ExerciseGrid = () => {
   const [allExercises, setAllExercises] = useState<Exercise[]>([]);
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [equipmentLoading, setEquipmentLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'all' | 'equipment'>('all');
   const [search, setSearch] = useState('');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -61,6 +62,8 @@ export const ExerciseGrid = () => {
       setEquipment(Array.isArray(data) ? data : []);
     } catch (e) {
       console.error('Ошибка загрузки тренажёров:', e);
+    } finally {
+      setEquipmentLoading(false);
     }
   };
 
@@ -94,8 +97,28 @@ export const ExerciseGrid = () => {
     setActiveTab('all');
   };
 
+  const skBase: React.CSSProperties = {
+    background: 'linear-gradient(90deg, var(--surface) 25%, var(--border2) 50%, var(--surface) 75%)',
+    backgroundSize: '200% 100%',
+    animation: 'sk-shimmer 1.4s ease-in-out infinite',
+    borderRadius: 6,
+  };
+
+  const EquipmentCardSkeleton = () => (
+    <div style={{ background: 'var(--surface)', borderRadius: 12, border: '1px solid var(--border)', overflow: 'hidden' }}>
+      <div style={{ aspectRatio: '3 / 2', width: '100%', overflow: 'hidden' }}>
+        <div style={{ ...skBase, width: '100%', height: '100%', borderRadius: 0 }} />
+      </div>
+      <div style={{ padding: '10px 10px 12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ ...skBase, width: '70%', height: 13 }} />
+        <div style={{ ...skBase, width: '45%', height: 11 }} />
+      </div>
+    </div>
+  );
+
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)' }}>
+      <style>{`@keyframes sk-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }`}</style>
       {/* Sticky header */}
       <div style={{
         position: 'sticky', top: 0, zIndex: 10,
@@ -160,7 +183,9 @@ export const ExerciseGrid = () => {
             </div>
             <style>{`@media (min-width: 640px) { .eq-grid { grid-template-columns: repeat(3, 1fr) !important; } } @media (min-width: 1024px) { .eq-grid { grid-template-columns: repeat(4, 1fr) !important; } }`}</style>
             <div className="eq-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, padding: '0 16px 16px' }}>
-              {equipment.length === 0 ? (
+              {equipmentLoading ? (
+                Array.from({ length: 6 }).map((_, i) => <EquipmentCardSkeleton key={i} />)
+              ) : equipment.length === 0 ? (
                 <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--faint)', padding: '48px 0' }}>
                   Тренажёры не загружены
                 </p>
@@ -182,10 +207,12 @@ export const ExerciseGrid = () => {
       {/* Вкладка: Все упражнения */}
       {activeTab === 'all' && (
         loading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 0', opacity: 0.5 }}>
-            <svg style={{ width: 40, height: 40, marginBottom: 12, color: 'var(--accent)', animation: 'spin 1s linear infinite' }} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeOpacity="0.25"/><path d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-            <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--accent)' }}>Загрузка...</p>
-          </div>
+          <>
+            <style>{`@media (min-width: 640px) { .ex-grid { grid-template-columns: repeat(3, 1fr) !important; } } @media (min-width: 1024px) { .ex-grid { grid-template-columns: repeat(4, 1fr) !important; } }`}</style>
+            <div className="ex-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, padding: '0 16px 16px' }}>
+              {Array.from({ length: 8 }).map((_, i) => <ExerciseCardSkeleton key={i} />)}
+            </div>
+          </>
         ) : exercises.length === 0 ? (
           <p style={{ textAlign: 'center', color: 'var(--faint)', padding: '48px 0' }}>Ничего не найдено</p>
         ) : (

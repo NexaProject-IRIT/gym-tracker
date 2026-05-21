@@ -39,6 +39,42 @@ interface Props {
   onDelete: () => void;
 }
 
+const skBase: React.CSSProperties = {
+  background: 'linear-gradient(90deg, var(--surface) 25%, var(--border2) 50%, var(--surface) 75%)',
+  backgroundSize: '200% 100%',
+  animation: 'sk-shimmer 1.4s ease-in-out infinite',
+  borderRadius: 6,
+};
+
+export const WorkoutCardSkeleton: React.FC = () => (
+  <div style={{
+    display: 'flex', alignItems: 'stretch', borderRadius: 16,
+    border: '1px solid var(--border)', background: 'var(--surface)',
+    position: 'relative',
+  }}>
+    <div style={{ width: 4, borderRadius: '16px 0 0 16px', background: 'var(--border2)', flexShrink: 0 }} />
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      padding: '16px 14px', minWidth: 52, flexShrink: 0,
+    }}>
+      <div style={{ ...skBase, width: 24, height: 22, borderRadius: 4 }} />
+      <div style={{ ...skBase, width: 20, height: 11, marginTop: 4 }} />
+      <div style={{ ...skBase, width: 28, height: 10, marginTop: 3 }} />
+    </div>
+    <div style={{ width: 1, margin: '12px 0', background: 'var(--border)', flexShrink: 0 }} />
+    <div style={{ flex: 1, padding: '14px 12px', minWidth: 0 }}>
+      <div style={{ marginBottom: 8 }}>
+        <div style={{ ...skBase, width: 72, height: 18, borderRadius: 20 }} />
+      </div>
+      <div style={{ ...skBase, width: '72%', height: 14, marginBottom: 7 }} />
+      <div style={{ ...skBase, width: '42%', height: 11 }} />
+    </div>
+    <div style={{ display: 'flex', alignItems: 'center', padding: '0 12px', flexShrink: 0 }}>
+      <div style={{ ...skBase, width: 32, height: 32, borderRadius: 8 }} />
+    </div>
+  </div>
+);
+
 export const WorkoutCard: React.FC<Props> = ({ workout, isMenuOpen, onSelect, onMenuToggle, onRepeat, onDelete }) => {
   const c = WORKOUT_TYPE_COLORS[workout.type];
   const d = formatDate(workout.date);

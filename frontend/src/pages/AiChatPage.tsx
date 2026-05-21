@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import React, { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAiChatContext } from '../contexts/AiChatContext';
 import { useWorkoutsContext } from '../contexts/WorkoutsContext';
@@ -97,6 +97,7 @@ export const AiChatPage = () => {
         .ai-textarea::placeholder { color: var(--faint); }
         .ai-send-btn:hover:not(:disabled) { background: #86efac !important; }
         .ai-prompt-chip:hover { background: var(--accent-a12) !important; border-color: var(--accent-a30) !important; }
+        @keyframes sk-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
         .ai-chat-root {
           height: 100dvh;
@@ -190,11 +191,53 @@ export const AiChatPage = () => {
 
         {/* Область сообщений */}
         <div className="ai-messages-area" ref={scrollRef}>
-          {loading && (
-            <div style={{ color: 'var(--dim)', fontSize: 13, textAlign: 'center', padding: 20 }}>
-              Загружаю историю…
-            </div>
-          )}
+          {loading && (() => {
+            const skBase: React.CSSProperties = {
+              background: 'linear-gradient(90deg, var(--surface) 25%, var(--border2) 50%, var(--surface) 75%)',
+              backgroundSize: '200% 100%',
+              animation: 'sk-shimmer 1.4s ease-in-out infinite',
+              borderRadius: 6,
+            };
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20, padding: '4px 0' }}>
+                {/* bot message 1 */}
+                <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                  <div style={{ ...skBase, width: 32, height: 32, borderRadius: 10, flexShrink: 0 }} />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 7, maxWidth: '72%' }}>
+                    <div style={{ ...skBase, width: 220, height: 14 }} />
+                    <div style={{ ...skBase, width: 170, height: 14 }} />
+                    <div style={{ ...skBase, width: 195, height: 14 }} />
+                  </div>
+                </div>
+                {/* user message 1 */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <div style={{ ...skBase, width: 160, height: 40, borderRadius: 16 }} />
+                </div>
+                {/* bot message 2 */}
+                <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                  <div style={{ ...skBase, width: 32, height: 32, borderRadius: 10, flexShrink: 0 }} />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 7, maxWidth: '60%' }}>
+                    <div style={{ ...skBase, width: 185, height: 14 }} />
+                    <div style={{ ...skBase, width: 145, height: 14 }} />
+                    <div style={{ ...skBase, width: 200, height: 14 }} />
+                    <div style={{ ...skBase, width: 120, height: 14 }} />
+                  </div>
+                </div>
+                {/* user message 2 */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <div style={{ ...skBase, width: 120, height: 40, borderRadius: 16 }} />
+                </div>
+                {/* bot message 3 */}
+                <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                  <div style={{ ...skBase, width: 32, height: 32, borderRadius: 10, flexShrink: 0 }} />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 7, maxWidth: '68%' }}>
+                    <div style={{ ...skBase, width: 200, height: 14 }} />
+                    <div style={{ ...skBase, width: 155, height: 14 }} />
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {isEmpty && (
             <div style={{

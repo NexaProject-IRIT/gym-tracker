@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { authedFetch, clearTokens } from '../utils/api';
 import { apiFetch, ApiError } from '../lib/api';
@@ -63,6 +63,7 @@ export const ProfilePage = () => {
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [stats, setStats] = useState<Stats>({ total: 0, this_month: 0 });
   const [statsLoaded, setStatsLoaded] = useState(false);
+  const [profileLoaded, setProfileLoaded] = useState(false);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -79,6 +80,8 @@ export const ProfilePage = () => {
           setProfile(p);
           setDraft(p);
         } catch { /* ignore */ }
+      } finally {
+        setProfileLoaded(true);
       }
     };
     loadProfile();
@@ -176,32 +179,58 @@ export const ProfilePage = () => {
     { label: 'Этот месяц', value: statsLoaded ? String(stats.this_month) : '—' },
   ];
 
+  const skBase: React.CSSProperties = {
+    background: 'linear-gradient(90deg, var(--surface) 25%, var(--border2) 50%, var(--surface) 75%)',
+    backgroundSize: '200% 100%',
+    animation: 'sk-shimmer 1.4s ease-in-out infinite',
+    borderRadius: 6,
+  };
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', padding: '48px 24px', maxWidth: 600, margin: '0 auto' }}>
+      <style>{`@keyframes sk-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }`}</style>
 
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 40 }}>
-        <div style={{
-          width: 80, height: 80, borderRadius: '50%',
-          background: 'var(--accent-a12)',
-          border: '2px solid var(--accent-a30)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          marginBottom: 16,
-        }}>
-          <IconPerson />
+      {profileLoaded ? (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 40 }}>
+          <div style={{
+            width: 80, height: 80, borderRadius: '50%',
+            background: 'var(--accent-a12)',
+            border: '2px solid var(--accent-a30)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            marginBottom: 16,
+          }}>
+            <IconPerson />
+          </div>
+          <h2 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 700 }}>{profile.displayName || profile.username || 'Ваш профиль'}</h2>
+          <p style={{ margin: '0 0 2px', color: 'var(--faint)', fontSize: 13 }}>@{profile.username}</p>
+          <p style={{ margin: 0, color: 'var(--faint)', fontSize: 14 }}>Личные данные и настройки</p>
         </div>
-        <h2 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 700 }}>{profile.displayName || profile.username || 'Ваш профиль'}</h2>
-        <p style={{ margin: '0 0 2px', color: 'var(--faint)', fontSize: 13 }}>@{profile.username}</p>
-        <p style={{ margin: 0, color: 'var(--faint)', fontSize: 14 }}>Личные данные и настройки</p>
-      </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 40 }}>
+          <div style={{ ...skBase, width: 80, height: 80, borderRadius: '50%', marginBottom: 16 }} />
+          <div style={{ ...skBase, width: 150, height: 22, marginBottom: 8 }} />
+          <div style={{ ...skBase, width: 90, height: 13, marginBottom: 6 }} />
+          <div style={{ ...skBase, width: 190, height: 14 }} />
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginBottom: 32 }}>
-        {statItems.map(({ label, value }) => (
+        {statsLoaded ? statItems.map(({ label, value }) => (
           <div key={label} style={{
             background: 'var(--surface)', border: '1px solid var(--border)',
             borderRadius: 16, padding: '20px 12px', textAlign: 'center',
           }}>
             <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--accent)' }}>{value}</div>
             <div style={{ fontSize: 12, color: 'var(--faint)', marginTop: 4 }}>{label}</div>
+          </div>
+        )) : [1, 2].map(i => (
+          <div key={i} style={{
+            background: 'var(--surface)', border: '1px solid var(--border)',
+            borderRadius: 16, padding: '20px 12px', textAlign: 'center',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+          }}>
+            <div style={{ ...skBase, width: 80, height: 20 }} />
+            <div style={{ ...skBase, width: 60, height: 12 }} />
           </div>
         ))}
       </div>
