@@ -137,7 +137,7 @@ export const LoginPage = () => {
             disabled={loading}
             style={{
               width: '100%', padding: '14px', borderRadius: 12, border: 'none',
-              background: loading ? 'var(--accent-a30)' : 'linear-gradient(135deg, var(--accent), #34d399)',
+              background: loading ? 'var(--accent-a30)' : 'linear-gradient(135deg, var(--accent), var(--accent2))',
               color: 'var(--accent-fg)', fontWeight: 700, fontSize: 15, cursor: loading ? 'default' : 'pointer',
               marginTop: 8, transition: 'opacity 0.15s',
             }}

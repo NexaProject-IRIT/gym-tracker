@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import type { WorkoutExercise, WorkoutType, ParameterType } from '../../../types/workout';
 import { PARAMETER_LABELS, DEFAULT_PARAMS_FOR_TYPE } from '../../../types/workout';
-import { NumberField } from './NumberField';
-import { TimeField } from './TimeField';
+import { NumberStepper } from '../../UI/NumberStepper';
+import { TimeStepper } from '../../UI/TimeStepper';
 
 function btnStyle(): React.CSSProperties {
   return {
     flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
     padding: '12px 16px', borderRadius: 12, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600,
     transition: 'opacity 0.15s',
-    background: 'linear-gradient(135deg, #6ee7b7, #34d399)', color: '#064e3b',
+    background: 'linear-gradient(135deg, var(--accent), var(--accent2))', color: 'var(--accent-fg)',
   };
 }
 
@@ -73,11 +73,11 @@ export const AddExerciseModal: React.FC<Props> = ({ workoutType, onAdd, onClose 
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 10, marginBottom: 20, alignItems: 'end' }}>
-          {params.includes('sets') && <NumberField label="Подходы" value={sets} onChange={setSets} />}
-          {params.includes('reps') && <NumberField label="Повторы" value={reps} onChange={setReps} />}
-          {params.includes('weight') && <NumberField label="Вес (кг)" value={weight} onChange={setWeight} step="0.5" />}
-          {params.includes('time') && <TimeField value={time} onChange={setTime} />}
-          {params.includes('distance') && <NumberField label="Дистанция (км)" value={distance} onChange={setDistance} step="0.1" />}
+          {params.includes('sets') && <NumberStepper label="Подходы" value={sets} onChange={setSets} />}
+          {params.includes('reps') && <NumberStepper label="Повторы" value={reps} onChange={setReps} />}
+          {params.includes('weight') && <NumberStepper label="Вес (кг)" value={weight} onChange={setWeight} step={0.5} />}
+          {params.includes('time') && <TimeStepper value={time} onChange={setTime} />}
+          {params.includes('distance') && <NumberStepper label="Дистанция (км)" value={distance} onChange={setDistance} step={0.1} />}
         </div>
 
         <button onClick={handleAdd} disabled={!name.trim() || !params.length} style={btnStyle()}>

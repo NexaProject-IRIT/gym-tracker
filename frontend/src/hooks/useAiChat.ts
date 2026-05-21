@@ -1,6 +1,6 @@
 // src/hooks/useAiChat.ts
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { authedFetch } from '../utils/api';
+import { apiFetch } from '../lib/api';
 
 const BASE = '';
 
@@ -22,7 +22,7 @@ export interface WorkoutSuggestion {
 export interface WorkoutImportEntry {
   name: string;
   type: 'strength' | 'cardio' | 'flexibility' | 'functional' | 'custom';
-  date: string; // YYYY-MM-DD
+  date: string;
   exercises: Array<{
     name: string;
     sets?: number;
@@ -65,9 +65,7 @@ export const useAiChat = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await authedFetch(`${BASE}/ai/history/`);
-      if (!res.ok) throw new Error(`Ошибка ${res.status}`);
-      const data = await res.json();
+      const data = await apiFetch<{ messages: ChatMessage[] }>(`${BASE}/ai/history/`);
       setMessages(data.messages ?? []);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Не удалось загрузить историю');
@@ -96,30 +94,15 @@ export const useAiChat = () => {
     setMessages(prev => [...prev, optimisticUserMsg]);
 
     try {
-      const res = await authedFetch(`${BASE}/ai/chat/`, {
-        method: 'POST',
-        body: JSON.stringify({ message: trimmed }),
-      });
-
-      if (!res.ok) {
-        const body = await res.text();
-        let reason = `Ошибка ${res.status}`;
-        try {
-          const parsed = JSON.parse(body);
-          reason = parsed.error || reason;
-        } catch { /* не JSON */ }
-        throw new Error(reason);
-      }
-
-      const data = await res.json();
+      const data = await apiFetch<{ user_message: ChatMessage; assistant_message: ChatMessage; error?: string }>(
+        `${BASE}/ai/chat/`,
+        { method: 'POST', body: JSON.stringify({ message: trimmed }) }
+      );
       setMessages(prev => {
         const withoutTemp = prev.filter(m => m.id !== tempId);
         return [...withoutTemp, data.user_message, data.assistant_message];
       });
-
-      if (data.error) {
-        setError(data.error);
-      }
+      if (data.error) setError(data.error);
     } catch (e) {
       setMessages(prev => prev.filter(m => m.id !== tempId));
       setError(e instanceof Error ? e.message : 'Не удалось отправить сообщение');
@@ -132,10 +115,7 @@ export const useAiChat = () => {
   const clearHistory = useCallback(async () => {
     setError(null);
     try {
-      const res = await authedFetch(`${BASE}/ai/history/`, {
-        method: 'DELETE',
-      });
-      if (!res.ok && res.status !== 204) throw new Error(`Ошибка ${res.status}`);
+      await apiFetch(`${BASE}/ai/history/`, { method: 'DELETE' });
       setMessages([]);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Не удалось очистить историю');
@@ -147,31 +127,27 @@ export const useAiChat = () => {
     if (!msg?.workout_suggestion) return null;
 
     const suggestion = msg.workout_suggestion;
-    const body = {
-      name: suggestion.name,
-      type: suggestion.type,
-      date: new Date().toISOString(),
-      notes: '',
-      exercises: suggestion.exercises.map(ex => ({
-        exerciseId: '',
-        customName: ex.name,
-        sets: ex.sets ?? 0,
-        reps: ex.reps ?? 0,
-        weight: ex.weight ?? null,
-        time: ex.time ?? null,
-        distance: ex.distance ?? null,
-        isCustom: true,
-        parameters: inferParameters(ex),
-      })),
-    };
-
     try {
-      const res = await authedFetch(`${BASE}/workouts/`, {
+      const created = await apiFetch<{ id: string }>(`${BASE}/workouts/`, {
         method: 'POST',
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          name: suggestion.name,
+          type: suggestion.type,
+          date: new Date().toLocaleDateString('en-CA'),
+          notes: '',
+          exercises: suggestion.exercises.map(ex => ({
+            exerciseId: '',
+            customName: ex.name,
+            sets: ex.sets ?? 0,
+            reps: ex.reps ?? 0,
+            weight: ex.weight ?? null,
+            time: ex.time ?? null,
+            distance: ex.distance ?? null,
+            isCustom: true,
+            parameters: inferParameters(ex),
+          })),
+        }),
       });
-      if (!res.ok) throw new Error(`Ошибка ${res.status}`);
-      const created = await res.json();
       setMessages(prev => prev.map(m => m.id === messageId ? { ...m, workoutAdded: true } : m));
       return created.id;
     } catch (e) {
@@ -185,12 +161,10 @@ export const useAiChat = () => {
     if (!msg?.workout_imports?.length) return 0;
 
     try {
-      const res = await authedFetch(`${BASE}/workouts/bulk-import/`, {
+      const data = await apiFetch<{ count?: number }>(`${BASE}/workouts/bulk-import/`, {
         method: 'POST',
         body: JSON.stringify({ workouts: msg.workout_imports }),
       });
-      if (!res.ok) throw new Error(`Ошибка ${res.status}`);
-      const data = await res.json();
       setMessages(prev => prev.map(m => m.id === messageId ? { ...m, workoutsImported: true } : m));
       return data.count ?? 0;
     } catch (e) {

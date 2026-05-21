@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
 import { SearchBar } from './SearchBar';
 import { TagFilter } from './TagFilter';
 import { ExerciseModal } from './ExerciseModal';
 import { ExerciseCard } from './ExerciseCard';
 import { EquipmentCard } from './EquipmentCard';
 import type { Exercise } from '../../types/workout';
-import { authedFetch } from '../../utils/api';
+import { apiFetch } from '../../lib/api';
 
 interface Equipment {
   id: string;
@@ -46,9 +45,7 @@ export const ExerciseGrid = () => {
       if (query.trim()) params.append('q', query.trim());
       if (tag) params.append('tag', tag.replace('#', ''));
       if (equipmentFilter) params.append('equipment', equipmentFilter);
-      const res = await authedFetch(`${url}?${params.toString()}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
+      const data = await apiFetch<Exercise[]>(`${url}?${params.toString()}`);
       setExercises(Array.isArray(data) ? data : []);
     } catch (e) {
       console.error('Ошибка загрузки упражнений:', e);
@@ -60,9 +57,7 @@ export const ExerciseGrid = () => {
 
   const fetchEquipment = async () => {
     try {
-      const res = await authedFetch(`/exercises/equipment/`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
+      const data = await apiFetch<Equipment[]>(`/exercises/equipment/`);
       setEquipment(Array.isArray(data) ? data : []);
     } catch (e) {
       console.error('Ошибка загрузки тренажёров:', e);
@@ -88,11 +83,8 @@ export const ExerciseGrid = () => {
   useEffect(() => {
     (async () => {
       try {
-        const res = await authedFetch('/exercises/');
-        if (res.ok) {
-          const data = await res.json();
-          setAllExercises(Array.isArray(data) ? data : []);
-        }
+        const data = await apiFetch<Exercise[]>('/exercises/');
+        setAllExercises(Array.isArray(data) ? data : []);
       } catch {}
     })();
   }, []);
@@ -191,7 +183,7 @@ export const ExerciseGrid = () => {
       {activeTab === 'all' && (
         loading ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 0', opacity: 0.5 }}>
-            <Loader2 className="w-10 h-10 animate-spin" style={{ marginBottom: 12, color: 'var(--accent)' }} />
+            <svg style={{ width: 40, height: 40, marginBottom: 12, color: 'var(--accent)', animation: 'spin 1s linear infinite' }} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeOpacity="0.25"/><path d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
             <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--accent)' }}>Загрузка...</p>
           </div>
         ) : exercises.length === 0 ? (

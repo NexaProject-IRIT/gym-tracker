@@ -2,18 +2,13 @@ import React from 'react';
 import type { Workout, WorkoutType } from '../../types/workout';
 import { WORKOUT_TYPE_LABELS, WORKOUT_TYPE_COLORS } from '../../types/workout';
 import { WorkoutMenu } from './WorkoutMenu';
-
-const typeIconPath: Record<WorkoutType, string> = {
-  strength: 'M6.5 6.5h11M6.5 17.5h11M4 9.5v5M20 9.5v5M2 11v2M22 11v2',
-  cardio: 'M3 12h4l3-8 4 16 3-8h4',
-  flexibility: 'M12 2C8 2 5 5 5 9c0 5 7 13 7 13s7-8 7-13c0-4-3-7-7-7z',
-  functional: 'M13 2L3 14h9l-1 8 10-12h-9l1-8z',
-  custom: 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
-};
+import { WORKOUT_TYPE_ICON_PATHS } from '../../constants/workoutTypes';
 
 const WorkoutTypeIcon: React.FC<{ type: WorkoutType; color: string; size?: number }> = ({ type, color, size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <path d={typeIconPath[type]} stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    {WORKOUT_TYPE_ICON_PATHS[type].map((d, i) => (
+      <path key={i} d={d} stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    ))}
   </svg>
 );
 
@@ -47,7 +42,7 @@ interface Props {
 export const WorkoutCard: React.FC<Props> = ({ workout, isMenuOpen, onSelect, onMenuToggle, onRepeat, onDelete }) => {
   const c = WORKOUT_TYPE_COLORS[workout.type];
   const d = formatDate(workout.date);
-  const exCount = (workout as any).exercise_count ?? workout.exercises?.length ?? 0;
+  const exCount = workout.exercise_count ?? workout.exercises?.length ?? 0;
 
   return (
     <div

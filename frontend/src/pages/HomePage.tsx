@@ -116,7 +116,7 @@ export const HomePage = () => {
             onClick={() => navigate(isLoggedIn ? '/workouts' : '/register')}
             style={{
               padding: '14px 32px', borderRadius: 14,
-              background: 'linear-gradient(135deg, var(--accent), #34d399)',
+              background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
               border: 'none', color: 'var(--accent-fg)',
               fontWeight: 700, fontSize: 15, cursor: 'pointer',
               transition: 'opacity 0.15s',
@@ -259,7 +259,7 @@ export const HomePage = () => {
             onClick={() => navigate(isLoggedIn ? '/workouts' : '/register')}
             style={{
               padding: '14px 36px', borderRadius: 14,
-              background: 'linear-gradient(135deg, var(--accent), #34d399)',
+              background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
               border: 'none', color: 'var(--accent-fg)',
               fontWeight: 700, fontSize: 15, cursor: 'pointer',
               transition: 'opacity 0.15s',

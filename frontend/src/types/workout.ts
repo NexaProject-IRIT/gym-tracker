@@ -62,6 +62,7 @@ export interface Workout {
   exercises: WorkoutExercise[];
   color: string;            // Цвет заливки в списке (п. 14) [cite: 14, 57]
   notes?: string;
+  exercise_count?: number;  // Только в ответе списка (детали без exercises)
 }
 
 // --- Справочные данные для UI ---

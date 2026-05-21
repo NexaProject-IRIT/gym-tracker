@@ -2,9 +2,37 @@
 import { useState, useCallback } from 'react';
 import type { Workout, WorkoutExercise, ParameterType } from '../types/workout';
 import { DEFAULT_PARAMS_FOR_TYPE } from '../types/workout';
-import { authedFetch } from '../utils/api';
+import { apiFetch } from '../lib/api';
 
 const BASE = '';
+
+interface RawWorkoutExercise {
+  id?: string | number;
+  exerciseId?: string;
+  customName?: string;
+  name?: string;
+  sets?: number;
+  reps?: number;
+  weight?: number | null;
+  time?: number | null;
+  distance?: number | null;
+  isCustom?: boolean;
+  isDone?: boolean;
+  parameters?: ParameterType[];
+  order?: number;
+  notes?: string;
+}
+
+interface RawWorkout {
+  id?: string | number;
+  name?: string;
+  type?: WorkoutType;
+  date?: string;
+  color?: string;
+  notes?: string;
+  exercises?: RawWorkoutExercise[];
+  exercise_count?: number;
+}
 
 function generateExId(): string {
   return `ex_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
@@ -33,13 +61,10 @@ function serializeExercise(e: WorkoutExercise, idx?: number) {
 // Backend → Frontend
 // ИСПРАВЛЕНО: если бэкенд вернул parameters = [] (старые записи до миграции),
 // пытаемся восстановить параметры из значений. Это защита для легаси-данных.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function inferParameters(e: any): ParameterType[] {
-  // Если parameters уже есть и не пустые — используем их
+function inferParameters(e: RawWorkoutExercise): ParameterType[] {
   if (Array.isArray(e.parameters) && e.parameters.length > 0) {
     return e.parameters as ParameterType[];
   }
-  // Иначе выводим из наличия значений (для старых записей без parameters)
   const inferred: ParameterType[] = [];
   if (e.sets != null && e.sets !== 0) inferred.push('sets');
   if (e.reps != null && e.reps !== 0) inferred.push('reps');
@@ -49,8 +74,7 @@ function inferParameters(e: any): ParameterType[] {
   return inferred;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function normalizeWorkout(raw: any): Workout {
+function normalizeWorkout(raw: RawWorkout): Workout {
   return {
     id: raw.id?.toString() ?? '',
     name: raw.name ?? '',
@@ -58,7 +82,7 @@ function normalizeWorkout(raw: any): Workout {
     date: raw.date ?? '',
     color: raw.color ?? '',
     notes: raw.notes ?? '',
-    exercises: (raw.exercises ?? []).map((e: any, idx: number) => ({
+    exercises: (raw.exercises ?? []).map((e: RawWorkoutExercise, idx: number) => ({
       ...e,
       id: e.id?.toString() ?? generateExId(),
       name: e.customName || e.exerciseId || 'Упражнение',
@@ -75,17 +99,13 @@ export const useWorkoutsApi = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // GET /workouts/ — list (no exercises in response, just metadata)
+  // GET /workouts/
   const fetchWorkouts = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await authedFetch(`${BASE}/workouts/`);
-      if (!res.ok) throw new Error(`Ошибка ${res.status}`);
-      const data = await res.json();
-      // List response has no exercises array, just exercise_count
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const normalized = data.map((raw: any) => ({
+      const data = await apiFetch<RawWorkout[]>(`${BASE}/workouts/`);
+      const normalized = data.map((raw: RawWorkout) => ({
         id: raw.id?.toString() ?? '',
         name: raw.name ?? '',
         type: raw.type ?? 'custom',
@@ -102,12 +122,10 @@ export const useWorkoutsApi = () => {
     }
   }, []);
 
-  // GET /workouts/:id/ — detail with exercises
+  // GET /workouts/:id/
   const fetchWorkoutDetail = useCallback(async (id: string): Promise<Workout | null> => {
     try {
-      const res = await authedFetch(`${BASE}/workouts/${id}/`);
-      if (!res.ok) return null;
-      const data = await res.json();
+      const data = await apiFetch<RawWorkout>(`${BASE}/workouts/${id}/`);
       const w = normalizeWorkout(data);
       setWorkouts(prev => {
         const exists = prev.some(existing => existing.id === id);
@@ -122,7 +140,7 @@ export const useWorkoutsApi = () => {
   // POST /workouts/
   const addWorkout = useCallback(async (workout: Omit<Workout, 'id'>): Promise<string | null> => {
     try {
-      const res = await authedFetch(`${BASE}/workouts/`, {
+      const raw = await apiFetch<RawWorkout>(`${BASE}/workouts/`, {
         method: 'POST',
         body: JSON.stringify({
           name: workout.name,
@@ -133,16 +151,7 @@ export const useWorkoutsApi = () => {
           exercises: workout.exercises.map(serializeExercise),
         }),
       });
-      if (!res.ok) {
-        const rawBody = await res.text();
-        let errMessage = `Ошибка ${res.status}`;
-        try {
-          const errData = JSON.parse(rawBody);
-          errMessage = errData.detail || errData.error || errData.message || errMessage;
-        } catch { /* HTML 500 — оставляем "Ошибка N" */ }
-        throw new Error(errMessage);
-      }
-      const created = normalizeWorkout(await res.json());
+      const created = normalizeWorkout(raw);
       setWorkouts(prev => [created, ...prev]);
       return created.id;
     } catch (e) {
@@ -167,13 +176,11 @@ export const useWorkoutsApi = () => {
       } else if (current?.exercises) {
         body.exercises = current.exercises.map((e, idx) => serializeExercise(e, idx));
       }
-      const res = await authedFetch(`${BASE}/workouts/${id}/`, {
+      const raw = await apiFetch<RawWorkout>(`${BASE}/workouts/${id}/`, {
         method: 'PUT',
         body: JSON.stringify(body),
       });
-      if (!res.ok) throw new Error(`Ошибка ${res.status}`);
-      const updated = normalizeWorkout(await res.json());
-      setWorkouts(prev => prev.map(w => w.id === id ? updated : w));
+      setWorkouts(prev => prev.map(w => w.id === id ? normalizeWorkout(raw) : w));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Неизвестная ошибка');
     }
@@ -182,10 +189,7 @@ export const useWorkoutsApi = () => {
   // DELETE /workouts/:id/
   const deleteWorkout = useCallback(async (id: string) => {
     try {
-      const res = await authedFetch(`${BASE}/workouts/${id}/`, {
-        method: 'DELETE',
-      });
-      if (!res.ok) throw new Error(`Ошибка ${res.status}`);
+      await apiFetch(`${BASE}/workouts/${id}/`, { method: 'DELETE' });
       setWorkouts(prev => prev.filter(w => w.id !== id));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Неизвестная ошибка');
@@ -197,7 +201,6 @@ export const useWorkoutsApi = () => {
     const original = workouts.find(w => w.id === id);
     if (!original) return null;
 
-    // If original has no exercises loaded, fetch detail first
     let exercises = original.exercises;
     if (!exercises.length) {
       const detail = await fetchWorkoutDetail(id);
@@ -218,7 +221,6 @@ export const useWorkoutsApi = () => {
   const addExercise = useCallback(async (workoutId: string, exercise: Omit<WorkoutExercise, 'id'>) => {
     const workout = workouts.find(w => w.id === workoutId);
     if (!workout) return;
-    // Гарантируем, что parameters установлены (по умолчанию — из типа тренировки)
     const exerciseWithParams: WorkoutExercise = {
       ...exercise,
       id: generateExId(),
@@ -259,32 +261,23 @@ export const useWorkoutsApi = () => {
     const exercise = workout?.exercises.find(e => e.id === exerciseId);
     if (!exercise) return;
     const newIsDone = !exercise.isDone;
-    // Оптимистичное обновление
+
     setWorkouts(prev => prev.map(w =>
       w.id === workoutId
         ? { ...w, exercises: w.exercises.map(e => e.id === exerciseId ? { ...e, isDone: newIsDone } : e) }
         : w
     ));
+
     try {
-      const res = await authedFetch(`/workouts/${workoutId}/exercises/${exerciseId}/done/`, {
-        method: 'PATCH',
-        body: JSON.stringify({ isDone: newIsDone }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setWorkouts(prev => prev.map(w =>
-          w.id === workoutId
-            ? { ...w, exercises: w.exercises.map(e => e.id === exerciseId ? { ...e, isDone: data.isDone } : e) }
-            : w
-        ));
-      } else {
-        // Откатываем
-        setWorkouts(prev => prev.map(w =>
-          w.id === workoutId
-            ? { ...w, exercises: w.exercises.map(e => e.id === exerciseId ? { ...e, isDone: !newIsDone } : e) }
-            : w
-        ));
-      }
+      const data = await apiFetch<{ isDone: boolean }>(
+        `/workouts/${workoutId}/exercises/${exerciseId}/done/`,
+        { method: 'PATCH', body: JSON.stringify({ isDone: newIsDone }) }
+      );
+      setWorkouts(prev => prev.map(w =>
+        w.id === workoutId
+          ? { ...w, exercises: w.exercises.map(e => e.id === exerciseId ? { ...e, isDone: data.isDone } : e) }
+          : w
+      ));
     } catch {
       setWorkouts(prev => prev.map(w =>
         w.id === workoutId

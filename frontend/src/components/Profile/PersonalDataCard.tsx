@@ -1,5 +1,5 @@
 import React from 'react';
-import { NumberInput } from '../UI/NumberInput';
+import { NumberStepper } from '../UI/NumberStepper';
 
 export type Goal =
   | 'lose_weight'
@@ -82,7 +82,7 @@ export const PersonalDataCard: React.FC<Props> = ({
           }}>Отмена</button>
           <button onClick={onSave} disabled={saving} style={{
             padding: '6px 14px', borderRadius: 20, border: 'none',
-            background: 'linear-gradient(135deg, var(--accent), #34d399)',
+            background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
             color: 'var(--accent-fg)', fontSize: 12, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.6 : 1,
           }}>{saving ? 'Сохраняем...' : 'Сохранить'}</button>
         </div>
@@ -137,7 +137,7 @@ export const PersonalDataCard: React.FC<Props> = ({
         <span style={{ color: 'var(--muted)', fontSize: 14 }}>{label}</span>
         {isEditing ? (
           <div style={{ width: 170 }}>
-            <NumberInput value={draft[field]} onChange={v => onDraftChange({ ...draft, [field]: v })} step={step} min={min} max={max} />
+            <NumberStepper value={draft[field]} onChange={v => onDraftChange({ ...draft, [field]: v })} step={step} min={min} max={max} />
           </div>
         ) : (
           <span style={{ color: profile[field] ? 'var(--text)' : 'var(--ghost)', fontSize: 14 }}>{profile[field] || '— не указано'}</span>

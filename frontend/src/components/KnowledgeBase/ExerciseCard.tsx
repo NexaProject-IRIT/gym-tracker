@@ -6,7 +6,7 @@ interface Props {
 }
 
 const DIFFICULTY_DOT: Record<string, string> = {
-  beginner: '#6ee7b7',
+  beginner: 'var(--accent)',
   intermediate: '#fbbf24',
   advanced: '#f87171',
 };

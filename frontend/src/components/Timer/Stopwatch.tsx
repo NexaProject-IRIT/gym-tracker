@@ -159,7 +159,7 @@ export const Stopwatch: React.FC = () => {
             borderRadius: '50%',
             background: isSwRunning
               ? 'rgba(239,68,68,0.15)'
-              : 'linear-gradient(135deg, var(--accent), #34d399)',
+              : 'linear-gradient(135deg, var(--accent), var(--accent2))',
             border: isSwRunning ? '1px solid rgba(239,68,68,0.25)' : 'none',
             display: 'flex',
             alignItems: 'center',

@@ -124,7 +124,7 @@ export const WorkoutList: React.FC = () => {
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 width: '100%', padding: '14px 24px', borderRadius: 14, border: 'none',
-                background: 'linear-gradient(135deg, var(--accent), #34d399)',
+                background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
                 color: 'var(--accent-fg)', fontWeight: 700, fontSize: 14, cursor: 'pointer',
                 boxShadow: '0 4px 20px rgba(110,231,183,0.25)',
                 transition: 'transform 0.15s, box-shadow 0.15s',

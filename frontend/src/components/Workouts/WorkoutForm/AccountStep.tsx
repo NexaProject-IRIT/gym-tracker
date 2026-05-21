@@ -1,35 +1,18 @@
 import React from 'react';
 import type { WorkoutType } from '../../../types/workout';
 import { WORKOUT_TYPE_LABELS, WORKOUT_TYPE_COLORS } from '../../../types/workout';
+import { WORKOUT_TYPE_ICON_PATHS } from '../../../constants/workoutTypes';
 
-export const TypeIcons: Record<WorkoutType, React.ReactNode> = {
-  strength: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-      <path d="M6.5 6.5h11M6.5 17.5h11M4 9.5v5M20 9.5v5M2 11v2M22 11v2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  ),
-  cardio: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-      <path d="M3 12h4l3-8 4 16 3-8h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  ),
-  flexibility: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-      <path d="M12 3c-1.5 4-4 6-4 9a4 4 0 008 0c0-3-2.5-5-4-9z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M12 15v6M9 18h6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-    </svg>
-  ),
-  functional: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  ),
-  custom: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  ),
-};
+export const TypeIcons: Record<WorkoutType, React.ReactNode> = Object.fromEntries(
+  (Object.keys(WORKOUT_TYPE_ICON_PATHS) as WorkoutType[]).map(type => [
+    type,
+    <svg key={type} width="20" height="20" viewBox="0 0 24 24" fill="none">
+      {WORKOUT_TYPE_ICON_PATHS[type].map((d, i) => (
+        <path key={i} d={d} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+      ))}
+    </svg>,
+  ])
+) as Record<WorkoutType, React.ReactNode>;
 
 const TYPE_DESCRIPTIONS: Record<WorkoutType, string> = {
   strength: 'Базовые упражнения, железо, прогрессивная перегрузка',

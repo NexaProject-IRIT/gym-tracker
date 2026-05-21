@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { WorkoutType, ParameterType } from '../../../types/workout';
 import { WORKOUT_TYPE_LABELS, WORKOUT_TYPE_COLORS, DEFAULT_PARAMS_FOR_TYPE, PARAMETER_LABELS } from '../../../types/workout';
-import { authedFetch } from '../../../utils/api';
-import { SmallField } from './SmallField';
-import { TimeField } from './TimeField';
+import { apiFetch } from '../../../lib/api';
+import { NumberStepper } from '../../UI/NumberStepper';
+import { TimeStepper } from '../../UI/TimeStepper';
 import { TypeIcons } from './AccountStep';
 
 export interface DraftExercise {
@@ -330,12 +330,9 @@ export const ExerciseStep: React.FC<Props> = ({
     if (value.trim().length >= 2) {
       debounceRef.current = window.setTimeout(async () => {
         try {
-          const res = await authedFetch(`/exercises/search/?q=${encodeURIComponent(value.trim())}`);
-          if (res.ok) {
-            const data = await res.json();
-            setSuggestions(data);
-            setShowSuggestions(data.length > 0);
-          }
+          const data = await apiFetch<ExerciseSuggestion[]>(`/exercises/search/?q=${encodeURIComponent(value.trim())}`);
+          setSuggestions(data);
+          setShowSuggestions(data.length > 0);
         } catch {
           setSuggestions([]);
         }
@@ -506,11 +503,11 @@ export const ExerciseStep: React.FC<Props> = ({
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 8, marginBottom: 12, alignItems: 'end' }}>
-            {newParams.includes('sets') && <SmallField label="Подходы" value={newSets} onChange={setNewSets} />}
-            {newParams.includes('reps') && <SmallField label="Повторы" value={newReps} onChange={setNewReps} />}
-            {newParams.includes('weight') && <SmallField label="Вес кг" value={newWeight} onChange={setNewWeight} step="0.5" />}
-            {newParams.includes('time') && <TimeField value={newTime} onChange={setNewTime} />}
-            {newParams.includes('distance') && <SmallField label="Дист. км" value={newDistance} onChange={setNewDistance} step="1" />}
+            {newParams.includes('sets') && <NumberStepper size="sm" label="Подходы" value={newSets} onChange={setNewSets} />}
+            {newParams.includes('reps') && <NumberStepper size="sm" label="Повторы" value={newReps} onChange={setNewReps} />}
+            {newParams.includes('weight') && <NumberStepper size="sm" label="Вес кг" value={newWeight} onChange={setNewWeight} step={0.5} />}
+            {newParams.includes('time') && <TimeStepper size="sm" value={newTime} onChange={setNewTime} />}
+            {newParams.includes('distance') && <NumberStepper size="sm" label="Дист. км" value={newDistance} onChange={setNewDistance} />}
           </div>
 
           <div style={{ display: 'flex', gap: 8 }}>

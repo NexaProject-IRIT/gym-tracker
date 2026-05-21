@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { authedFetch, clearTokens } from '../utils/api';
+import { apiFetch, ApiError } from '../lib/api';
 import { PersonalDataCard, type ProfileData, type Goal, GOAL_LABELS } from '../components/Profile/PersonalDataCard';
 import { DataActionsCard } from '../components/Profile/DataActionsCard';
 import { ConfirmModal } from '../components/Profile/ConfirmModal';
@@ -8,6 +9,15 @@ import { ConfirmModal } from '../components/Profile/ConfirmModal';
 interface Stats {
   total: number;
   this_month: number;
+}
+
+interface ProfileApiResponse {
+  username?: string;
+  display_name?: string;
+  age?: number | null;
+  weight?: number | null;
+  height?: number | null;
+  goal?: string;
 }
 
 function formatWorkouts(n: number): string {
@@ -27,8 +37,7 @@ const IconPerson = () => (
   </svg>
 );
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function readProfileFromResponse(data: any): ProfileData {
+function readProfileFromResponse(data: ProfileApiResponse): ProfileData {
   return {
     username: data.username ?? '',
     displayName: data.display_name ?? data.username ?? '',
@@ -57,17 +66,14 @@ export const ProfilePage = () => {
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const res = await authedFetch('/auth/profile/');
-        if (res.ok) {
-          const data = await res.json();
-          const p = readProfileFromResponse(data);
-          setProfile(p);
-          setDraft(p);
-          localStorage.setItem('user', JSON.stringify(data));
-        }
+        const data = await apiFetch<ProfileApiResponse>('/auth/profile/');
+        const p = readProfileFromResponse(data);
+        setProfile(p);
+        setDraft(p);
+        localStorage.setItem('user', JSON.stringify(data));
       } catch {
         try {
-          const u = JSON.parse(localStorage.getItem('user') || '{}');
+          const u = JSON.parse(localStorage.getItem('user') || '{}') as ProfileApiResponse;
           const p = readProfileFromResponse(u);
           setProfile(p);
           setDraft(p);
@@ -80,12 +86,9 @@ export const ProfilePage = () => {
   useEffect(() => {
     const loadStats = async () => {
       try {
-        const res = await authedFetch('/workouts/stats/');
-        if (res.ok) {
-          const data = await res.json();
-          setStats({ total: data.total ?? 0, this_month: data.this_month ?? 0 });
-          setStatsLoaded(true);
-        }
+        const data = await apiFetch<{ total?: number; this_month?: number }>('/workouts/stats/');
+        setStats({ total: data.total ?? 0, this_month: data.this_month ?? 0 });
+        setStatsLoaded(true);
       } catch { /* statsLoaded остаётся false */ }
     };
     loadStats();
@@ -110,22 +113,21 @@ export const ProfilePage = () => {
       if (draft.age) body.age = parseInt(draft.age);
       if (draft.goal) body.goal = draft.goal;
 
-      const res = await authedFetch('/auth/profile/', { method: 'PATCH', body: JSON.stringify(body) });
-      if (res.ok) {
-        const data = await res.json();
-        const p = readProfileFromResponse(data);
-        setProfile(p);
-        setDraft(p);
-        localStorage.setItem('user', JSON.stringify(data));
-        setIsEditing(false);
+      const data = await apiFetch<ProfileApiResponse>('/auth/profile/', { method: 'PATCH', body: JSON.stringify(body) });
+      const p = readProfileFromResponse(data);
+      setProfile(p);
+      setDraft(p);
+      localStorage.setItem('user', JSON.stringify(data));
+      setIsEditing(false);
+    } catch (e) {
+      if (e instanceof ApiError) {
+        const err = e.data as Record<string, unknown> | undefined;
+        const usernameErr = (err?.username as string[] | undefined)?.[0];
+        if (usernameErr) { setUsernameError(usernameErr); return; }
+        setSaveError(e.message);
       } else {
-        const err = await res.json().catch(() => ({}));
-        if (err.username?.[0]) { setUsernameError(err.username[0]); return; }
-        const firstKey = Object.keys(err)[0];
-        setSaveError(firstKey ? String(Array.isArray(err[firstKey]) ? err[firstKey][0] : err[firstKey]) : `Ошибка ${res.status}`);
+        setSaveError('Нет связи с сервером');
       }
-    } catch {
-      setSaveError('Нет связи с сервером');
     } finally {
       setSaving(false);
     }
@@ -156,14 +158,14 @@ export const ProfilePage = () => {
     navigate(-1);
     setClearing(true);
     try {
-      const res = await authedFetch('/workouts/clear/', { method: 'DELETE' });
-      if (res.ok) setStats({ total: 0, this_month: 0 });
+      await apiFetch('/workouts/clear/', { method: 'DELETE' });
+      setStats({ total: 0, this_month: 0 });
     } catch { /* ignore */ }
     setClearing(false);
   };
 
   const handleLogout = () => {
-    authedFetch('/auth/logout/', { method: 'POST' }).catch(() => {});
+    apiFetch('/auth/logout/', { method: 'POST' }).catch(() => {});
     clearTokens();
     navigate('/login');
   };

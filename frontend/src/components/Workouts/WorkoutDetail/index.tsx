@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import type { Workout, WorkoutExercise, Exercise } from '../../../types/workout';
 import { WORKOUT_TYPE_LABELS, WORKOUT_TYPE_COLORS } from '../../../types/workout';
 import { ExerciseModal } from '../../KnowledgeBase/ExerciseModal';
-import { authedFetch } from '../../../utils/api';
+import { apiFetch } from '../../../lib/api';
 import { ExerciseEditModal } from './ExerciseEditModal';
 import { AddExerciseModal } from './AddExerciseModal';
 
@@ -118,15 +118,10 @@ export const WorkoutDetail: React.FC<Props> = ({
     navigate('.', { state: { modal: 'info-exercise' } });
     setInfoLoading(true);
     try {
-      const res = await authedFetch(`/exercises/?exercise_id=${ex.exerciseId}`);
-      if (res.ok) {
-        const data = await res.json();
-        const detail = Array.isArray(data) ? data[0] : data;
-        if (detail) setInfoExercise(detail as Exercise);
-        else navigate(-1);
-      } else {
-        navigate(-1);
-      }
+      const data = await apiFetch<Exercise | Exercise[]>(`/exercises/?exercise_id=${ex.exerciseId}`);
+      const detail = Array.isArray(data) ? data[0] : data;
+      if (detail) setInfoExercise(detail);
+      else navigate(-1);
     } catch { navigate(-1); }
     setInfoLoading(false);
   };
@@ -190,7 +185,7 @@ export const WorkoutDetail: React.FC<Props> = ({
           {isEditMode ? (
             <button onClick={() => setIsEditMode(false)} style={{
               padding: '6px 16px', borderRadius: 20, border: 'none', cursor: 'pointer',
-              background: 'linear-gradient(135deg, #6ee7b7, #34d399)', color: '#064e3b', fontSize: 13, fontWeight: 700,
+              background: 'linear-gradient(135deg, var(--accent), var(--accent2))', color: 'var(--accent-fg)', fontSize: 13, fontWeight: 700,
             }}>
               Готово
             </button>
@@ -376,7 +371,7 @@ export const WorkoutDetail: React.FC<Props> = ({
               <div style={{
                 height: '100%',
                 width: `${(doneCount / workout.exercises.length) * 100}%`,
-                background: 'linear-gradient(90deg, #6ee7b7, #34d399)',
+                background: 'linear-gradient(90deg, var(--accent), var(--accent2))',
                 borderRadius: 2,
                 transition: 'width 0.3s ease',
               }} />

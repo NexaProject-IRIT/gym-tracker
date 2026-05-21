@@ -153,7 +153,7 @@ export const Countdown: React.FC = () => {
               onMouseEnter={e => {
                 e.currentTarget.style.background = 'rgba(110,231,183,0.1)';
                 e.currentTarget.style.borderColor = 'rgba(110,231,183,0.3)';
-                e.currentTarget.style.color = '#6ee7b7';
+                e.currentTarget.style.color = 'var(--accent)';
               }}
               onMouseLeave={e => {
                 e.currentTarget.style.background = 'var(--border)';
@@ -224,7 +224,7 @@ export const Countdown: React.FC = () => {
               }
             : canStart
             ? {
-                background: 'linear-gradient(135deg, var(--accent), #34d399)',
+                background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
                 boxShadow: '0 4px 16px rgba(110,231,183,0.3)',
               }
             : {

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import React from 'react';
-import { NumberInput } from '../components/UI/NumberInput';
+import { NumberStepper } from '../components/UI/NumberStepper';
 import { setTokens } from '../utils/api';
 
 const IconEye = () => (
@@ -262,7 +262,7 @@ export const RegisterPage = () => {
               />
               <button onClick={handleNextStep} style={{
                 width: '100%', padding: '14px', borderRadius: 12, border: 'none',
-                background: 'linear-gradient(135deg, var(--accent), #34d399)',
+                background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
                 color: 'var(--accent-fg)', fontWeight: 700, fontSize: 15, cursor: 'pointer',
                 marginTop: 8, transition: 'opacity 0.15s',
               }}>
@@ -279,19 +279,19 @@ export const RegisterPage = () => {
 
               <div style={{ marginBottom: 16 }}>
                 <label style={{ fontSize: 12, color: 'var(--dim)', fontWeight: 500, display: 'block', marginBottom: 6 }}>Возраст</label>
-                <NumberInput value={body.age} onChange={v => setBody(f => ({ ...f, age: v }))} step={1} min={10} max={120} placeholder="Например: 25" />
+                <NumberStepper value={body.age} onChange={v => setBody(f => ({ ...f, age: v }))} step={1} min={10} max={120} placeholder="Например: 25" />
                 {bodyErrors.age && <p style={{ margin: '4px 0 0', fontSize: 12, color: '#f87171' }}>{bodyErrors.age}</p>}
               </div>
 
               <div style={{ marginBottom: 16 }}>
                 <label style={{ fontSize: 12, color: 'var(--dim)', fontWeight: 500, display: 'block', marginBottom: 6 }}>Рост (см)</label>
-                <NumberInput value={body.height} onChange={v => setBody(f => ({ ...f, height: v }))} step={1} min={50} max={280} placeholder="Например: 175" />
+                <NumberStepper value={body.height} onChange={v => setBody(f => ({ ...f, height: v }))} step={1} min={50} max={280} placeholder="Например: 175" />
                 {bodyErrors.height && <p style={{ margin: '4px 0 0', fontSize: 12, color: '#f87171' }}>{bodyErrors.height}</p>}
               </div>
 
               <div style={{ marginBottom: 16 }}>
                 <label style={{ fontSize: 12, color: 'var(--dim)', fontWeight: 500, display: 'block', marginBottom: 6 }}>Начальный вес (кг)</label>
-                <NumberInput value={body.weight} onChange={v => setBody(f => ({ ...f, weight: v }))} step={0.5} min={20} max={500} placeholder="Например: 75" />
+                <NumberStepper value={body.weight} onChange={v => setBody(f => ({ ...f, weight: v }))} step={0.5} min={20} max={500} placeholder="Например: 75" />
                 {bodyErrors.weight && <p style={{ margin: '4px 0 0', fontSize: 12, color: '#f87171' }}>{bodyErrors.weight}</p>}
               </div>
 
@@ -336,7 +336,7 @@ export const RegisterPage = () => {
                 }}>← Назад</button>
                 <button onClick={handleSubmit} disabled={loading} style={{
                   flex: 2, padding: '14px', borderRadius: 12, border: 'none',
-                  background: loading ? 'var(--accent-a30)' : 'linear-gradient(135deg, var(--accent), #34d399)',
+                  background: loading ? 'var(--accent-a30)' : 'linear-gradient(135deg, var(--accent), var(--accent2))',
                   color: 'var(--accent-fg)', fontWeight: 700, fontSize: 14, cursor: loading ? 'default' : 'pointer',
                   transition: 'opacity 0.15s',
                 }}>
@@ -369,7 +369,7 @@ function getPasswordStrength(p: string): 0 | 1 | 2 | 3 {
 }
 
 const STRENGTH_LABEL = ['', 'Слабый', 'Средний', 'Сильный'] as const;
-const STRENGTH_COLOR = ['', '#f87171', '#fbbf24', '#34d399'] as const;
+const STRENGTH_COLOR = ['', '#f87171', '#fbbf24', 'var(--accent2)'] as const;
 
 const PasswordStrength = ({ password }: { password: string }) => {
   const strength = getPasswordStrength(password);
