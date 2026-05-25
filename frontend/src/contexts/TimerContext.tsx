@@ -29,6 +29,7 @@ interface TimerContextValue {
 
 const TimerCtx = createContext<TimerContextValue | null>(null);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useTimer = (): TimerContextValue => {
   const c = useContext(TimerCtx);
   if (!c) throw new Error('useTimer must be used within TimerProvider');
@@ -48,6 +49,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const swRafRef = useRef(0);
 
   const tickSw = () => {
+    // eslint-disable-next-line react-hooks/purity
     const t = swAccumRef.current + (Date.now() - swStartRef.current);
     swTimeRef.current = t;
     setSwTime(t);
@@ -63,6 +65,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       swAccumRef.current = swTimeRef.current;
     }
     return () => cancelAnimationFrame(swRafRef.current);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSwRunning]);
 
   const swStartStop = useCallback(() => setIsSwRunning(r => !r), []);
@@ -100,6 +103,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const tmRafRef = useRef(0);
 
   const tickTm = () => {
+    // eslint-disable-next-line react-hooks/purity
     const remaining = tmEndRef.current - Date.now();
     if (remaining <= 0) {
       setTmTimeLeftMs(0);
@@ -118,6 +122,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       cancelAnimationFrame(tmRafRef.current);
     }
     return () => cancelAnimationFrame(tmRafRef.current);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isTmRunning]);
 
   const startCountdown = (totalSecs: number) => {

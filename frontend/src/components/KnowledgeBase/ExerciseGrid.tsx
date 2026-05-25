@@ -88,7 +88,7 @@ export const ExerciseGrid = () => {
       try {
         const data = await apiFetch<Exercise[]>('/exercises/');
         setAllExercises(Array.isArray(data) ? data : []);
-      } catch {}
+      } catch { /* network error — leave list empty */ }
     })();
   }, []);
 

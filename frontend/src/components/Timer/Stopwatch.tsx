@@ -48,6 +48,7 @@ const LapRow = ({ label, time, isNew }: { label: string; time: string; isNew: bo
       [{ opacity: 0, transform: 'translateY(-6px)' }, { opacity: 1, transform: 'translateY(0)' }],
       { duration: 200, easing: 'ease', fill: 'both' }
     );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -78,7 +79,13 @@ export const Stopwatch: React.FC = () => {
   const { swTime, isSwRunning, laps, swStartStop, swLapReset, formatSwTime } = useTimer();
   const currentLapTime = swTime - laps.reduce((a, b) => a + b, 0);
 
-  const lapResetBtn = useHoverStyle(
+  const {
+    ref: lapResetRef,
+    onMouseEnter: lapResetEnter,
+    onMouseLeave: lapResetLeave,
+    onMouseDown: lapResetDown,
+    onMouseUp: lapResetUp,
+  } = useHoverStyle(
     { background: 'var(--border)' },
     { background: 'var(--border2)' },
   );
@@ -107,12 +114,12 @@ export const Stopwatch: React.FC = () => {
 
         {/* Lap / Reset */}
         <button
-          ref={lapResetBtn.ref}
+          ref={lapResetRef}
           onClick={swLapReset}
-          onMouseEnter={lapResetBtn.onMouseEnter}
-          onMouseLeave={lapResetBtn.onMouseLeave}
-          onMouseDown={lapResetBtn.onMouseDown}
-          onMouseUp={lapResetBtn.onMouseUp}
+          onMouseEnter={lapResetEnter}
+          onMouseLeave={lapResetLeave}
+          onMouseDown={lapResetDown}
+          onMouseUp={lapResetUp}
           style={{
             width: 56,
             height: 56,

@@ -1,6 +1,6 @@
 // src/hooks/useWorkoutsApi.ts
 import { useState, useCallback } from 'react';
-import type { Workout, WorkoutExercise, ParameterType } from '../types/workout';
+import type { Workout, WorkoutExercise, ParameterType, WorkoutType } from '../types/workout';
 import { DEFAULT_PARAMS_FOR_TYPE } from '../types/workout';
 import { apiFetch } from '../lib/api';
 
@@ -90,6 +90,9 @@ function normalizeWorkout(raw: RawWorkout): Workout {
       isCustom: e.isCustom ?? true,
       isDone: e.isDone ?? false,
       order: e.order ?? idx,
+      weight: e.weight ?? undefined,
+      time: e.time ?? undefined,
+      distance: e.distance ?? undefined,
     })),
   };
 }
@@ -212,6 +215,7 @@ export const useWorkoutsApi = () => {
       type: original.type,
       date: new Date().toLocaleDateString('en-CA'),
       color: original.color,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       exercises: exercises.map(({ id: _id, ...rest }) => rest as WorkoutExercise),
     };
     return addWorkout(copy);

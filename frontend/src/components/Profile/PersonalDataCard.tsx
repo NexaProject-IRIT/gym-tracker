@@ -9,6 +9,7 @@ export type Goal =
   | 'increase_strength'
   | 'maintain';
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const GOAL_LABELS: Record<Goal, string> = {
   lose_weight: 'Похудение',
   gain_muscle: 'Набор мышц',

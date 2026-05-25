@@ -10,6 +10,7 @@ export const WorkoutsProvider = ({ children }: { children: ReactNode }) => {
   return <WorkoutsContext.Provider value={api}>{children}</WorkoutsContext.Provider>;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useWorkoutsContext = (): WorkoutsContextType => {
   const ctx = useContext(WorkoutsContext);
   if (!ctx) throw new Error('useWorkoutsContext вызван вне WorkoutsProvider');

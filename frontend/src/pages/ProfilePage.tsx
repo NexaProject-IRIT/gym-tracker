@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { authedFetch, clearTokens } from '../utils/api';
 import { apiFetch, ApiError } from '../lib/api';
-import { PersonalDataCard, type ProfileData, type Goal, GOAL_LABELS } from '../components/Profile/PersonalDataCard';
+import { PersonalDataCard, type ProfileData, type Goal } from '../components/Profile/PersonalDataCard';
 import { DataActionsCard } from '../components/Profile/DataActionsCard';
 import { ThemeSettingsCard } from '../components/Profile/ThemeSettingsCard';
 import { ConfirmModal } from '../components/Profile/ConfirmModal';

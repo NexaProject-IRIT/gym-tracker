@@ -22,7 +22,7 @@ const playBeep = () => {
     gain.gain.exponentialRampToValueAtTime(0.01, ac.currentTime + 0.6);
     osc.start(ac.currentTime);
     osc.stop(ac.currentTime + 0.6);
-  } catch {}
+  } catch { /* AudioContext unavailable */ }
 };
 
 const ClockIcon = ({ active }: { active: boolean }) => (

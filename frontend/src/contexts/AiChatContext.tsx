@@ -23,6 +23,7 @@ export const AiChatProvider = ({ children }: { children: ReactNode }) => {
   return <AiChatContext.Provider value={chat}>{children}</AiChatContext.Provider>;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAiChatContext = (): AiChatContextType => {
   const ctx = useContext(AiChatContext);
   if (!ctx) throw new Error('useAiChatContext вызван вне AiChatProvider');
