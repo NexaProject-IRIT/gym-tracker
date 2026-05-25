@@ -488,7 +488,6 @@ export const AnalyticsPage = () => {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setError(null);
     apiFetch<AnalyticsResponse>(`/workouts/analytics/?period=${period}`)
       .then(d => {
