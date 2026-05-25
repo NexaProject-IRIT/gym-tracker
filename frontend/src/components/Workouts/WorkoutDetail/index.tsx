@@ -66,6 +66,13 @@ const IconPencil = () => (
     <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
+const IconTrophy = () => (
+  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 4h12v4a6 6 0 0 1-12 0V4z"/>
+    <path d="M6 6H3v2a3 3 0 0 0 3 3M18 6h3v2a3 3 0 0 1-3 3"/>
+    <path d="M12 14v4M8 21h8M10 18h4"/>
+  </svg>
+);
 
 function buildParamChips(ex: WorkoutExercise): string[] {
   const chips: string[] = [];
@@ -463,6 +470,20 @@ export const WorkoutDetail: React.FC<Props> = ({
                     }}>
                       {ex.name}
                     </span>
+                    {ex.isPR && !ex.isDone && (
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 3,
+                        fontSize: 10, fontWeight: 700, flexShrink: 0,
+                        color: '#fbbf24',
+                        background: 'rgba(251,191,36,0.12)',
+                        border: '1px solid rgba(251,191,36,0.28)',
+                        borderRadius: 5, padding: '1px 6px',
+                        letterSpacing: '0.03em',
+                      }}>
+                        <IconTrophy />
+                        рекорд
+                      </span>
+                    )}
                     {ex.isCustom && (
                       <span style={{
                         fontSize: 11, color: 'var(--accent)', fontWeight: 500, flexShrink: 0,

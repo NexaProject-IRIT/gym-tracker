@@ -23,6 +23,10 @@ class ChatMessage(models.Model):
     workout_suggestion = models.JSONField(blank=True, null=True)
     # Массив тренировок для массового импорта из журнала пользователя
     workout_imports = models.JSONField(blank=True, null=True)
+    # Массив переименований: [{"id": "uuid", "new_name": "..."}]
+    workout_renames = models.JSONField(blank=True, null=True)
+    # Имя прикреплённого файла (для отображения бейджа в чате). Само содержимое не храним.
+    file_name = models.CharField(max_length=255, blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

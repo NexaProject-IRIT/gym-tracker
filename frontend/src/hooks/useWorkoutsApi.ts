@@ -18,6 +18,7 @@ interface RawWorkoutExercise {
   distance?: number | null;
   isCustom?: boolean;
   isDone?: boolean;
+  isPR?: boolean;
   parameters?: ParameterType[];
   order?: number;
   notes?: string;
@@ -89,6 +90,7 @@ function normalizeWorkout(raw: RawWorkout): Workout {
       parameters: inferParameters(e),
       isCustom: e.isCustom ?? true,
       isDone: e.isDone ?? false,
+      isPR: e.isPR ?? false,
       order: e.order ?? idx,
       weight: e.weight ?? undefined,
       time: e.time ?? undefined,

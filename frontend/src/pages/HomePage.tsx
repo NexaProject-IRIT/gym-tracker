@@ -139,6 +139,11 @@ const IconCheck = ({ size = 14 }: { size?: number }) => (
     <path d="M4 12l5 5L20 6" />
   </svg>
 );
+const IconBrain = ({ size = 14 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9.5 2a2.5 2.5 0 0 1 5 0v.5M9.5 2A4.5 4.5 0 0 0 5 6.5v0A4.5 4.5 0 0 0 9.5 11M9.5 2h5M14.5 2A4.5 4.5 0 0 1 19 6.5v0A4.5 4.5 0 0 1 14.5 11M9.5 11v8a2.5 2.5 0 0 0 5 0v-8M9.5 11h5M7 11.5a2.5 2.5 0 0 0 0 5h2.5M17 11.5a2.5 2.5 0 0 1 0 5h-2.5" />
+  </svg>
+);
 
 // ─── шаблоны для приветствия (иконка времени суток) ───────────────────────
 const greetingIconFor = (hour: number) => {
@@ -147,6 +152,70 @@ const greetingIconFor = (hour: number) => {
   if (hour < 18) return <IconSun size={18} />;
   return <IconMoon size={18} />;
 };
+
+// ─── AI-подсказки (меняются каждый день) ─────────────────────────────────
+const AI_TIPS: { hint: string; prompt: string }[] = [
+  {
+    hint: 'Что реально улучшилось за последнее время?',
+    prompt: 'Проанализируй мои последние тренировки и скажи: что конкретно прогрессирует — веса, объём, частота? Приведи примеры из моей истории.',
+  },
+  {
+    hint: 'Есть ли у меня слабые места в программе?',
+    prompt: 'Посмотри на мою историю тренировок и найди слабые места: какие мышечные группы я прокачиваю редко или с малым весом? Что стоит добавить или усилить?',
+  },
+  {
+    hint: 'Достаточно ли я восстанавливаюсь между тренировками?',
+    prompt: 'Оцени мой режим восстановления по истории тренировок: как часто я тренируюсь, есть ли признаки перетренированности или наоборот — слишком редкие тренировки?',
+  },
+  {
+    hint: 'Стоит ли мне взять разгрузочную неделю?',
+    prompt: 'Проанализируй мою нагрузку за последние несколько недель. Нужна ли мне разгрузочная неделя прямо сейчас? Объясни почему.',
+  },
+  {
+    hint: 'На каком упражнении сосредоточиться прямо сейчас?',
+    prompt: 'Посмотри на мою историю и определи: над каким конкретным упражнением мне сейчас стоит работать больше всего и почему?',
+  },
+  {
+    hint: 'Что мне попробовать в следующей тренировке?',
+    prompt: 'Предложи что-то новое для моей следующей тренировки — упражнение, схему подходов или подход, которого нет в моей обычной программе. Обоснуй почему это будет полезно.',
+  },
+  {
+    hint: 'Как скорректировать нагрузку на следующей неделе?',
+    prompt: 'Исходя из моих последних тренировок, как лучше выстроить нагрузку на следующей неделе — какие дни, какие группы мышц, примерный объём?',
+  },
+  {
+    hint: 'Прогрессирую ли я на самом деле?',
+    prompt: 'Честно скажи: есть ли реальный прогресс в моих тренировках или я топчусь на месте? Посмотри на веса и объём за последние недели.',
+  },
+  {
+    hint: 'Какая мышечная группа отстаёт больше всего?',
+    prompt: 'По моей истории тренировок определи: какую мышечную группу я тренирую меньше всего или с наименьшей интенсивностью? Что именно нужно исправить?',
+  },
+  {
+    hint: 'Что я делаю хорошо в своих тренировках?',
+    prompt: 'Найди в моей истории тренировок то, что я делаю правильно и стабильно. Похвали конкретные вещи — это поможет мне понять, что стоит продолжать.',
+  },
+  {
+    hint: 'Достаточно ли часто я тренируюсь?',
+    prompt: 'Оцени частоту моих тренировок: тренируюсь ли я достаточно для прогресса или слишком редко? Что рекомендуешь изменить в расписании?',
+  },
+  {
+    hint: 'Где у меня стагнация по весам?',
+    prompt: 'Проанализируй мои рабочие веса за последние недели. Какие упражнения стоят на месте без роста? Что можно сделать, чтобы сдвинуть прогресс?',
+  },
+  {
+    hint: 'Как моя тренировочная неделя по сравнению с прошлой?',
+    prompt: 'Сравни мои тренировки этой недели с прошлой: что изменилось по объёму, интенсивности, набору упражнений? Есть ли тренд?',
+  },
+  {
+    hint: 'Что поменять в программе для лучшего результата?',
+    prompt: 'Предложи конкретные изменения в моей тренировочной программе исходя из последних недель. Что убрать, что добавить, что скорректировать по весам или объёму?',
+  },
+  {
+    hint: 'Я тренируюсь эффективно или просто хожу в зал?',
+    prompt: 'Посмотри на мою историю тренировок критически: есть ли признаки реальной прогрессии нагрузки, или я просто хожу в зал без системы? Будь честным.',
+  },
+];
 
 // ─── главный компонент ───────────────────────────────────────────────────
 export const HomePage = () => {
@@ -275,6 +344,9 @@ export const HomePage = () => {
   const maxBar = Math.max(1, ...weeklyBars.map(b => b.count));
 
   const onStartNew = () => navigate('/workouts', { state: { modal: 'form' } });
+
+  const aiTip = AI_TIPS[dayOfYear(now) % AI_TIPS.length];
+  const onAiAdvice = () => navigate('/ai', { state: { autoPrompt: aiTip.prompt } });
 
   const onRepeatLast = async () => {
     if (!lastWorkout || repeatingId) return;
@@ -481,6 +553,48 @@ export const HomePage = () => {
                 </span>
                 <span style={{ color: 'var(--ghost)', fontSize: 12 }}>
                   {new Date(lastWorkout.date).getDate()} {MONTH_SHORT[new Date(lastWorkout.date).getMonth()]}
+                </span>
+              </button>
+            )}
+
+            {totalWorkouts >= 3 && (
+              <button
+                onClick={onAiAdvice}
+                className="dash-press"
+                style={{
+                  marginTop: 10,
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  width: '100%', padding: '12px 14px 12px 16px',
+                  borderRadius: 14,
+                  background: 'rgba(110,231,183,0.04)',
+                  border: '1px solid var(--accent-a20)',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <span style={{
+                  flexShrink: 0, width: 30, height: 30, borderRadius: 9,
+                  background: 'var(--accent-a12)', border: '1px solid var(--accent-a20)',
+                  color: 'var(--accent)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <IconBrain size={14} />
+                </span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{
+                    display: 'block', fontSize: 10, fontWeight: 600,
+                    color: 'var(--accent)', letterSpacing: '0.07em',
+                    textTransform: 'uppercase', marginBottom: 2,
+                  }}>GymBot</span>
+                  <span style={{
+                    display: 'block', fontSize: 13, fontWeight: 500,
+                    color: 'var(--text3)',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    letterSpacing: '-0.005em',
+                  }}>{aiTip.hint}</span>
+                </span>
+                <span style={{ flexShrink: 0, color: 'var(--accent)', opacity: 0.5 }}>
+                  <IconArrowRight size={13} />
                 </span>
               </button>
             )}

@@ -68,3 +68,29 @@ def build_import_messages(user_text: str) -> list[dict]:
         {'role': 'system', 'content': IMPORT_SYSTEM_PROMPT},
         {'role': 'user',   'content': user_prompt},
     ]
+
+
+def split_diary_into_chunks(text: str, workouts_per_chunk: int = 12) -> list[str]:
+    """
+    Разбивает большой дневник на чанки, чтобы каждый влез в ~8K токенов ответа LLM.
+    Граница чанка — начало строки, в которой есть дата (DD.MM.YYYY или DD/MM/YY).
+    Если в тексте ≤ workouts_per_chunk дат — возвращает [text] без изменений.
+    """
+    lines = text.split('\n')
+    workout_start_lines: list[int] = []
+    for i, line in enumerate(lines):
+        if _DATE_RE.search(line):
+            workout_start_lines.append(i)
+
+    if len(workout_start_lines) <= workouts_per_chunk:
+        return [text]
+
+    chunks: list[str] = []
+    for i in range(0, len(workout_start_lines), workouts_per_chunk):
+        start_line = workout_start_lines[i]
+        next_i = i + workouts_per_chunk
+        end_line = workout_start_lines[next_i] if next_i < len(workout_start_lines) else len(lines)
+        chunk = '\n'.join(lines[start_line:end_line]).strip()
+        if chunk:
+            chunks.append(chunk)
+    return chunks

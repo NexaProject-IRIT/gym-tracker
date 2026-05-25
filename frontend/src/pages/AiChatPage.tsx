@@ -5,7 +5,7 @@ import { useWorkoutsContext } from '../contexts/WorkoutsContext';
 import { MessageBubble } from '../components/AiChat/MessageBubble';
 import { TypingIndicator } from '../components/AiChat/TypingIndicator';
 
-const MAX_MESSAGE_LENGTH = 2000;
+const MAX_INPUT_LENGTH = 10000;
 
 const SUGGESTED_PROMPTS = [
   'Составь тренировку на ноги и плечи',
@@ -27,18 +27,34 @@ export const AiChatPage = () => {
     clearHistory,
     addWorkoutFromSuggestion,
     addWorkoutsFromImport,
+    applyWorkoutRenames,
     setError,
   } = useAiChatContext();
 
   const { fetchWorkouts } = useWorkoutsContext();
 
   const [input, setInput] = useState('');
+  const [fileContent, setFileContent] = useState<string | null>(null);
   const showClearConfirm = (location.state as { modal?: string } | null)?.modal === 'confirm';
   const [addingWorkoutForId, setAddingWorkoutForId] = useState<string | null>(null);
   const [importingForId, setImportingForId] = useState<string | null>(null);
+  const [renamingForId, setRenamingForId] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const autoPromptSentRef = useRef(false);
+  const [fileName, setFileName] = useState<string | null>(null);
+
+  // Автоматически отправить промт, если он пришёл через location.state (кнопка «Совет тренера»)
+  useEffect(() => {
+    const state = location.state as { autoPrompt?: string } | null;
+    if (!state?.autoPrompt || loading || autoPromptSentRef.current) return;
+    autoPromptSentRef.current = true;
+    sendMessage(state.autoPrompt);
+    navigate(location.pathname, { replace: true, state: {} });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -51,10 +67,28 @@ export const AiChatPage = () => {
     ta.style.height = Math.min(ta.scrollHeight, 140) + 'px';
   }, [input]);
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = (ev.target?.result as string) ?? '';
+      setFileContent(text);
+      setFileName(file.name);
+      textareaRef.current?.focus();
+    };
+    reader.readAsText(file, 'utf-8');
+    e.target.value = '';
+  };
+
   const handleSend = () => {
-    if (!input.trim() || sending) return;
-    sendMessage(input);
+    const text = input.trim();
+    if ((!text && !fileContent) || sending) return;
+    const messageText = text || 'Импортируй тренировки из прикреплённого файла';
+    sendMessage(messageText, fileContent ?? undefined, fileName ?? undefined);
     setInput('');
+    setFileName(null);
+    setFileContent(null);
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -82,6 +116,13 @@ export const AiChatPage = () => {
       navigate('/workouts');
     }
     setImportingForId(null);
+  };
+
+  const handleApplyRenames = async (messageId: string) => {
+    setRenamingForId(messageId);
+    const count = await applyWorkoutRenames(messageId);
+    if (count > 0) await fetchWorkouts();
+    setRenamingForId(null);
   };
 
   const handleClear = async () => {
@@ -298,6 +339,8 @@ export const AiChatPage = () => {
               addingWorkout={addingWorkoutForId === msg.id}
               onImportWorkouts={handleImportWorkouts}
               importingWorkouts={importingForId === msg.id}
+              onApplyRenames={handleApplyRenames}
+              applyingRenames={renamingForId === msg.id}
             />
           ))}
 
@@ -331,6 +374,28 @@ export const AiChatPage = () => {
 
         {/* Поле ввода */}
         <div className="ai-input-bar">
+          {fileName && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              marginBottom: 6, padding: '5px 10px',
+              background: 'var(--accent-a10)', border: '1px solid var(--accent-a20)',
+              borderRadius: 8, fontSize: 12, color: 'var(--accent)',
+            }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+              </svg>
+              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fileName}</span>
+              <button
+                type="button"
+                onClick={() => { setFileName(null); setFileContent(null); }}
+                style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', padding: 0, display: 'flex' }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M6 6l12 12M18 6L6 18"/>
+                </svg>
+              </button>
+            </div>
+          )}
           <div style={{
             display: 'flex',
             gap: 8,
@@ -338,15 +403,41 @@ export const AiChatPage = () => {
             background: 'var(--bg)',
             border: '1px solid var(--border)',
             borderRadius: 12,
-            padding: '6px 6px 6px 12px',
+            padding: '6px 6px 6px 8px',
           }}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".txt,.md,.csv"
+              onChange={handleFileSelect}
+              style={{ display: 'none' }}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={sending}
+              title="Прикрепить текстовый файл"
+              style={{
+                width: 34, height: 34, borderRadius: 9, border: 'none',
+                background: 'transparent', color: 'var(--ghost)',
+                cursor: sending ? 'default' : 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0, transition: 'color 0.15s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'var(--muted)')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'var(--ghost)')}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
+              </svg>
+            </button>
             <textarea
               ref={textareaRef}
               className="ai-textarea"
               value={input}
-              onChange={(e) => setInput(e.target.value.slice(0, MAX_MESSAGE_LENGTH))}
+              onChange={(e) => setInput(e.target.value.slice(0, MAX_INPUT_LENGTH))}
               onKeyDown={handleKeyDown}
-              placeholder="Напиши сообщение…"
+              placeholder={fileContent ? 'Напиши команду к файлу (или просто нажми Enter)…' : 'Напиши сообщение или прикрепи .txt файл…'}
               rows={1}
               disabled={sending}
               style={{
@@ -367,12 +458,12 @@ export const AiChatPage = () => {
               type="button"
               className="ai-send-btn"
               onClick={handleSend}
-              disabled={!input.trim() || sending}
+              disabled={(!input.trim() && !fileContent) || sending}
               style={{
                 width: 34, height: 34, borderRadius: 9,
                 border: 'none',
-                cursor: (!input.trim() || sending) ? 'default' : 'pointer',
-                background: (!input.trim() || sending) ? 'var(--accent-a25)' : 'var(--accent)',
+                cursor: ((!input.trim() && !fileContent) || sending) ? 'default' : 'pointer',
+                background: ((!input.trim() && !fileContent) || sending) ? 'var(--accent-a25)' : 'var(--accent)',
                 color: 'var(--accent-fg)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 flexShrink: 0,

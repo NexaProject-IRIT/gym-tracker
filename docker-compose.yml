@@ -3,15 +3,15 @@ services:
     image: postgres:15
     container_name: gym_postgres
     environment:
-      POSTGRES_USER: gym_user
-      POSTGRES_PASSWORD: gym_password
-      POSTGRES_DB: gym_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U gym_user -d gym_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -25,20 +25,23 @@ services:
       db:
         condition: service_healthy
     environment:
-      - DATABASE_URL=postgresql://gym_user:gym_password@db:5432/gym_db
-      - DB_NAME=gym_db
-      - DB_USER=gym_user
-      - DB_PASSWORD=gym_password
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - DB_NAME=${POSTGRES_DB}
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
       - DB_HOST=db
       - DB_PORT=5432
-      - DEBUG=True
-      - ALLOWED_HOSTS=localhost,127.0.0.1,backend
-      - CORS_ALLOWED_ORIGINS=http://localhost:5173
-      - LLM_PROVIDER=gigachat
-      - GIGACHAT_AUTH_KEY=MDE5Y2I5ZGQtOWY2OS03NDdhLWIxMjAtMTVmOTRhMTE1MGYwOmQxMGU1NzNlLTlkYjMtNDBiYi1iMDIyLTQ5MjQyOWE2MDJiZQ==
-      - GIGACHAT_SCOPE=GIGACHAT_API_PERS
-      - GIGACHAT_MODEL=GigaChat
-      - GIGACHAT_VERIFY_SSL=false
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
+      - LLM_PROVIDER=${LLM_PROVIDER}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - DEEPSEEK_MODEL=${DEEPSEEK_MODEL}
+      - GIGACHAT_AUTH_KEY=${GIGACHAT_AUTH_KEY}
+      - GIGACHAT_SCOPE=${GIGACHAT_SCOPE}
+      - GIGACHAT_MODEL=${GIGACHAT_MODEL}
+      - GIGACHAT_VERIFY_SSL=${GIGACHAT_VERIFY_SSL}
     volumes:
       - ./backend:/app
     command: >
@@ -56,7 +59,8 @@ services:
       - "5173:5173"
     volumes:
       - ./frontend:/app
-      - /app/node_modules
+      - frontend_node_modules:/app/node_modules
 
 volumes:
   postgres_data:
+  frontend_node_modules:

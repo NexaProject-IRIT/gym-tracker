@@ -33,15 +33,23 @@ export interface WorkoutImportEntry {
   }>;
 }
 
+export interface WorkoutRenameEntry {
+  id: string;
+  new_name: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: ChatRole;
   content: string;
   workout_suggestion: WorkoutSuggestion | null;
   workout_imports: WorkoutImportEntry[] | null;
+  workout_renames: WorkoutRenameEntry[] | null;
+  file_name?: string;
   created_at: string;
   workoutAdded?: boolean;
   workoutsImported?: boolean;
+  workoutsRenamed?: boolean;
 }
 
 function inferParameters(ex: { sets?: number; reps?: number; weight?: number; time?: number; distance?: number }): string[] {
@@ -74,7 +82,7 @@ export const useAiChat = () => {
     }
   }, []);
 
-  const sendMessage = useCallback(async (text: string) => {
+  const sendMessage = useCallback(async (text: string, fileContent?: string, fileName?: string) => {
     const trimmed = text.trim();
     if (!trimmed || sendingRef.current) return;
 
@@ -89,14 +97,19 @@ export const useAiChat = () => {
       content: trimmed,
       workout_suggestion: null,
       workout_imports: null,
+      workout_renames: null,
+      file_name: fileName,
       created_at: new Date().toISOString(),
     };
     setMessages(prev => [...prev, optimisticUserMsg]);
 
     try {
+      const body: Record<string, string> = { message: trimmed };
+      if (fileContent) body.file_content = fileContent;
+      if (fileName) body.file_name = fileName;
       const data = await apiFetch<{ user_message: ChatMessage; assistant_message: ChatMessage; error?: string }>(
         `${BASE}/ai/chat/`,
-        { method: 'POST', body: JSON.stringify({ message: trimmed }) }
+        { method: 'POST', body: JSON.stringify(body) }
       );
       setMessages(prev => {
         const withoutTemp = prev.filter(m => m.id !== tempId);
@@ -173,6 +186,23 @@ export const useAiChat = () => {
     }
   }, [messages]);
 
+  const applyWorkoutRenames = useCallback(async (messageId: string): Promise<number> => {
+    const msg = messages.find(m => m.id === messageId);
+    if (!msg?.workout_renames?.length) return 0;
+
+    try {
+      const data = await apiFetch<{ count?: number }>(`${BASE}/workouts/bulk-rename/`, {
+        method: 'POST',
+        body: JSON.stringify({ renames: msg.workout_renames }),
+      });
+      setMessages(prev => prev.map(m => m.id === messageId ? { ...m, workoutsRenamed: true } : m));
+      return data.count ?? 0;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Не удалось переименовать тренировки');
+      return 0;
+    }
+  }, [messages]);
+
   useEffect(() => {
     void loadHistory();
   }, [loadHistory]);
@@ -186,6 +216,7 @@ export const useAiChat = () => {
     clearHistory,
     addWorkoutFromSuggestion,
     addWorkoutsFromImport,
+    applyWorkoutRenames,
     setError,
   };
 };

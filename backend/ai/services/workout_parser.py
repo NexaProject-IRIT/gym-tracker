@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 WORKOUT_BLOCK_RE = re.compile(r'<workout>(.*?)</workout>', re.DOTALL | re.IGNORECASE)
 IMPORT_BLOCK_RE  = re.compile(r'<import>(.*?)</import>',   re.DOTALL | re.IGNORECASE)
+RENAME_BLOCK_RE  = re.compile(r'<rename>(.*?)</rename>',   re.DOTALL | re.IGNORECASE)
 
 ALLOWED_WORKOUT_TYPES = {'strength', 'cardio', 'flexibility', 'functional', 'custom'}
 ALLOWED_EXERCISE_KEYS = {'name', 'sets', 'reps', 'weight', 'time', 'distance'}
@@ -192,6 +193,49 @@ def extract_workout_imports(raw_response: str) -> tuple[str, Optional[list]]:
 
     if not validated:
         logger.warning('Ни одна тренировка из <import>-блока не прошла валидацию')
+        return visible_text, None
+
+    return visible_text, validated
+
+
+def extract_workout_renames(raw_response: str) -> tuple[str, Optional[list]]:
+    """
+    Ищет <rename>[...]</rename> в ответе LLM.
+    Возвращает (видимый текст без блока, список переименований или None).
+    Формат каждого элемента: {"id": "uuid-строка", "new_name": "Новое название"}.
+    """
+    if not raw_response:
+        return '', None
+
+    match = RENAME_BLOCK_RE.search(raw_response)
+    if not match:
+        return raw_response.strip(), None
+
+    json_text = match.group(1).strip()
+    try:
+        parsed = json.loads(json_text)
+    except json.JSONDecodeError as e:
+        logger.warning('Не смог распарсить <rename>-JSON: %s; ошибка: %s', json_text[:200], e)
+        return raw_response.strip(), None
+
+    if not isinstance(parsed, list):
+        logger.warning('<rename>-блок не является массивом, игнорирую')
+        return raw_response.strip(), None
+
+    validated = []
+    for item in parsed:
+        if not isinstance(item, dict):
+            continue
+        workout_id = str(item.get('id', '')).strip()
+        new_name = str(item.get('new_name', '')).strip()[:255]
+        if workout_id and new_name:
+            validated.append({'id': workout_id, 'new_name': new_name})
+
+    visible_text = RENAME_BLOCK_RE.sub('', raw_response).strip()
+    visible_text = re.sub(r'\n{3,}', '\n\n', visible_text)
+
+    if not validated:
+        logger.warning('Ни одно переименование из <rename>-блока не прошло валидацию')
         return visible_text, None
 
     return visible_text, validated

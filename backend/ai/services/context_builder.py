@@ -49,7 +49,7 @@ def _build_user_block(user: User) -> str:
 
 
 def _build_workout_history_block(user: User) -> str:
-    workouts = (
+    workouts = list(
         Workout.objects
         .filter(user=user)
         .order_by('-date')[:WORKOUTS_IN_CONTEXT]
@@ -59,8 +59,13 @@ def _build_workout_history_block(user: User) -> str:
     if not workouts:
         return 'История тренировок: пользователь ещё не сохранил ни одной тренировки.'
 
+    # Компактная таблица ID для операции <rename>
+    id_lines = ['ID тренировок (используй только в блоке <rename>):']
     workouts_data = []
     for w in workouts:
+        date_str = w.date.isoformat() if w.date else ''
+        id_lines.append(f'- {w.uid} → «{w.name}» · {date_str}')
+
         exercises_data = []
         for ex in w.exercises.all():
             exercises_data.append({
@@ -77,13 +82,14 @@ def _build_workout_history_block(user: User) -> str:
         workouts_data.append({
             'name': w.name,
             'type': w.type,
-            'date': w.date.isoformat() if w.date else '',
+            'date': date_str,
             'exercises': exercises_data,
             'notes': w.notes or '',
         })
 
+    id_block = '\n'.join(id_lines)
     export_text = generate_export_text(workouts_data)
-    return f'Последние тренировки пользователя (сверху новые):\n\n{export_text}'
+    return f'Последние тренировки пользователя (сверху новые):\n\n{id_block}\n\n{export_text}'
 
 
 def _build_exercises_catalog_block() -> str:
@@ -133,6 +139,19 @@ SYSTEM_PROMPT_TEMPLATE = """Ты — персональный AI-тренер Gy
 Допустимые значения type: strength, cardio, flexibility, functional, custom.
 
 ═══════════════════════════════════════════════════════
+РЕЖИМ ПЕРЕИМЕНОВАНИЯ — когда пользователь просит переименовать уже существующие тренировки:
+═══════════════════════════════════════════════════════
+Используй блок <rename> со списком ID и новых названий:
+
+<rename>[{{"id":"uuid-из-списка-выше","new_name":"Грудь и трицепс"}},{{"id":"другой-uuid","new_name":"Ноги — квадрицепс"}}]</rename>
+
+Правила:
+- Используй ТОЛЬКО ID из раздела «ID тренировок» выше. Не придумывай ID.
+- Придумывай чёткие, информативные названия на основе упражнений тренировки: «Грудь и трицепс», «Ноги», «Спина и бицепс», «Кардио ВИИТ».
+- Пиши краткий текст перед блоком: что именно переименуешь.
+- НЕ используй <import> или <workout> при переименовании — только <rename>.
+
+═══════════════════════════════════════════════════════
 РЕЖИМ ИМПОРТА — когда пользователь присылает дневник тренировок:
 ═══════════════════════════════════════════════════════
 Если сообщение содержит НЕСКОЛЬКО тренировок с упражнениями (список из дневника/блокнота) — это запрос на импорт.
@@ -145,6 +164,10 @@ SYSTEM_PROMPT_TEMPLATE = """Ты — персональный AI-тренер Gy
   ]}},
   {{"name":"Следующая тренировка","type":"strength","date":"YYYY-MM-DD","exercises":[...]}}
 ]</import>
+
+ЗАПРЕЩЕНО при импорте:
+- Если пользователь просит переименовать, отредактировать или изменить уже добавленные тренировки — НЕ используй <import>. Объясни, что переименование делается вручную в приложении: открой тренировку → нажми ··· → Редактировать → тапни на название.
+- Не создавай дубликаты тренировок, которые уже были импортированы ранее.
 
 Правила импорта:
 - ДАТА: извлекай из текста (форматы DD.MM.YYYY, DD.MM.YY, DD/MM/YYYY и т.п.) → конвертируй в YYYY-MM-DD. Если дата не указана — используй {today}.

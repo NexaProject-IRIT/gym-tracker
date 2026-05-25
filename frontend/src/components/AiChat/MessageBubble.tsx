@@ -4,6 +4,7 @@ import type { Components } from 'react-markdown';
 import type { ChatMessage } from '../../hooks/useAiChat';
 import { WorkoutSuggestionCard } from './WorkoutSuggestionCard';
 import { WorkoutImportCard } from './WorkoutImportCard';
+import { WorkoutRenameCard } from './WorkoutRenameCard';
 
 interface Props {
   message: ChatMessage;
@@ -11,6 +12,8 @@ interface Props {
   addingWorkout: boolean;
   onImportWorkouts: (messageId: string) => void;
   importingWorkouts: boolean;
+  onApplyRenames: (messageId: string) => void;
+  applyingRenames: boolean;
 }
 
 const MD_COMPONENTS: Components = {
@@ -182,12 +185,32 @@ const BotAvatar = () => (
   </div>
 );
 
-export const MessageBubble = ({ message, onAddWorkout, addingWorkout, onImportWorkouts, importingWorkouts }: Props) => {
+export const MessageBubble = ({ message, onAddWorkout, addingWorkout, onImportWorkouts, importingWorkouts, onApplyRenames, applyingRenames }: Props) => {
   const isUser = message.role === 'user';
 
   if (isUser) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginBottom: 12, gap: 4 }}>
+        {message.file_name && (
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            padding: '5px 10px',
+            background: 'var(--accent-a12)',
+            border: '1px solid var(--accent-a20)',
+            borderRadius: 10,
+            color: 'var(--accent)',
+            fontSize: 12, fontWeight: 500,
+            maxWidth: '80%',
+          }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {message.file_name}
+            </span>
+          </div>
+        )}
         <div style={{
           maxWidth: '80%',
           background: 'var(--accent)',
@@ -240,6 +263,15 @@ export const MessageBubble = ({ message, onAddWorkout, addingWorkout, onImportWo
             onImport={() => onImportWorkouts(message.id)}
             imported={!!message.workoutsImported}
             loading={importingWorkouts}
+          />
+        )}
+
+        {message.workout_renames && message.workout_renames.length > 0 && (
+          <WorkoutRenameCard
+            renames={message.workout_renames}
+            onApply={() => onApplyRenames(message.id)}
+            applied={!!message.workoutsRenamed}
+            loading={applyingRenames}
           />
         )}
       </div>

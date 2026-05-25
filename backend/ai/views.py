@@ -11,8 +11,8 @@ from .models import ChatMessage
 from .serializers import ChatMessageSerializer, ChatRequestSerializer
 from .services.context_builder import build_messages_for_llm
 from .services.gigachat import get_llm_client, LLMError
-from .services.workout_parser import extract_workout_suggestion, extract_workout_imports
-from .services.import_detector import looks_like_workout_import, build_import_messages
+from .services.workout_parser import extract_workout_suggestion, extract_workout_imports, extract_workout_renames
+from .services.import_detector import looks_like_workout_import, build_import_messages, split_diary_into_chunks
 
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ RATE_LIMIT_WINDOW_SECONDS = 60
 # Убираем <user-data>...</user-data> и другие служебные теги.
 # Делаем это ДО extract_workout_suggestion, чтобы не ломать парсинг <workout>.
 _CLEANUP_TAGS_RE = re.compile(
-    r'<(?!/?workout\b)(?!/?import\b)[a-zA-Z][a-zA-Z0-9_-]*(?:\s[^>]*)?>.*?</[a-zA-Z][a-zA-Z0-9_-]*>',
+    r'<(?!/?workout\b)(?!/?import\b)(?!/?rename\b)[a-zA-Z][a-zA-Z0-9_-]*(?:\s[^>]*)?>.*?</[a-zA-Z][a-zA-Z0-9_-]*>',
     re.DOTALL | re.IGNORECASE,
 )
 
@@ -60,10 +60,33 @@ class ChatView(APIView):
     """
     permission_classes = [permissions.IsAuthenticated]
 
+    def _llm_error_response(self, user, user_msg, error_text: str):
+        """Возвращает 200-ответ с fallback-сообщением, чтобы фронт не падал."""
+        logger.exception('LLM error for user %s: %s', user.username, error_text)
+        fallback_text = (
+            'Сейчас не могу ответить — сервис ИИ-тренера временно недоступен. '
+            'Попробуй ещё раз через минуту.'
+        )
+        assistant_msg = ChatMessage.objects.create(
+            user=user,
+            role='assistant',
+            content=fallback_text,
+        )
+        return Response(
+            {
+                'user_message': ChatMessageSerializer(user_msg).data,
+                'assistant_message': ChatMessageSerializer(assistant_msg).data,
+                'error': error_text,
+            },
+            status=status.HTTP_200_OK,
+        )
+
     def post(self, request):
         serializer = ChatRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user_message_text = serializer.validated_data['message'].strip()
+        file_content = serializer.validated_data.get('file_content', '').strip()
+        file_name = serializer.validated_data.get('file_name', '').strip()
 
         if not user_message_text:
             return Response(
@@ -77,61 +100,113 @@ class ChatView(APIView):
                 status=status.HTTP_429_TOO_MANY_REQUESTS,
             )
 
+        # Текст для LLM: включаем содержимое файла (если есть) как контекст.
+        # В историю чата сохраняем только набранный текст — чтобы история оставалась чистой.
+        if file_content:
+            llm_user_text = f"{user_message_text}\n\n---\nСодержимое прикреплённого файла:\n{file_content}"
+        else:
+            llm_user_text = user_message_text
+
         # Сохраняем сообщение пользователя ДО запроса в LLM —
         # если модель упадёт, сообщение останется в истории.
         user_msg = ChatMessage.objects.create(
             user=request.user,
             role='user',
             content=user_message_text,
+            file_name=file_name,
         )
 
         # Детектируем: это журнал тренировок для импорта или обычный вопрос?
-        is_import = looks_like_workout_import(user_message_text)
+        is_import = looks_like_workout_import(llm_user_text)
+        client = get_llm_client()
 
+        # Импорт: режем большие дневники на чанки и парсим каждый отдельно,
+        # потому что у DeepSeek max_tokens = 8K, а 30+ тренировок в JSON туда не лезут.
         if is_import:
-            llm_messages = build_import_messages(user_message_text)
+            chunks = split_diary_into_chunks(llm_user_text)
+            workout_suggestion = None
+            workout_renames = None
+            workout_imports: list | None = None
+            visible_text = ''
+
+            if len(chunks) > 1:
+                logger.info('Import: разбиваю дневник на %s чанков', len(chunks))
+                aggregated: list = []
+                failed_chunks = 0
+                for idx, chunk in enumerate(chunks, 1):
+                    chunk_messages = build_import_messages(chunk)
+                    try:
+                        chunk_reply = client.chat(chunk_messages, max_tokens=8000)
+                    except LLMError:
+                        logger.exception('LLM error на чанке %s/%s', idx, len(chunks))
+                        failed_chunks += 1
+                        continue
+                    chunk_reply = _clean_llm_response(chunk_reply)
+                    _, chunk_imports = extract_workout_imports(chunk_reply)
+                    if chunk_imports:
+                        aggregated.extend(chunk_imports)
+
+                workout_imports = aggregated or None
+                if workout_imports:
+                    n = len(workout_imports)
+                    note = f' (часть из {failed_chunks} блоков не удалось обработать)' if failed_chunks else ''
+                    visible_text = (
+                        f'Распознал {n} тренировок из файла{note}. '
+                        f'Нажми кнопку ниже, чтобы добавить их в журнал.'
+                    )
+                else:
+                    visible_text = (
+                        'Не смог распарсить ни одной тренировки. '
+                        'Проверь, что в файле есть даты в формате DD.MM.YYYY.'
+                    )
+            else:
+                # Один чанк — обычный путь, но с увеличенным лимитом токенов.
+                llm_messages = build_import_messages(llm_user_text)
+                try:
+                    raw_reply = client.chat(llm_messages, max_tokens=8000)
+                except LLMError as e:
+                    return self._llm_error_response(request.user, user_msg, str(e))
+                except Exception as e:
+                    logger.exception('Unexpected LLM error')
+                    return Response(
+                        {'error': f'Внутренняя ошибка: {e}'},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    )
+
+                raw_reply = _clean_llm_response(raw_reply)
+                visible_text, workout_imports = extract_workout_imports(raw_reply)
+
+                # Если модель вернула <import>... но без закрывающего тега — значит, упёрлась в max_tokens.
+                if not workout_imports and '<import>' in raw_reply.lower() and '</import>' not in raw_reply.lower():
+                    visible_text = (
+                        'Не успел сформировать ответ — журнал слишком большой даже для чанка. '
+                        'Попробуй прислать его в виде .txt файла (тогда я разобью на части автоматически).'
+                    )
         else:
             history_qs = ChatMessage.objects.filter(user=request.user).exclude(pk=user_msg.pk)
-            llm_messages = build_messages_for_llm(request.user, history_qs, user_message_text)
+            llm_messages = build_messages_for_llm(request.user, history_qs, llm_user_text)
+            try:
+                raw_reply = client.chat(llm_messages, max_tokens=2048)
+            except LLMError as e:
+                return self._llm_error_response(request.user, user_msg, str(e))
+            except Exception as e:
+                logger.exception('Unexpected LLM error')
+                return Response(
+                    {'error': f'Внутренняя ошибка: {e}'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
 
-        client = get_llm_client()
-        try:
-            raw_reply = client.chat(llm_messages, max_tokens=3000 if is_import else 1024)
-        except LLMError as e:
-            logger.exception('LLM error for user %s', request.user.username)
-            fallback_text = (
-                'Сейчас не могу ответить — сервис ИИ-тренера временно недоступен. '
-                'Попробуй ещё раз через минуту.'
-            )
-            assistant_msg = ChatMessage.objects.create(
-                user=request.user,
-                role='assistant',
-                content=fallback_text,
-            )
-            return Response(
-                {
-                    'user_message': ChatMessageSerializer(user_msg).data,
-                    'assistant_message': ChatMessageSerializer(assistant_msg).data,
-                    'error': str(e),
-                },
-                status=status.HTTP_200_OK,
-            )
-        except Exception as e:
-            logger.exception('Unexpected LLM error')
-            return Response(
-                {'error': f'Внутренняя ошибка: {e}'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
-        # Очищаем XML-артефакты из ответа модели, оставляем <workout> и <import>.
-        raw_reply = _clean_llm_response(raw_reply)
-
-        # Сначала вырезаем <workout>, потом <import> из оставшегося текста.
-        visible_text, workout_suggestion = extract_workout_suggestion(raw_reply)
-        visible_text, workout_imports = extract_workout_imports(visible_text)
+            raw_reply = _clean_llm_response(raw_reply)
+            visible_text, workout_suggestion = extract_workout_suggestion(raw_reply)
+            visible_text, workout_imports = extract_workout_imports(visible_text)
+            visible_text, workout_renames = extract_workout_renames(visible_text)
 
         if not visible_text:
-            if workout_imports:
+            if workout_renames:
+                n = len(workout_renames)
+                label = f'{n} тренировк' + ('у' if n == 1 else 'и' if n in (2, 3, 4) else 'ок')
+                visible_text = f'Готово — придумал названия для {label}. Нажми кнопку ниже, чтобы применить.'
+            elif workout_imports:
                 n = len(workout_imports)
                 if n == 1:
                     label = '1 тренировку'
@@ -142,14 +217,11 @@ class ChatView(APIView):
                 visible_text = f'Распознал {label}. Нажми кнопку ниже, чтобы добавить их в журнал.'
             elif workout_suggestion:
                 visible_text = 'Вот тренировка, которую я составил. Можешь добавить её одним кликом.'
-
-        # Если импорт-режим сработал, но модель не вернула <import>-блок —
-        # дать понятную ошибку вместо пустого сообщения.
-        if is_import and not workout_imports and not visible_text:
-            visible_text = (
-                'Не смог распарсить журнал тренировок — попробуй отправить данные '
-                'меньшими блоками (по 3–4 тренировки за раз).'
-            )
+            elif is_import:
+                visible_text = (
+                    'Не смог распарсить журнал тренировок — проверь, что в файле есть '
+                    'даты в формате DD.MM.YYYY и упражнения в формате «NхM» или «NхMхWкг».'
+                )
 
         assistant_msg = ChatMessage.objects.create(
             user=request.user,
@@ -157,6 +229,7 @@ class ChatView(APIView):
             content=visible_text,
             workout_suggestion=workout_suggestion,
             workout_imports=workout_imports,
+            workout_renames=workout_renames,
         )
 
         return Response(

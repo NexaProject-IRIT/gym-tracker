@@ -178,6 +178,48 @@ class GigaChatClient:
             raise LLMError(f'Неожиданный формат ответа GigaChat: {payload}')
 
 
+class DeepSeekClient:
+    """
+    Клиент DeepSeek API (OpenAI-совместимый формат).
+    Никакого OAuth — просто статический API-ключ в заголовке.
+    Документация: https://platform.deepseek.com/api-docs
+    """
+
+    API_URL = 'https://api.deepseek.com/v1/chat/completions'
+
+    def __init__(self, api_key: str, model: str = 'deepseek-chat', timeout: int = 60):
+        if not api_key:
+            raise ValueError('DEEPSEEK_API_KEY is empty')
+        self.api_key = api_key
+        self.model = model
+        self.timeout = timeout
+
+    def chat(self, messages: list[dict], temperature: float = 0.6, max_tokens: int = 1024) -> str:
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {self.api_key}',
+        }
+        body = {
+            'model': self.model,
+            'messages': messages,
+            'temperature': temperature,
+            'max_tokens': max_tokens,
+        }
+        try:
+            resp = requests.post(self.API_URL, headers=headers, json=body, timeout=self.timeout)
+        except requests.RequestException as e:
+            raise LLMError(f'Не удалось связаться с DeepSeek: {e}')
+
+        if resp.status_code != 200:
+            raise LLMError(f'DeepSeek вернул {resp.status_code}: {resp.text[:300]}')
+
+        payload = resp.json()
+        try:
+            return payload['choices'][0]['message']['content']
+        except (KeyError, IndexError, TypeError):
+            raise LLMError(f'Неожиданный формат ответа DeepSeek: {payload}')
+
+
 class MockLLMClient:
     """
     Заглушка для разработки без реального ключа GigaChat.
@@ -239,25 +281,39 @@ def get_llm_client():
             return _client_instance
 
         provider = os.environ.get('LLM_PROVIDER', 'gigachat').lower()
-        auth_key = os.environ.get('GIGACHAT_AUTH_KEY', '').strip()
 
-        if provider == 'mock' or not auth_key:
-            if provider != 'mock':
+        if provider == 'deepseek':
+            api_key = os.environ.get('DEEPSEEK_API_KEY', '').strip()
+            if not api_key:
+                logger.warning('DEEPSEEK_API_KEY не задан — включаю MockLLMClient.')
+                _client_instance = MockLLMClient()
+            else:
+                model = os.environ.get('DEEPSEEK_MODEL', 'deepseek-chat')
+                _client_instance = DeepSeekClient(api_key=api_key, model=model)
+                logger.info('LLM: используется DeepSeek (%s)', model)
+
+        elif provider == 'mock':
+            _client_instance = MockLLMClient()
+
+        else:  # gigachat (default)
+            auth_key = os.environ.get('GIGACHAT_AUTH_KEY', '').strip()
+            if not auth_key:
                 logger.warning(
                     'GIGACHAT_AUTH_KEY не задан — включаю MockLLMClient. '
                     'Настрой ключ в docker-compose чтобы получить реальные ответы.'
                 )
-            _client_instance = MockLLMClient()
-        else:
-            scope = os.environ.get('GIGACHAT_SCOPE', 'GIGACHAT_API_PERS')
-            model = os.environ.get('GIGACHAT_MODEL', 'GigaChat')
-            verify_ssl_env = os.environ.get('GIGACHAT_VERIFY_SSL', 'false').lower()
-            verify_ssl = verify_ssl_env in ('true', '1', 'yes')
-            _client_instance = GigaChatClient(
-                auth_key=auth_key,
-                scope=scope,
-                model=model,
-                verify_ssl=verify_ssl,
-            )
+                _client_instance = MockLLMClient()
+            else:
+                scope = os.environ.get('GIGACHAT_SCOPE', 'GIGACHAT_API_PERS')
+                model = os.environ.get('GIGACHAT_MODEL', 'GigaChat')
+                verify_ssl_env = os.environ.get('GIGACHAT_VERIFY_SSL', 'false').lower()
+                verify_ssl = verify_ssl_env in ('true', '1', 'yes')
+                _client_instance = GigaChatClient(
+                    auth_key=auth_key,
+                    scope=scope,
+                    model=model,
+                    verify_ssl=verify_ssl,
+                )
+                logger.info('LLM: используется GigaChat (%s)', model)
 
         return _client_instance

@@ -5,7 +5,7 @@ from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.db.models import Q
+from django.db.models import Q, Max
 from django.http import HttpResponse
 from .models import Workout, WorkoutExercise
 from .serializers import (
@@ -45,6 +45,58 @@ def serialize_exercise(we: WorkoutExercise) -> dict:
         "parameters": we.parameters if we.parameters else [],
         "order": we.order,
     }
+
+
+def _calculate_prs(user, workout):
+    """
+    Возвращает set UID упражнений из тренировки, где вес — исторический рекорд пользователя.
+    Два запроса: один для kb-упражнений (по exercise_id), один для кастомных (по custom_name).
+    """
+    exercises_with_weight = [
+        we for we in workout.exercises.all()
+        if we.weight and float(we.weight) > 0
+    ]
+    if not exercises_with_weight:
+        return set()
+
+    kb_ids = [e.exercise_id for e in exercises_with_weight if e.exercise_id and not e.is_custom]
+    custom_names = [e.custom_name for e in exercises_with_weight if e.is_custom and e.custom_name]
+
+    hist_by_exercise_id = {}
+    if kb_ids:
+        for row in (
+            WorkoutExercise.objects
+            .filter(workout__user=user, exercise_id__in=kb_ids, weight__isnull=False)
+            .exclude(workout=workout)
+            .values('exercise_id')
+            .annotate(max_weight=Max('weight'))
+        ):
+            hist_by_exercise_id[row['exercise_id']] = float(row['max_weight'])
+
+    hist_by_custom_name = {}
+    if custom_names:
+        for row in (
+            WorkoutExercise.objects
+            .filter(workout__user=user, custom_name__in=custom_names, weight__isnull=False)
+            .exclude(workout=workout)
+            .values('custom_name')
+            .annotate(max_weight=Max('weight'))
+        ):
+            hist_by_custom_name[row['custom_name']] = float(row['max_weight'])
+
+    pr_uids = set()
+    for we in exercises_with_weight:
+        current = float(we.weight)
+        if we.exercise_id and not we.is_custom:
+            hist_max = hist_by_exercise_id.get(we.exercise_id)
+        elif we.custom_name:
+            hist_max = hist_by_custom_name.get(we.custom_name)
+        else:
+            continue
+        if hist_max is None or current >= hist_max:
+            pr_uids.add(we.uid)
+
+    return pr_uids
 
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
@@ -99,13 +151,17 @@ class WorkoutViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         workout = self.get_object()
+        pr_uids = _calculate_prs(request.user, workout)
         return Response({
             "id": str(workout.uid),
             "name": workout.name,
             "type": workout.type,
             "date": workout.date,
             "notes": workout.notes or "",
-            "exercises": [serialize_exercise(we) for we in workout.exercises.all()],
+            "exercises": [
+                {**serialize_exercise(we), "isPR": we.uid in pr_uids}
+                for we in workout.exercises.all()
+            ],
             "color": workout.color or WORKOUT_COLORS.get(workout.type, WORKOUT_COLORS['custom'])
         })
 
@@ -434,6 +490,37 @@ class BulkImportView(APIView):
             created.append({'id': str(workout.uid), 'name': workout.name, 'date': str(workout.date)})
 
         return Response({'created': created, 'count': len(created)}, status=status.HTTP_201_CREATED)
+
+
+class BulkRenameView(APIView):
+    """
+    POST /workouts/bulk-rename/
+    Переименовывает несколько тренировок пользователя.
+    Вход: { "renames": [{"id": "uuid", "new_name": "..."}] }
+    Выход: { "updated": [{"id": "uuid", "name": "..."}], "count": N }
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        renames = request.data.get('renames', [])
+        if not isinstance(renames, list):
+            return Response({'error': 'renames must be a list'}, status=status.HTTP_400_BAD_REQUEST)
+
+        updated = []
+        for item in renames:
+            workout_id = str(item.get('id', '')).strip()
+            new_name = str(item.get('new_name', '')).strip()[:255]
+            if not workout_id or not new_name:
+                continue
+            try:
+                workout = Workout.objects.get(uid=workout_id, user=request.user)
+            except Workout.DoesNotExist:
+                continue
+            workout.name = new_name
+            workout.save(update_fields=['name'])
+            updated.append({'id': str(workout.uid), 'name': workout.name})
+
+        return Response({'updated': updated, 'count': len(updated)}, status=status.HTTP_200_OK)
 
 
 class ExportWorkoutsView(APIView):
