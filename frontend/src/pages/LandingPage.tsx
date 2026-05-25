@@ -426,7 +426,7 @@ const HeroSection = ({
 
       <div style={{
         display: 'flex', alignItems: 'center', gap: 8,
-        marginTop: 22, fontSize: 12.5, color: 'var(--ghost)',
+        marginTop: 22, fontSize: 12.5, color: 'var(--muted)',
         fontWeight: 500,
       }}>
         <IconCheck s={13} />
@@ -1199,7 +1199,7 @@ const FinalCta = ({ onClick }: { onClick: () => void }) => (
         </button>
 
         <div style={{
-          marginTop: 22, fontSize: 12.5, color: 'var(--ghost)',
+          marginTop: 22, fontSize: 12.5, color: 'var(--muted)',
           display: 'flex', justifyContent: 'center', flexWrap: 'wrap',
           gap: 14,
         }}>
