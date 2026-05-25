@@ -156,6 +156,12 @@ const IconAsterisk = ({ size = 14 }: { size?: number }) => (
     <path d="M12 4v16M5 8l14 8M5 16l14-8" />
   </svg>
 );
+const IconInfo = ({ size = 13 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 8h.01M12 12v4" />
+  </svg>
+);
 const IconChevron = ({ size = 14 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M6 9l6 6 6-6" />
@@ -417,6 +423,46 @@ const MiniBars = ({ data, color, formatValue }: MiniBarProps) => {
           </div>
         );
       })}
+    </div>
+  );
+};
+
+// ─── Подсказка (ⓘ) ───────────────────────────────────────────────────────
+
+const HintIcon = ({ text }: { text: string }) => {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+      <button
+        onMouseEnter={() => setVisible(true)}
+        onMouseLeave={() => setVisible(false)}
+        onClick={() => setVisible(v => !v)}
+        style={{
+          background: 'none', border: 'none', cursor: 'pointer',
+          color: 'var(--ghost)', display: 'flex', alignItems: 'center',
+          padding: '0 2px', lineHeight: 1,
+        }}
+      >
+        <IconInfo size={13} />
+      </button>
+      {visible && (
+        <div style={{
+          position: 'absolute', bottom: 'calc(100% + 6px)', left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'var(--surface)',
+          border: '1px solid var(--border2)',
+          borderRadius: 8,
+          padding: '6px 10px',
+          fontSize: 12,
+          color: 'var(--muted)',
+          whiteSpace: 'nowrap',
+          zIndex: 100,
+          boxShadow: '0 4px 16px rgba(0,0,0,0.22)',
+          pointerEvents: 'none',
+        }}>
+          {text}
+        </div>
+      )}
     </div>
   );
 };
@@ -954,7 +1000,10 @@ export const AnalyticsPage = () => {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                <h2 style={{ ...sectionTitleStyle, marginBottom: 0 }}>Тоннаж по тренировкам</h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <h2 style={{ ...sectionTitleStyle, marginBottom: 0 }}>Тоннаж по тренировкам</h2>
+                  <HintIcon text="объём нагрузки: подходы × повторы × вес" />
+                </div>
                 <div style={{
                   fontSize: 11.5, color: 'var(--ghost)',
                   display: 'flex', alignItems: 'center', gap: 6,
@@ -987,7 +1036,10 @@ export const AnalyticsPage = () => {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                <h2 style={{ ...sectionTitleStyle, marginBottom: 0 }}>Дистанция по тренировкам</h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <h2 style={{ ...sectionTitleStyle, marginBottom: 0 }}>Дистанция по тренировкам</h2>
+                  <HintIcon text="суммарный километраж за тренировку" />
+                </div>
                 <div style={{ fontSize: 11.5, color: 'var(--ghost)', display: 'flex', alignItems: 'center', gap: 6 }}>
                   <IconRoute size={12} />
                   последние {Math.min(10, data.distance_series.length)}
@@ -1017,7 +1069,10 @@ export const AnalyticsPage = () => {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                <h2 style={{ ...sectionTitleStyle, marginBottom: 0 }}>Время практики</h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <h2 style={{ ...sectionTitleStyle, marginBottom: 0 }}>Упражнения на время</h2>
+                  <HintIcon text="планка, растяжка и всё, что измеряется в секундах" />
+                </div>
                 <div style={{ fontSize: 11.5, color: 'var(--ghost)', display: 'flex', alignItems: 'center', gap: 6 }}>
                   <IconClock size={12} />
                   последние {Math.min(10, data.time_series.length)}

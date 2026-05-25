@@ -732,16 +732,14 @@ const StatCell = ({ icon, label, value, unit, accent, loading, borderRight, prog
     minWidth: 0,
   }}>
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 6,
+      display: 'flex', alignItems: 'flex-start', gap: 5,
       fontSize: 10.5, fontWeight: 600,
       color: 'var(--ghost)',
-      textTransform: 'uppercase', letterSpacing: '0.08em',
+      textTransform: 'uppercase', letterSpacing: '0.06em',
       marginBottom: 8,
     }}>
-      <span style={{ color: accent }}>{icon}</span>
-      <span style={{
-        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-      }}>{label}</span>
+      <span style={{ color: accent, flexShrink: 0, marginTop: 1 }}>{icon}</span>
+      <span style={{ lineHeight: 1.35 }}>{label}</span>
     </div>
     {loading ? (
       <div className="dash-skel" style={{ height: 28, width: '60%', borderRadius: 6 }} />
