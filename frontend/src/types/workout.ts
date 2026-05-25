@@ -23,6 +23,7 @@ export interface Exercise {
   targetMuscles: string[];
   difficulty?: string;
   tags: string[];
+  synonyms?: string[];
   parameters: ExerciseParameter[];
   images: {
     cover: string;

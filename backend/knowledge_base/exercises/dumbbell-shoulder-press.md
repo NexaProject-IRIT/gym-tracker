@@ -5,6 +5,7 @@ name: Жим гантелей стоя
 equipment: Гантели
 targetMuscles: [Плечи, Трицепсы]
 tags: [плечи, жим]
+synonyms: [жим стоя, армейский жим гантелями, shoulder press, жим на плечи, жим гантелей сидя, жим гантелями над головой]
 difficulty: intermediate
 parameters: [sets, reps, weight]
 images:

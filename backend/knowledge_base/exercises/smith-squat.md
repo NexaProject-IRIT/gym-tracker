@@ -5,6 +5,7 @@ name: Приседания в машине Смита
 equipment: Машина Смита
 targetMuscles: [Квадрицепсы, Ягодицы, Бицепс бедра]
 tags: [ноги, базовые, сила]
+synonyms: [присед в смите, smith squat, приседы смит, приседания в смите, присед в машине]
 difficulty: intermediate
 parameters: [sets, reps, weight]
 images:

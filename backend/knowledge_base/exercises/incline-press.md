@@ -5,6 +5,7 @@ name: Жим под углом вверх
 equipment: Скамья
 targetMuscles: [Верх грудных мышц, Передние дельты, Трицепсы]
 tags: [грудь, жим, верх груди]
+synonyms: [incline bench press, жим лёжа головой вверх, жим на наклонной, верхний жим, жим вверх, жим на наклонной скамье]
 difficulty: intermediate
 parameters: [sets, reps, weight]
 images:

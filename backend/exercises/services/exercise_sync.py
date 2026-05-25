@@ -139,6 +139,7 @@ def sync_exercises_to_db():
                 "equipment": equipment_name,
                 "tags": [t.lower() for t in exercise_data.get("tags", [])],
                 "target_muscles": [m.lower() for m in exercise_data.get("targetMuscles", [])],
+                "synonyms": [str(s).strip() for s in exercise_data.get("synonyms", []) if str(s).strip()],
                 "difficulty": exercise_data.get("difficulty", ""),
                 "images": build_images_dict(exercise_data.get("images", {})),
                 "source_file": exercise_data.get("source_file", ""),

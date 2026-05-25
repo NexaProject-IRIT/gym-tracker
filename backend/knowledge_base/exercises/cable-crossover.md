@@ -5,6 +5,7 @@ name: Сведение рук в кроссовере
 equipment: Кроссовер
 targetMuscles: [Грудные мышцы]
 tags: [грудь, изоляция]
+synonyms: [кроссовер, сведение в кроссовере, cable crossover, кроссы, сведение на блоках]
 difficulty: intermediate
 parameters: [sets, reps, weight]
 images:

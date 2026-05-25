@@ -5,6 +5,7 @@ name: Сведение рук (грудь)
 equipment: Тренажёр-бабочка
 targetMuscles: [Грудные мышцы]
 tags: [грудь, изоляция]
+synonyms: [бабочка, butterfly, peck deck, pec deck, сведение грудных, сведение на тренажёре, грудная бабочка]
 difficulty: beginner
 parameters: [sets, reps, weight]
 images:

@@ -5,6 +5,7 @@ name: Разведение рук для задних дельт
 equipment: Тренажёр-бабочка
 targetMuscles: [Задние дельты, Верх спины]
 tags: [плечи, задняя дельта, изоляция]
+synonyms: [задние дельты, reverse fly, обратные разведения, задняя дельта, разведение на задние дельты, reverse pec deck]
 difficulty: beginner
 parameters: [sets, reps, weight]
 images:

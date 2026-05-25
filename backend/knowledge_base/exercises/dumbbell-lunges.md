@@ -5,6 +5,7 @@ name: Выпады с гантелями
 equipment: Гантели
 targetMuscles: [Квадрицепсы, Ягодицы]
 tags: [ноги, ягодицы]
+synonyms: [выпады, lunges, выпады в шаге, ножницы, шаги с гантелями]
 difficulty: intermediate
 parameters: [sets, reps, weight]
 images:

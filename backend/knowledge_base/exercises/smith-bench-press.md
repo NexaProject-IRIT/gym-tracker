@@ -5,6 +5,7 @@ name: Жим в машине Смита
 equipment: Машина Смита
 targetMuscles: [Грудные мышцы, Трицепсы, Передние дельты]
 tags: [грудь, жим, сила]
+synonyms: [жим в смите, smith bench press, жим лёжа смит, жим в машине, жим в смите лёжа]
 difficulty: intermediate
 parameters: [sets, reps, weight]
 images:

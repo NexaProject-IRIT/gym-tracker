@@ -36,19 +36,38 @@ class ExerciseListView(APIView):
         if search and search.strip():
             exercises_list = list(queryset)
             if exercises_list:
-                exercise_items = [(ex.name, ex) for ex in exercises_list]
-                names_only = [name for name, _ in exercise_items]
+                # Каждое упражнение участвует в поиске как несколько строк: основное имя + синонимы.
+                # Берём лучший скор для упражнения, чтобы оно не выпало из топа из-за слабого синонима.
+                candidates = []  # (search_string, exercise_index)
+                for idx, ex in enumerate(exercises_list):
+                    candidates.append((ex.name, idx))
+                    for syn in (ex.synonyms or []):
+                        syn_str = str(syn).strip()
+                        if syn_str:
+                            candidates.append((syn_str, idx))
 
-                results = process.extract(
+                strings_only = [s for s, _ in candidates]
+
+                raw_results = process.extract(
                     search.strip(),
-                    names_only,
+                    strings_only,
                     scorer=fuzz.WRatio,
-                    limit=20,
-                    score_cutoff=60
+                    limit=len(strings_only),
+                    score_cutoff=60,
                 )
+
+                # Сворачиваем по упражнениям, оставляя максимальный скор
+                best_by_idx: dict[int, float] = {}
+                for _, score, pos in raw_results:
+                    ex_idx = candidates[pos][1]
+                    if score > best_by_idx.get(ex_idx, -1):
+                        best_by_idx[ex_idx] = score
+
+                ordered = sorted(best_by_idx.items(), key=lambda x: x[1], reverse=True)[:20]
+
                 exercises_data = []
-                for matched_name, score, index in results:
-                    ex = exercise_items[index][1]
+                for ex_idx, score in ordered:
+                    ex = exercises_list[ex_idx]
                     parameters = list(ex.parameters.values_list('type', flat=True))
                     target_muscles = ex.target_muscles if ex.target_muscles else []
 
@@ -59,6 +78,7 @@ class ExerciseListView(APIView):
                         'equipment': ex.equipment or '',
                         'targetMuscles': target_muscles,
                         'tags': ex.tags or [],
+                        'synonyms': ex.synonyms or [],
                         'parameters': parameters,
                         'difficulty': ex.difficulty,
                         'description': ex.description or '',

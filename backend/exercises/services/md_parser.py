@@ -66,6 +66,7 @@ def parse_exercise_file(file_path: Path) -> dict:
         "equipment": normalize_string(meta.get("equipment")),
         "targetMuscles": normalize_list(target_muscles),
         "tags": normalize_list(meta.get("tags")),
+        "synonyms": normalize_list(meta.get("synonyms")),
         "difficulty": normalize_string(meta.get("difficulty")),
         "parameters": normalize_list(meta.get("parameters")),
         "images": normalize_exercise_images(meta.get("images")),

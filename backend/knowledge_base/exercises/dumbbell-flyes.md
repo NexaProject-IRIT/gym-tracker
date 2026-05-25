@@ -5,6 +5,7 @@ name: Разводка гантелей лёжа
 equipment: Скамья
 targetMuscles: [Грудные мышцы]
 tags: [грудь, изоляция]
+synonyms: [разводка гантелей, разведение гантелей, dumbbell flyes, flyes, разводка лёжа, разведение лёжа]
 difficulty: intermediate
 parameters: [sets, reps, weight]
 images:

@@ -5,6 +5,7 @@ name: Тяга штанги в наклоне
 equipment: Штанга
 targetMuscles: [Широчайшие мышцы спины, Бицепсы]
 tags: [спина, тяга]
+synonyms: [тяга в наклоне, тяга штанги, barbell row, тяга к поясу, тяга штанги к поясу]
 difficulty: intermediate
 parameters: [sets, reps, weight]
 images:

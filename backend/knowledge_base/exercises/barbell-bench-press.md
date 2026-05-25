@@ -5,6 +5,7 @@ name: Жим штанги лёжа
 equipment: Штанга
 targetMuscles: [Грудные мышцы, Трицепсы, Передние дельты]
 tags: [грудь, базовые, сила]
+synonyms: [жим лёжа, жим штанги, жим штангой, жим штангой лёжа, bench press, bench, горизонтальный жим]
 difficulty: intermediate
 parameters: [sets, reps, weight]
 images:

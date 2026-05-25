@@ -11,6 +11,7 @@ class Exercise(models.Model):
     difficulty = models.CharField(max_length=50, blank=True, default="")
     target_muscles = models.JSONField(default=list)
     tags = models.JSONField(default=list)
+    synonyms = models.JSONField(default=list, blank=True)
     images = models.JSONField(default=dict)
     source_file = models.CharField(max_length=255, blank=True, null=True)
     created_at = models.DateField(auto_now_add=True)

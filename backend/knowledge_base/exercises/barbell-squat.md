@@ -5,6 +5,7 @@ name: Приседания со штангой
 equipment: Штанга
 targetMuscles: [Квадрицепсы, Ягодицы, Бицепс бедра]
 tags: [ноги, базовые, сила]
+synonyms: [присед, приседы, приседания, squat, squats, приседания со штангой на плечах, бэк-сквот, back squat]
 difficulty: intermediate
 parameters: [sets, reps, weight]
 images:

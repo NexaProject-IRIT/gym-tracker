@@ -5,6 +5,7 @@ name: Жим под углом вниз
 equipment: Скамья
 targetMuscles: [Нижняя часть грудных мышц, Трицепсы]
 tags: [грудь, жим, низ груди]
+synonyms: [жим лёжа головой вниз, decline bench press, обратный жим, негативный угол, жим вниз головой]
 difficulty: intermediate
 parameters: [sets, reps, weight]
 images:

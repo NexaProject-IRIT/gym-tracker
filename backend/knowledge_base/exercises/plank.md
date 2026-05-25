@@ -5,6 +5,7 @@ name: Планка
 equipment: Коврик
 targetMuscles: [Пресс, Корпус, Поясница]
 tags: [корпус, изометрия, пресс]
+synonyms: [planka, plank, статика на пресс, упор лёжа, статическая планка]
 difficulty: beginner
 parameters: [sets, time]
 images:

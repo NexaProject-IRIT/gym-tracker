@@ -5,6 +5,7 @@ name: Сгибание рук на кроссовере
 equipment: Кроссовер
 targetMuscles: [Бицепсы]
 tags: [руки, бицепс]
+synonyms: [бицепс на кроссовере, сгибания на блоке, cable curl, биц на нижнем блоке, сгибание рук на блоке]
 difficulty: beginner
 parameters: [sets, reps, weight]
 images:

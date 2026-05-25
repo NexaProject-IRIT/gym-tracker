@@ -5,6 +5,7 @@ name: Разгибание рук на кроссовере
 equipment: Кроссовер
 targetMuscles: [Трицепсы]
 tags: [руки, трицепс]
+synonyms: [трицепс на блоке, разгибание на блоке, tricep pushdown, pushdown, верхний блок на трицепс, разгибание рук на блоке]
 difficulty: beginner
 parameters: [sets, reps, weight]
 images:

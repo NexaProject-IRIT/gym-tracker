@@ -91,11 +91,16 @@ def _build_exercises_catalog_block() -> str:
     if not exercises:
         return 'База упражнений приложения: пусто.'
 
-    lines = ['Упражнения из базы приложения (используй строго эти названия):']
+    lines = [
+        'Упражнения из базы приложения (используй строго эти названия — поле «name» в JSON).',
+        'Если пользователь упоминает упражнение под одним из синонимов — сопоставь его с каноническим названием из этого списка:'
+    ]
     for ex in exercises:
         muscles = ', '.join(ex.target_muscles) if ex.target_muscles else '—'
         equipment = ex.equipment or '—'
-        lines.append(f'- {ex.name} (оборудование: {equipment}, мышцы: {muscles})')
+        syns = [str(s).strip() for s in (ex.synonyms or []) if str(s).strip()]
+        syn_part = f', синонимы: {", ".join(syns)}' if syns else ''
+        lines.append(f'- {ex.name} (оборудование: {equipment}, мышцы: {muscles}{syn_part})')
     return '\n'.join(lines)
 
 

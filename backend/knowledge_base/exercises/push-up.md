@@ -5,6 +5,7 @@ name: Отжимания
 equipment: Коврик
 targetMuscles: [Грудные мышцы, Трицепсы, Передние дельты]
 tags: [грудь, корпус]
+synonyms: [отжимания от пола, push-ups, push up, pushups, отжимы, отжимания на руках]
 difficulty: beginner
 parameters: [sets, reps]
 images:

@@ -5,6 +5,7 @@ name: Бег
 equipment: Беговая дорожка
 targetMuscles: [Ноги, Икры, Ягодицы, Сердечно-сосудистая система]
 tags: [кардио, выносливость, бег]
+synonyms: [кардио, run, jog, пробежка, бег на дорожке, бег трусцой]
 difficulty: beginner
 parameters: [time, distance]
 images:

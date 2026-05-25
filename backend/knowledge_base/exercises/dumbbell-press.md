@@ -5,6 +5,7 @@ name: Жим гантелей лёжа
 equipment: Гантели
 targetMuscles: [Грудные мышцы, Трицепсы]
 tags: [грудь, базовые]
+synonyms: [жим гантелей, dumbbell press, dumbbell bench press, жим гантелей лёжа, жим гантелями]
 difficulty: intermediate
 parameters: [sets, reps, weight]
 images:

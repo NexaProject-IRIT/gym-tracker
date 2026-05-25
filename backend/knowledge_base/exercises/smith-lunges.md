@@ -5,6 +5,7 @@ name: Выпады в машине Смита
 equipment: Машина Смита
 targetMuscles: [Квадрицепсы, Ягодицы, Бицепс бедра]
 tags: [ноги, ягодицы, баланс]
+synonyms: [выпады в смите, smith lunges, выпад смит, выпады в машине]
 difficulty: intermediate
 parameters: [sets, reps, weight]
 images:

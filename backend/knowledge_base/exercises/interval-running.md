@@ -5,6 +5,7 @@ name: Интервальный бег
 equipment: Беговая дорожка
 targetMuscles: [Ноги, Икры, Ягодицы, Сердечно-сосудистая система]
 tags: [кардио, интервалы, выносливость]
+synonyms: [hiit, интервалы, спринт, interval running, интервальная пробежка, интервалы бега]
 difficulty: intermediate
 parameters: [time, distance]
 images:

@@ -5,6 +5,7 @@ name: Скручивания
 equipment: Коврик
 targetMuscles: [Пресс]
 tags: [пресс, корпус]
+synonyms: [пресс, скручивание, crunches, абс, качать пресс, упражнение на пресс]
 difficulty: beginner
 parameters: [sets, reps]
 images:

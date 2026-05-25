@@ -5,6 +5,7 @@ name: Сгибание рук с гантелями
 equipment: Гантели
 targetMuscles: [Бицепсы]
 tags: [руки, бицепс, изоляция]
+synonyms: [подъём гантелей на бицепс, бицепс с гантелями, dumbbell curl, биц гантелями, сгибание гантелей, подъём на бицепс]
 difficulty: beginner
 parameters: [sets, reps, weight]
 images:

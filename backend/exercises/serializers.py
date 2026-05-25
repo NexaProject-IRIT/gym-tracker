@@ -14,6 +14,7 @@ class ExerciseSerializer(serializers.ModelSerializer):
     sourceFile = serializers.CharField(source='source_file', read_only=True)
     exerciseId = serializers.CharField(source='exercise_id', read_only=True)
     difficulty = serializers.CharField(read_only=True)
+    synonyms = serializers.ListField(child=serializers.CharField(), read_only=True)
 
     class Meta:
         model = Exercise
@@ -25,6 +26,7 @@ class ExerciseSerializer(serializers.ModelSerializer):
             'equipment',
             'targetMuscles',
             'tags',
+            'synonyms',
             'difficulty',
             'images',
             'parameters',
@@ -48,6 +50,7 @@ class ExerciseListSerializer(serializers.ModelSerializer):
     exerciseId = serializers.CharField(source='exercise_id', read_only=True)
     difficulty = serializers.CharField(read_only=True)
     parameters = serializers.SerializerMethodField()
+    synonyms = serializers.ListField(child=serializers.CharField(), read_only=True)
 
     class Meta:
         model = Exercise
@@ -59,6 +62,7 @@ class ExerciseListSerializer(serializers.ModelSerializer):
             'equipment',
             'targetMuscles',
             'tags',
+            'synonyms',
             'difficulty',
             'images',
             'parameters',

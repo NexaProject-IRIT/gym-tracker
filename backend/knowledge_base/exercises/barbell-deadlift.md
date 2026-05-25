@@ -5,6 +5,7 @@ name: Становая тяга
 equipment: Штанга
 targetMuscles: [Ягодицы, Спина, Бицепс бедра]
 tags: [спина, ноги, базовые]
+synonyms: [становая, дедлифт, deadlift, тяга со штангой, становая со штангой, тяга мёртвой штанги]
 difficulty: intermediate
 parameters: [sets, reps, weight]
 images:
