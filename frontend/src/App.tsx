@@ -9,6 +9,7 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { AiChatPage } from './pages/AiChatPage';
 import { WorkoutDetailPage } from './pages/WorkoutDetailPage';
+import { AnalyticsPage } from './pages/AnalyticsPage';
 import { TimerProvider } from './contexts/TimerContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 
@@ -47,6 +48,7 @@ function App() {
                 <Route path="workouts" element={<WorkoutList />} />
                 <Route path="workouts/:id" element={<WorkoutDetailPage />} />
                 <Route path="knowledge" element={<ExerciseGrid />} />
+                <Route path="analytics" element={<AnalyticsPage />} />
                 <Route path="ai" element={<AiChatPage />} />
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="settings" element={<Navigate to="/profile" replace />} />

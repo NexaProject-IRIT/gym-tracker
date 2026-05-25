@@ -44,6 +44,15 @@ const IconAi = ({ active }: { active: boolean }) => (
   </svg>
 );
 
+const IconAnalytics = ({ active }: { active: boolean }) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+    <path d="M3 3v18h18"
+      stroke={active ? 'var(--accent)' : 'var(--dim)'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M7 14l4-4 3 3 5-6"
+      stroke={active ? 'var(--accent)' : 'var(--dim)'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
 type NavItem = {
   to: string;
   label: string;        // отображается в десктоп-сайдбаре
@@ -55,6 +64,7 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { to: '/',          label: 'Главная',         icon: (a) => <IconHome active={a} />,     end: true  },
   { to: '/workouts',  label: 'Тренировки',      icon: (a) => <IconDumbbell active={a} />, end: false },
+  { to: '/analytics', label: 'Аналитика',       icon: (a) => <IconAnalytics active={a} />, end: false },
   { to: '/ai',        label: 'ИИ-тренер',       icon: (a) => <IconAi active={a} />,       end: false },
   { to: '/knowledge', label: 'База тренировок', mobileLabel: 'База', icon: (a) => <IconBook active={a} />, end: false },
   { to: '/profile',   label: 'Профиль',         icon: (a) => <IconUser active={a} />,     end: false },

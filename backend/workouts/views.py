@@ -1,4 +1,5 @@
-from datetime import datetime, date as date_cls
+from collections import defaultdict
+from datetime import datetime, date as date_cls, timedelta
 from django.utils import timezone
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
@@ -213,6 +214,147 @@ class WorkoutViewSet(viewsets.ModelViewSet):
         total = Workout.objects.filter(user=user).count()
         this_month = Workout.objects.filter(user=user, date__gte=start_of_month, date__lte=today).count()
         return Response({"total": total, "this_month": this_month})
+
+    @action(detail=False, methods=['get'])
+    def analytics(self, request):
+        """
+        Универсальная сводка для страницы /analytics.
+        Параметр period: 7 / 30 / 90 / 0 (всё время).
+        """
+        try:
+            period = int(request.query_params.get('period', 30))
+        except (TypeError, ValueError):
+            period = 30
+        period = max(0, period)
+
+        today = timezone.localdate()
+        qs = Workout.objects.filter(user=request.user).prefetch_related('exercises')
+        if period > 0:
+            qs = qs.filter(date__gte=today - timedelta(days=period - 1), date__lte=today)
+        qs = qs.order_by('date')
+
+        by_type = defaultdict(int)
+        active_dates = set()
+        exercise_counts = defaultdict(int)
+        exercise_max_weight = defaultdict(float)
+        exercise_type_hint = {}
+        tonnage_series = []
+        distance_series = []
+        time_series = []
+        exercise_names_set = set()
+        all_exercise_names = set()
+
+        for w in qs:
+            by_type[w.type] += 1
+            active_dates.add(w.date)
+
+            total_tonnage = 0.0
+            total_distance = 0.0
+            total_time = 0
+
+            for ex in w.exercises.all():
+                name = (ex.custom_name or ex.exercise_id or '').strip()
+                if name:
+                    exercise_counts[name] += 1
+                    all_exercise_names.add(name)
+                    exercise_type_hint.setdefault(name, w.type)
+                    if ex.weight:
+                        exercise_max_weight[name] = max(exercise_max_weight[name], float(ex.weight))
+                        exercise_names_set.add(name)
+
+                if ex.weight and ex.sets and ex.reps:
+                    total_tonnage += float(ex.weight) * int(ex.sets) * int(ex.reps)
+                if ex.distance:
+                    total_distance += float(ex.distance)
+                if ex.time:
+                    total_time += int(ex.time)
+
+            iso_date = w.date.isoformat()
+            if total_tonnage > 0:
+                tonnage_series.append({'date': iso_date, 'value': round(total_tonnage, 1), 'name': w.name})
+            if total_distance > 0:
+                distance_series.append({'date': iso_date, 'value': round(total_distance, 2), 'name': w.name})
+            if total_time > 0:
+                time_series.append({'date': iso_date, 'value': total_time, 'name': w.name})
+
+        top_exercises = sorted(exercise_counts.items(), key=lambda x: x[1], reverse=True)[:6]
+
+        # Доминирующий тип — для адаптивных KPI
+        dominant_type = max(by_type, key=by_type.get) if by_type else None
+
+        # Стрик по неделям (только последние ~52 недели)
+        all_workouts = Workout.objects.filter(user=request.user).values_list('date', flat=True)
+        weeks_with_workouts = {(d - timedelta(days=d.weekday())) for d in all_workouts}
+        streak = 0
+        cursor = today - timedelta(days=today.weekday())
+        for _ in range(200):
+            if cursor in weeks_with_workouts:
+                streak += 1
+                cursor -= timedelta(days=7)
+            elif streak == 0 and cursor == today - timedelta(days=today.weekday()):
+                # Текущая неделя без тренировок не сбрасывает
+                cursor -= timedelta(days=7)
+            else:
+                break
+
+        return Response({
+            'period_days': period,
+            'dominant_type': dominant_type,
+            'summary': {
+                'total_workouts': sum(by_type.values()),
+                'active_days': len(active_dates),
+                'unique_exercises': len(all_exercise_names),
+                'weekly_streak': streak,
+                'total_tonnage': round(sum(s['value'] for s in tonnage_series), 1),
+                'total_distance': round(sum(s['value'] for s in distance_series), 2),
+                'total_time': sum(s['value'] for s in time_series),
+            },
+            'by_type': dict(by_type),
+            'tonnage_series': tonnage_series,
+            'distance_series': distance_series,
+            'time_series': time_series,
+            'top_exercises': [
+                {
+                    'name': n,
+                    'count': c,
+                    'max_weight': exercise_max_weight.get(n) or None,
+                    'type_hint': exercise_type_hint.get(n, 'custom'),
+                }
+                for n, c in top_exercises
+            ],
+            'exercise_names': sorted(exercise_names_set),
+        })
+
+    @action(detail=False, methods=['get'], url_path='exercise-progress')
+    def exercise_progress(self, request):
+        name = request.query_params.get('name', '').strip()
+        if not name:
+            return Response({'error': 'name parameter is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        exercises = (
+            WorkoutExercise.objects
+            .filter(workout__user=request.user)
+            .filter(
+                Q(custom_name__icontains=name) |
+                Q(exercise_id__icontains=name)
+            )
+            .select_related('workout')
+            .order_by('workout__date')
+        )
+
+        data = []
+        for ex in exercises:
+            if ex.weight is None:
+                continue
+            data.append({
+                'date': ex.workout.date,
+                'weight': ex.weight,
+                'sets': ex.sets or 0,
+                'reps': ex.reps or 0,
+                'name': ex.custom_name or ex.exercise_id,
+            })
+
+        return Response(data)
 
     @action(detail=False, methods=['delete'])
     def clear(self, request):
