@@ -440,7 +440,9 @@ export const AnalyticsPage = () => {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setError(null);
     apiFetch<AnalyticsResponse>(`/workouts/analytics/?period=${period}`)
       .then(d => {
@@ -455,6 +457,7 @@ export const AnalyticsPage = () => {
   }, [period]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!selectedExercise) { setProgress([]); return; }
     apiFetch<ProgressPoint[]>(`/workouts/exercise-progress/?name=${encodeURIComponent(selectedExercise)}`)
       .then(setProgress)

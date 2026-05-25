@@ -49,7 +49,6 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const swRafRef = useRef(0);
 
   const tickSw = () => {
-    // eslint-disable-next-line react-hooks/purity
     const t = swAccumRef.current + (Date.now() - swStartRef.current);
     swTimeRef.current = t;
     setSwTime(t);
@@ -103,7 +102,6 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const tmRafRef = useRef(0);
 
   const tickTm = () => {
-    // eslint-disable-next-line react-hooks/purity
     const remaining = tmEndRef.current - Date.now();
     if (remaining <= 0) {
       setTmTimeLeftMs(0);
