@@ -53,3 +53,39 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - run: npm run build
+
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    needs: [ backend, frontend-lint, frontend-build ]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: nexa
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/gym-tracker
+            git reset --hard HEAD
+            git pull origin main
+            cat > .env << 'EOF'
+            POSTGRES_DB=gymlog_db
+            POSTGRES_USER=gymlog_user
+            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+            SECRET_KEY=${{ secrets.SECRET_KEY }}
+            DEBUG=False
+            ALLOWED_HOSTS=localhost,127.0.0.1,backend,${{ secrets.SERVER_IP }}
+            CORS_ALLOWED_ORIGINS=http://${{ secrets.SERVER_IP }}:5173,http://localhost:5173
+            LLM_PROVIDER=${{ secrets.LLM_PROVIDER }}
+            DEEPSEEK_API_KEY=${{ secrets.DEEPSEEK_API_KEY }}
+            DEEPSEEK_MODEL=${{ secrets.DEEPSEEK_MODEL }}
+            GIGACHAT_AUTH_KEY=${{ secrets.GIGACHAT_AUTH_KEY }}
+            GIGACHAT_SCOPE=${{ secrets.GIGACHAT_SCOPE }}
+            GIGACHAT_MODEL=${{ secrets.GIGACHAT_MODEL }}
+            GIGACHAT_VERIFY_SSL=${{ secrets.GIGACHAT_VERIFY_SSL }}
+            EOF
+            docker-compose down
+            docker-compose up -d --build
+            docker system prune -f
