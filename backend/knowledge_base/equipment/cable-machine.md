@@ -6,5 +6,5 @@ description: >
   Универсальный блочный тренажёр с регулируемой точкой крепления троса.
   Позволяет выполнять тяговые, жимовые и изолирующие движения
   под любым углом с постоянным мышечным напряжением.
-image: images/equipment/cable-machine.jpg
+image: images/equipment/cable-machine.jpeg
 ---

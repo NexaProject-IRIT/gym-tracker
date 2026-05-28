@@ -6,5 +6,5 @@ description: >
   Утяжелённый мяч для функциональных и силовых упражнений.
   Применяется в скручиваниях, бросках, приседаниях и плиометрике.
   Вес варьируется от 1 до 10 кг и более.
-image: images/equipment/medicine-ball.jpg
+image: images/equipment/medicine-ball.jpeg
 ---

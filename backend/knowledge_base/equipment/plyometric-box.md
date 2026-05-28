@@ -6,5 +6,5 @@ description: >
   Устойчивая деревянная или мягкая тумба для прыжковых упражнений.
   Используется в запрыгиваниях, степ-апах и других плиометрических движениях,
   развивающих взрывную силу ног.
-image: images/equipment/plyometric-box.jpg
+image: images/equipment/plyometric-box.jpeg
 ---

@@ -6,5 +6,5 @@ description: >
   Специализированный тренажёр для изолированной тренировки икроножных мышц.
   Доступен в версиях стоя и сидя, обеспечивает строгую амплитуду движения
   и возможность работы с большим весом.
-image: images/equipment/calf-raise-machine.jpg
+image: images/equipment/calf-raise-machine.jpeg
 ---

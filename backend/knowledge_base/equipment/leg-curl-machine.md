@@ -6,5 +6,5 @@ description: >
   Тренажёр для изолированной проработки бицепса бедра.
   Выпускается в двух вариантах: лёжа и сидя.
   Фиксирует положение тела и обеспечивает строгую изоляцию задней поверхности бедра.
-image: images/equipment/leg-curl-machine.jpg
+image: images/equipment/leg-curl-machine.jpeg
 ---
