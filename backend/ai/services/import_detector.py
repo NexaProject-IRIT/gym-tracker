@@ -1,7 +1,7 @@
 """
 Эвристика для детектирования журнала тренировок в сообщении пользователя.
 
-Вместо того чтобы просить GigaChat «самостоятельно решить» что делать с текстом,
+Вместо того чтобы просить LLM «самостоятельно решить» что делать с текстом,
 мы на бэке детектируем паттерн — и тогда отправляем модели узкий,
 сфокусированный запрос-парсер, а не общий системный промпт.
 """
@@ -61,7 +61,7 @@ IMPORT_USER_PROMPT_TEMPLATE = """\
 
 
 def build_import_messages(user_text: str) -> list[dict]:
-    """Собирает messages для GigaChat в режиме парсинга импорта."""
+    """Собирает messages для LLM в режиме парсинга импорта."""
     today = date_cls.today().isoformat()
     user_prompt = IMPORT_USER_PROMPT_TEMPLATE.format(today=today, text=user_text)
     return [

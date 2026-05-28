@@ -265,7 +265,10 @@ export const ProfilePage = () => {
         Выйти из аккаунта
       </button>
 
-      <div style={{ textAlign: 'center', marginTop: 32, color: 'var(--ghost)', fontSize: 12 }}>GymLog MVP v0.1</div>
+      <div style={{ textAlign: 'center', marginTop: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+        <img src="/favicon.png" alt="GymLog" style={{ width: 20, height: 20, borderRadius: 6, display: 'block' }} />
+        <span style={{ color: 'var(--ghost)', fontSize: 12 }}>GymLog MVP v0.1</span>
+      </div>
 
       {showClearConfirm && (
         <ConfirmModal

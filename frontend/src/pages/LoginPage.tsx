@@ -76,18 +76,7 @@ export const LoginPage = () => {
       <div style={{ width: '100%', maxWidth: 400 }}>
 
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: 16,
-            background: 'var(--accent-a12)',
-            border: '1px solid var(--accent-a20)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 16px',
-          }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M6.5 6.5h11M6.5 17.5h11M4 9.5v5M20 9.5v5M2 11v2M22 11v2"
-                stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
+          <img src="/favicon.png" alt="GymLog" style={{ width: 64, height: 64, borderRadius: 18, display: 'block', margin: '0 auto 16px' }} />
           <h1 style={{ color: 'var(--text)', fontSize: 24, fontWeight: 800, margin: '0 0 6px' }}>GymLog</h1>
           <p style={{ color: 'var(--faint)', fontSize: 14, margin: 0 }}>Войдите в свой аккаунт</p>
         </div>

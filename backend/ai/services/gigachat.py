@@ -1,17 +1,9 @@
 """
-Клиент для GigaChat API (Сбер).
+LLM-клиенты для ИИ-тренера.
 
-Документация: https://developers.sber.ru/docs/ru/gigachat/api/reference/rest/post-chat
-
-Архитектура:
-- OAuth-токен GigaChat живёт 30 минут → кэшируем в памяти процесса.
-- Все запросы идут с verify=False, потому что GigaChat использует цепочку
-  сертификатов Минцифры РФ, которой по дефолту нет в ca-certificates.
-  Для продакшн-сетапа нужно добавить их корневой сертификат в контейнер,
-  но для MVP работает и так. Переключается через GIGACHAT_VERIFY_SSL=true.
-- Если GIGACHAT_AUTH_KEY пустой или LLM_PROVIDER=mock — работает заглушка
-  (отдельный класс MockLLMClient), чтобы фронт можно было собирать без
-  реального ключа.
+Основной провайдер: DeepSeek (LLM_PROVIDER=deepseek, требует DEEPSEEK_API_KEY).
+Резервный провайдер: GigaChat (LLM_PROVIDER=gigachat, требует GIGACHAT_AUTH_KEY).
+Заглушка без ключа: LLM_PROVIDER=mock — возвращает фиксированный ответ.
 """
 import os
 import time
@@ -222,7 +214,7 @@ class DeepSeekClient:
 
 class MockLLMClient:
     """
-    Заглушка для разработки без реального ключа GigaChat.
+    Заглушка для разработки без реального API-ключа.
     Включается через LLM_PROVIDER=mock.
     Никуда не ходит, возвращает фиксированный ответ.
     """
@@ -237,7 +229,7 @@ class MockLLMClient:
 
         # Если в сообщении есть слова про «составь тренировку» — вернём
         # валидный <workout>-блок, чтобы можно было протестить кнопку
-        # «Добавить тренировку» без GigaChat.
+        # «Добавить тренировку» без реального LLM.
         lower = user_text.lower()
         if any(trigger in lower for trigger in ('составь', 'сделай трен', 'дай трен', 'план трен')):
             return (
@@ -253,8 +245,8 @@ class MockLLMClient:
 
         return (
             'Это заглушка ИИ-тренера (LLM_PROVIDER=mock). '
-            'Добавь GIGACHAT_AUTH_KEY в docker-compose и переключи '
-            'LLM_PROVIDER=gigachat, чтобы получить реальные ответы.\n\n'
+            'Добавь DEEPSEEK_API_KEY в .env и переключи '
+            'LLM_PROVIDER=deepseek, чтобы получить реальные ответы.\n\n'
             f'Ты написал: «{user_text[:200]}»'
         )
 
@@ -268,7 +260,8 @@ _client_lock = threading.Lock()
 def get_llm_client():
     """
     Ленивая инициализация клиента. Выбор провайдера через LLM_PROVIDER:
-      - 'gigachat' (дефолт): требует GIGACHAT_AUTH_KEY
+      - 'deepseek' (дефолт): требует DEEPSEEK_API_KEY
+      - 'gigachat': резерв, требует GIGACHAT_AUTH_KEY
       - 'mock': заглушка, ключ не нужен
     """
     global _client_instance
@@ -280,7 +273,7 @@ def get_llm_client():
         if _client_instance is not None:
             return _client_instance
 
-        provider = os.environ.get('LLM_PROVIDER', 'gigachat').lower()
+        provider = os.environ.get('LLM_PROVIDER', 'deepseek').lower()
 
         if provider == 'deepseek':
             api_key = os.environ.get('DEEPSEEK_API_KEY', '').strip()
@@ -295,7 +288,7 @@ def get_llm_client():
         elif provider == 'mock':
             _client_instance = MockLLMClient()
 
-        else:  # gigachat (default)
+        else:  # gigachat (резерв)
             auth_key = os.environ.get('GIGACHAT_AUTH_KEY', '').strip()
             if not auth_key:
                 logger.warning(

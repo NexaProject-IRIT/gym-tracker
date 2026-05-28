@@ -45,6 +45,7 @@ class WorkoutExercise(models.Model):
     # Без этого поля фронтенд не знает, какие поля рендерить в карточке.
     parameters = models.JSONField(default=list, blank=True)
     is_done = models.BooleanField(default=False)
+    sets_done = models.IntegerField(default=0)
     order = models.IntegerField(default=0)
 
     class Meta:

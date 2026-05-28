@@ -2,7 +2,7 @@
 Собирает системный промпт для ИИ-тренера.
 
 Ключевые изменения v2:
-- Убраны XML-теги <user-data> — GigaChat их копировал в ответ как текст.
+- Убраны XML-теги <user-data> — LLM их копировал в ответ как текст.
 - Добавлены правила про единицы времени: планка и изометрия — в СЕКУНДАХ.
 - Добавлено требование ВСЕГДА указывать вес для упражнений с инвентарём.
 - Текст промпта стал более строгим и конкретным, меньше воды.
@@ -192,7 +192,7 @@ def build_system_prompt(user: User) -> str:
 
 def build_messages_for_llm(user: User, history_queryset, new_user_message: str) -> list[dict]:
     """
-    Формирует messages для GigaChat:
+    Формирует messages для LLM:
     [{role: system, ...}, ...история..., {role: user, content: новое_сообщение}]
     """
     system_prompt = build_system_prompt(user)

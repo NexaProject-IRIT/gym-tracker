@@ -48,6 +48,7 @@ export interface WorkoutExercise {
   distance?: number;        // В км
   isCustom: boolean;
   isDone?: boolean;
+  setsDone?: number;
   isPR?: boolean;
   parameters: ParameterType[];
   order?: number;

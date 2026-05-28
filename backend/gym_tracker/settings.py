@@ -128,8 +128,8 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 # ---- ИИ-тренер ----
-# Ключи/настройки GigaChat берутся из окружения. См. docker-compose.yml.
-# LLM_PROVIDER: 'gigachat' (дефолт) или 'mock' (заглушка без реального ключа).
+# Провайдер LLM задаётся через LLM_PROVIDER в окружении. См. docker-compose.yml.
+# LLM_PROVIDER: 'deepseek' (дефолт) | 'gigachat' (резерв) | 'mock' (заглушка).
 
 LOGGING = {
     'version': 1,

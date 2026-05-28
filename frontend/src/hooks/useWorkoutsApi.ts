@@ -262,32 +262,77 @@ export const useWorkoutsApi = () => {
   }, [workouts, updateWorkout]);
 
   // PATCH /workouts/:workoutId/exercises/:exerciseId/done/
-  const toggleExerciseDone = useCallback(async (workoutId: string, exerciseId: string) => {
+  // Если targetSetsDone === undefined → классический тоггл isDone (старое поведение).
+  // Если targetSetsDone задан → выставить именно это число; бэк сам пересчитает isDone.
+  const toggleExerciseDone = useCallback(async (
+    workoutId: string,
+    exerciseId: string,
+    targetSetsDone?: number,
+  ) => {
     const workout = workouts.find(w => w.id === workoutId);
     const exercise = workout?.exercises.find(e => e.id === exerciseId);
     if (!exercise) return;
-    const newIsDone = !exercise.isDone;
+
+    const totalSets = Math.max(exercise.sets ?? 0, 1);
+
+    let optimisticSetsDone: number;
+    let optimisticIsDone: boolean;
+    let body: Record<string, unknown>;
+
+    if (targetSetsDone !== undefined) {
+      optimisticSetsDone = Math.max(0, Math.min(targetSetsDone, totalSets));
+      optimisticIsDone = optimisticSetsDone >= totalSets;
+      body = { setsDone: optimisticSetsDone };
+    } else {
+      optimisticIsDone = !exercise.isDone;
+      optimisticSetsDone = optimisticIsDone ? totalSets : 0;
+      body = { isDone: optimisticIsDone };
+    }
+
+    const prevSetsDone = exercise.setsDone ?? (exercise.isDone ? totalSets : 0);
+    const prevIsDone = !!exercise.isDone;
 
     setWorkouts(prev => prev.map(w =>
       w.id === workoutId
-        ? { ...w, exercises: w.exercises.map(e => e.id === exerciseId ? { ...e, isDone: newIsDone } : e) }
+        ? {
+            ...w,
+            exercises: w.exercises.map(e =>
+              e.id === exerciseId
+                ? { ...e, isDone: optimisticIsDone, setsDone: optimisticSetsDone }
+                : e
+            ),
+          }
         : w
     ));
 
     try {
-      const data = await apiFetch<{ isDone: boolean }>(
+      const data = await apiFetch<{ isDone: boolean; setsDone: number }>(
         `/workouts/${workoutId}/exercises/${exerciseId}/done/`,
-        { method: 'PATCH', body: JSON.stringify({ isDone: newIsDone }) }
+        { method: 'PATCH', body: JSON.stringify(body) }
       );
       setWorkouts(prev => prev.map(w =>
         w.id === workoutId
-          ? { ...w, exercises: w.exercises.map(e => e.id === exerciseId ? { ...e, isDone: data.isDone } : e) }
+          ? {
+              ...w,
+              exercises: w.exercises.map(e =>
+                e.id === exerciseId
+                  ? { ...e, isDone: data.isDone, setsDone: data.setsDone }
+                  : e
+              ),
+            }
           : w
       ));
     } catch {
       setWorkouts(prev => prev.map(w =>
         w.id === workoutId
-          ? { ...w, exercises: w.exercises.map(e => e.id === exerciseId ? { ...e, isDone: !newIsDone } : e) }
+          ? {
+              ...w,
+              exercises: w.exercises.map(e =>
+                e.id === exerciseId
+                  ? { ...e, isDone: prevIsDone, setsDone: prevSetsDone }
+                  : e
+              ),
+            }
           : w
       ));
     }

@@ -7,6 +7,7 @@ class WorkoutExerciseSerializer(serializers.ModelSerializer):
     customName = serializers.CharField(source='custom_name', required=False, allow_null=True, allow_blank=True)
     isCustom = serializers.BooleanField(source='is_custom', required=False, default=False)
     isDone = serializers.BooleanField(source='is_done', required=False, default=False)
+    setsDone = serializers.IntegerField(source='sets_done', required=False, default=0)
     parameters = serializers.ListField(
         child=serializers.CharField(),
         required=False,
@@ -18,7 +19,8 @@ class WorkoutExerciseSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkoutExercise
         fields = ['id', 'uid', 'exerciseId', 'customName', 'sets', 'reps',
-                  'weight', 'time', 'distance', 'isCustom', 'isDone', 'parameters', 'order']
+                  'weight', 'time', 'distance', 'isCustom', 'isDone', 'setsDone',
+                  'parameters', 'order']
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

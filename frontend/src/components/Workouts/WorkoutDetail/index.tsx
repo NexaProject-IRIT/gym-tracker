@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import type { Workout, WorkoutExercise, Exercise } from '../../../types/workout';
+import type { Workout, WorkoutExercise, Exercise, WorkoutType } from '../../../types/workout';
 import { WORKOUT_TYPE_LABELS, WORKOUT_TYPE_COLORS } from '../../../types/workout';
 import { ExerciseModal } from '../../KnowledgeBase/ExerciseModal';
 import { apiFetch } from '../../../lib/api';
 import { ExerciseEditModal } from './ExerciseEditModal';
 import { AddExerciseModal } from './AddExerciseModal';
+import { ExerciseCard } from '../ExerciseCard';
 
 interface Props {
   workout: Workout;
@@ -16,7 +17,7 @@ interface Props {
   onUpdateExercise: (exId: string, updates: Partial<WorkoutExercise>) => void;
   onDeleteExercise: (exId: string) => void;
   onAddExercise: (exercise: Omit<WorkoutExercise, 'id'>) => void;
-  onToggleDone: (exId: string) => void;
+  onToggleDone: (exId: string, targetSetsDone?: number) => void;
 }
 
 const IconBack = () => (
@@ -102,6 +103,7 @@ export const WorkoutDetail: React.FC<Props> = ({
   const [dateValue, setDateValue] = useState(workout.date.slice(0, 10));
   const [noteValue, setNoteValue] = useState(workout.notes ?? '');
   const [isEditingNote, setIsEditingNote] = useState(false);
+  const [editingType, setEditingType] = useState(false);
 
   const [infoExercise, setInfoExercise] = useState<Exercise | null>(null);
   const [infoLoading, setInfoLoading] = useState(false);
@@ -246,14 +248,65 @@ export const WorkoutDetail: React.FC<Props> = ({
       {/* Контент */}
       <div style={{ maxWidth: 720, width: '100%', margin: '0 auto', padding: '28px 24px 120px' }}>
         {/* Тип */}
-        <div style={{ marginBottom: 12 }}>
-          <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600,
-            background: c.bg, border: `1px solid ${c.border}`, color: c.accent,
-          }}>
+        <div style={{ marginBottom: 12, position: 'relative', display: 'inline-block' }}>
+          <span
+            onClick={() => isEditMode && setEditingType(v => !v)}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600,
+              background: c.bg, border: `1px solid ${c.border}`, color: c.accent,
+              cursor: isEditMode ? 'pointer' : 'default',
+              userSelect: 'none',
+              transition: 'opacity 0.15s',
+            }}
+          >
             {WORKOUT_TYPE_LABELS[workout.type]}
+            {isEditMode && <IconPencil />}
           </span>
+
+          {editingType && (
+            <>
+              <div style={{ position: 'fixed', inset: 0, zIndex: 90 }} onClick={() => setEditingType(false)} />
+              <div style={{
+                position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 100,
+                background: 'var(--surface)', borderRadius: 14, overflow: 'hidden',
+                border: '1px solid var(--border2)', boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+                minWidth: 200,
+              }}>
+                {(Object.keys(WORKOUT_TYPE_LABELS) as WorkoutType[]).map((t, i, arr) => {
+                  const tc = WORKOUT_TYPE_COLORS[t];
+                  const isActive = workout.type === t;
+                  return (
+                    <button
+                      key={t}
+                      onClick={() => { onUpdate({ type: t }); setEditingType(false); }}
+                      style={{
+                        width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '10px 14px', background: isActive ? tc.bg : 'none',
+                        border: 'none', borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none',
+                        cursor: 'pointer', textAlign: 'left',
+                      }}
+                      onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = 'var(--border)'; }}
+                      onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = 'none'; }}
+                    >
+                      <span style={{
+                        width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                        background: tc.accent,
+                      }} />
+                      <span style={{ fontSize: 13, fontWeight: isActive ? 600 : 400, color: isActive ? tc.accent : 'var(--muted)' }}>
+                        {WORKOUT_TYPE_LABELS[t]}
+                      </span>
+                      {isActive && (
+                        <svg style={{ marginLeft: 'auto', flexShrink: 0 }} width="12" height="12" viewBox="0 0 24 24" fill="none">
+                          <path d="M4 12l5 5L20 6" stroke={tc.accent} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Название */}
@@ -391,73 +444,58 @@ export const WorkoutDetail: React.FC<Props> = ({
           <p style={{ color: 'var(--faint)', textAlign: 'center', marginTop: 40, fontSize: 14 }}>Упражнения не добавлены</p>
         )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: isEditMode ? 8 : 12 }}>
           {workout.exercises.map((ex, idx) => {
             const isDone = ex.isDone;
             const isDragging = dragIndex === idx;
             const isDragOver = dragOverIndex === idx && dragIndex !== idx;
+
+            if (!isEditMode) {
+              return (
+                <ExerciseCard
+                  key={ex.id}
+                  exercise={ex}
+                  index={idx}
+                  category={WORKOUT_TYPE_LABELS[workout.type]}
+                  onSetsDone={(n) => onToggleDone(ex.id, n)}
+                  onShowInfo={ex.isCustom ? undefined : () => openExerciseInfo(ex)}
+                />
+              );
+            }
+
             return (
               <div
                 key={ex.id}
-                draggable={isEditMode}
-                onDragStart={isEditMode ? e => handleDragStart(e, idx) : undefined}
-                onDragOver={isEditMode ? e => handleDragOver(e, idx) : undefined}
-                onDrop={isEditMode ? e => handleDrop(e, idx) : undefined}
-                onDragEnd={isEditMode ? handleDragEnd : undefined}
+                draggable
+                onDragStart={e => handleDragStart(e, idx)}
+                onDragOver={e => handleDragOver(e, idx)}
+                onDrop={e => handleDrop(e, idx)}
+                onDragEnd={handleDragEnd}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 12,
                   padding: '14px 16px', borderRadius: 14,
                   background: isDragging
                     ? 'rgba(110,231,183,0.08)'
-                    : isDone
-                      ? 'rgba(110,231,183,0.04)'
-                      : isEditMode ? 'var(--border)' : 'var(--border)',
-                  border: `1px solid ${isDragOver
-                    ? 'rgba(110,231,183,0.5)'
-                    : isDone
-                      ? 'rgba(110,231,183,0.15)'
-                      : isEditMode ? 'var(--border2)' : 'var(--border)'}`,
-                  borderLeft: isDone && !isEditMode ? '2px solid rgba(110,231,183,0.35)' : undefined,
+                    : 'var(--border)',
+                  border: `1px solid ${isDragOver ? 'rgba(110,231,183,0.5)' : 'var(--border2)'}`,
                   borderTop: isDragOver ? '2px solid rgba(110,231,183,0.5)' : undefined,
                   opacity: isDragging ? 0.4 : 1,
-                  cursor: isEditMode ? 'default' : 'default',
+                  cursor: 'default',
                   transition: 'background 0.15s, border-color 0.15s, opacity 0.15s',
                 }}
-                onClick={() => isEditMode && openEditExercise(ex)}
+                onClick={() => openEditExercise(ex)}
               >
-                {isEditMode && (
-                  <div
-                    onMouseDown={e => e.stopPropagation()}
-                    style={{
-                      cursor: 'grab', color: 'var(--ghost)', flexShrink: 0,
-                      display: 'flex', alignItems: 'center', padding: '2px 0',
-                      userSelect: 'none',
-                    }}
-                    title="Перетащить"
-                  >
-                    <IconDrag />
-                  </div>
-                )}
-
-                {!isEditMode && (
-                  <button
-                    onClick={e => { e.stopPropagation(); onToggleDone(ex.id); }}
-                    style={{
-                      width: 22, height: 22, borderRadius: 6, flexShrink: 0,
-                      border: `1.5px solid ${isDone ? 'var(--accent)' : 'var(--border2)'}`,
-                      background: isDone ? 'var(--accent-a10)' : 'transparent',
-                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      transition: 'all 0.15s',
-                      padding: 0,
-                    }}
-                  >
-                    {isDone && (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                        <path d="M5 13l4 4L19 7" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    )}
-                  </button>
-                )}
+                <div
+                  onMouseDown={e => e.stopPropagation()}
+                  style={{
+                    cursor: 'grab', color: 'var(--ghost)', flexShrink: 0,
+                    display: 'flex', alignItems: 'center', padding: '2px 0',
+                    userSelect: 'none',
+                  }}
+                  title="Перетащить"
+                >
+                  <IconDrag />
+                </div>
 
                 <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--faint)', minWidth: 20, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{idx + 1}</span>
 
@@ -503,22 +541,7 @@ export const WorkoutDetail: React.FC<Props> = ({
                   )}
                 </div>
 
-                {!ex.isCustom && !isEditMode && (
-                  <button
-                    onClick={e => { e.stopPropagation(); openExerciseInfo(ex); }}
-                    style={{
-                      width: 24, height: 24, borderRadius: '50%', border: '1px solid var(--border2)',
-                      background: 'none', color: 'var(--faint)', cursor: 'pointer', flexShrink: 0,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}
-                    title="База знаний"
-                  >
-                    <IconInfo />
-                  </button>
-                )}
-                {isEditMode && (
-                  <span style={{ color: 'var(--ghost)', flexShrink: 0 }}><IconEdit2 /></span>
-                )}
+                <span style={{ color: 'var(--ghost)', flexShrink: 0 }}><IconEdit2 /></span>
               </div>
             );
           })}

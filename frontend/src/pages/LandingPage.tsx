@@ -220,15 +220,7 @@ const LandingHeader = ({
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{
-          width: 34, height: 34, borderRadius: 10,
-          background: 'var(--accent-a12)',
-          border: '1px solid var(--accent-a20)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: 'var(--accent)',
-        }}>
-          <IconDumbbell s={16} />
-        </div>
+        <img src="/favicon.png" alt="GymLog" style={{ width: 34, height: 34, borderRadius: 10, display: 'block', flexShrink: 0 }} />
         <div>
           <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.01em', lineHeight: 1.1 }}>GymLog</div>
           <div style={{ fontSize: 10.5, color: 'var(--ghost)', marginTop: 1, letterSpacing: '0.04em' }}>
@@ -349,7 +341,7 @@ const HeroSection = ({
         }}>
           <IconSparkle s={10} />
         </span>
-        <span>MVP · 100+ упражнений · GigaChat внутри</span>
+        <span>MVP · 100+ упражнений · DeepSeek внутри</span>
       </div>
 
       <h1 style={{
@@ -733,7 +725,7 @@ const FEATURES: {
   },
   {
     title: 'ИИ-тренер',
-    desc: 'GigaChat собирает программу под твою цель и параметры.',
+    desc: 'ИИ-тренер собирает программу под твою цель и параметры.',
     icon: <IconAi s={20} />,
     accent: '#c4b5fd',
     size: 'sm',
@@ -1234,14 +1226,7 @@ const FooterSection = () => (
       flexWrap: 'wrap', gap: 12,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div style={{
-          width: 24, height: 24, borderRadius: 7,
-          background: 'var(--accent-a12)',
-          color: 'var(--accent)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <IconDumbbell s={12} />
-        </div>
+        <img src="/favicon.png" alt="GymLog" style={{ width: 24, height: 24, borderRadius: 7, display: 'block', flexShrink: 0 }} />
         <span style={{ fontSize: 12.5, color: 'var(--muted)', fontWeight: 500 }}>
           GymLog · студенческий проект
         </span>

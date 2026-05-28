@@ -5,6 +5,7 @@ import { WORKOUT_TYPE_COLORS } from '../../types/workout';
 import { WorkoutForm } from './WorkoutForm';
 import { WorkoutCard, WorkoutCardSkeleton } from './WorkoutCard';
 import { StatsRow } from './StatsRow';
+import { WorkoutEmptyState } from './WorkoutEmptyState';
 
 const CSS = `
   input[type=number]::-webkit-inner-spin-button,
@@ -86,13 +87,7 @@ export const WorkoutList: React.FC = () => {
               {Array.from({ length: 6 }).map((_, i) => <WorkoutCardSkeleton key={i} />)}
             </div>
           ) : workouts.length === 0 ? (
-            <div style={{ textAlign: 'center', paddingTop: 80 }}>
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style={{ margin: '0 auto 16px', display: 'block', opacity: 0.2 }}>
-                <path d="M6.5 6.5h11M6.5 17.5h11M4 9.5v5M20 9.5v5M2 11v2M22 11v2" stroke="var(--text)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              <p style={{ color: 'var(--dim)', fontWeight: 500, margin: '0 0 4px' }}>Ещё нет тренировок</p>
-              <p style={{ color: 'var(--ghost)', fontSize: 13, margin: 0 }}>Нажмите «Новая тренировка», чтобы начать</p>
-            </div>
+            <WorkoutEmptyState onAdd={openForm} />
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 12 }}>
               {[...workouts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(workout => (
@@ -110,40 +105,42 @@ export const WorkoutList: React.FC = () => {
           )}
         </div>
 
-        <div style={{
-          position: 'fixed',
-          bottom: isMobile ? 64 : 0,
-          left: isMobile ? 0 : 220,
-          right: 0,
-          padding: isMobile ? '12px 32px 0' : '12px 32px 20px',
-          background: 'linear-gradient(to top, var(--bg) 60%, transparent)',
-          zIndex: 30,
-        }}>
-          <div style={{ maxWidth: 900, margin: '0 auto' }}>
-            <button
-              onClick={openForm}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                width: '100%', padding: '14px 24px', borderRadius: 14, border: 'none',
-                background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
-                color: 'var(--accent-fg)', fontWeight: 700, fontSize: 14, cursor: 'pointer',
-                boxShadow: '0 4px 20px rgba(110,231,183,0.25)',
-                transition: 'transform 0.15s, box-shadow 0.15s',
-              }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)';
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 8px 28px rgba(110,231,183,0.35)';
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLButtonElement).style.transform = 'none';
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 20px rgba(110,231,183,0.25)';
-              }}
-            >
-              <IconPlus />
-              Новая тренировка
-            </button>
+        {workouts.length > 0 && (
+          <div style={{
+            position: 'fixed',
+            bottom: isMobile ? 64 : 0,
+            left: isMobile ? 0 : 220,
+            right: 0,
+            padding: isMobile ? '12px 32px 0' : '12px 32px 20px',
+            background: 'linear-gradient(to top, var(--bg) 60%, transparent)',
+            zIndex: 30,
+          }}>
+            <div style={{ maxWidth: 900, margin: '0 auto' }}>
+              <button
+                onClick={openForm}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  width: '100%', padding: '14px 24px', borderRadius: 14, border: 'none',
+                  background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
+                  color: 'var(--accent-fg)', fontWeight: 700, fontSize: 14, cursor: 'pointer',
+                  boxShadow: '0 4px 20px rgba(110,231,183,0.25)',
+                  transition: 'transform 0.15s, box-shadow 0.15s',
+                }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)';
+                  (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 8px 28px rgba(110,231,183,0.35)';
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLButtonElement).style.transform = 'none';
+                  (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 20px rgba(110,231,183,0.25)';
+                }}
+              >
+                <IconPlus />
+                Новая тренировка
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {showForm && (
           <WorkoutForm

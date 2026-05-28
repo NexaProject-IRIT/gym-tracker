@@ -72,17 +72,7 @@ const NAV_ITEMS: NavItem[] = [
 
 const Logo = () => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-    <div style={{
-      width: 34, height: 34, borderRadius: 10,
-      background: 'var(--accent-a12)',
-      border: '1px solid var(--accent-a20)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-    }}>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-        <path d="M6.5 6.5h11M6.5 17.5h11M4 9.5v5M20 9.5v5M2 11v2M22 11v2"
-          stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-    </div>
+    <img src="/favicon.png" alt="GymLog" style={{ width: 34, height: 34, borderRadius: 10, display: 'block', flexShrink: 0 }} />
     <div>
       <div style={{ color: 'var(--text)', fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>GymLog</div>
       <div style={{ color: 'var(--ghost)', fontSize: 11, marginTop: 1 }}>трекер тренировок</div>

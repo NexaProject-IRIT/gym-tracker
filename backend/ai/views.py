@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 RATE_LIMIT_MESSAGES = 30
 RATE_LIMIT_WINDOW_SECONDS = 60
 
-# Паттерн для очистки XML-тегов, которые GigaChat иногда копирует из промпта.
+# Паттерн для очистки XML-тегов, которые LLM иногда копирует из промпта.
 # Убираем <user-data>...</user-data> и другие служебные теги.
 # Делаем это ДО extract_workout_suggestion, чтобы не ломать парсинг <workout>.
 _CLEANUP_TAGS_RE = re.compile(

@@ -214,9 +214,24 @@ class WorkoutViewSet(viewsets.ModelViewSet):
         exercise = workout.exercises.filter(uid=ex_uid).first()
         if not exercise:
             return Response({'error': 'Exercise not found'}, status=status.HTTP_404_NOT_FOUND)
-        exercise.is_done = request.data.get('isDone', not exercise.is_done)
-        exercise.save(update_fields=['is_done'])
-        return Response({'isDone': exercise.is_done})
+
+        total_sets = max(exercise.sets or 0, 1)
+        updates = []
+
+        if 'setsDone' in request.data:
+            sets_done = int(request.data.get('setsDone') or 0)
+            sets_done = max(0, min(sets_done, total_sets))
+            exercise.sets_done = sets_done
+            exercise.is_done = sets_done >= total_sets
+            updates = ['sets_done', 'is_done']
+        else:
+            new_is_done = request.data.get('isDone', not exercise.is_done)
+            exercise.is_done = new_is_done
+            exercise.sets_done = total_sets if new_is_done else 0
+            updates = ['is_done', 'sets_done']
+
+        exercise.save(update_fields=updates)
+        return Response({'isDone': exercise.is_done, 'setsDone': exercise.sets_done})
 
     @action(detail=False, methods=['get'])
     def recent(self, request):

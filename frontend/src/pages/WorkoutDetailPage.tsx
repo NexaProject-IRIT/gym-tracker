@@ -93,7 +93,7 @@ export const WorkoutDetailPage = () => {
       onUpdateExercise={(exId, u) => updateExercise(workout.id, exId, u)}
       onDeleteExercise={exId => deleteExercise(workout.id, exId)}
       onAddExercise={ex => addExercise(workout.id, ex)}
-      onToggleDone={exId => toggleExerciseDone(workout.id, exId)}
+      onToggleDone={(exId, targetSetsDone) => toggleExerciseDone(workout.id, exId, targetSetsDone)}
     />
   );
 };

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWorkoutsContext } from '../contexts/WorkoutsContext';
 import { apiFetch } from '../lib/api';
+import { WorkoutSummaryWidget } from '../components/Home/WorkoutSummaryWidget';
 
 // ─── мотивационные фразы (40 шт., стабильный выбор по дню года) ────────────
 const QUOTES: { text: string; tag: string }[] = [
@@ -104,11 +105,6 @@ const IconCoffee = ({ size = 18 }: { size?: number }) => (
 const IconSparkle = ({ size = 16 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8" />
-  </svg>
-);
-const IconPlus = ({ size = 18 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-    <path d="M12 5v14M5 12h14" />
   </svg>
 );
 const IconRepeat = ({ size = 16 }: { size?: number }) => (
@@ -493,44 +489,23 @@ export const HomePage = () => {
             </div>
           </div>
 
-          {/* ── QUICK ACTIONS ── */}
-          <div className="dash-fade" style={{ marginBottom: 28, animationDelay: '120ms' }}>
-            <button
-              onClick={onStartNew}
-              className="dash-press dash-cta"
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-                width: '100%', padding: isMobile ? '18px 22px' : '20px 26px',
-                borderRadius: 18, border: 'none',
-                background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%)',
-                color: 'var(--accent-fg)',
-                fontWeight: 700, fontSize: isMobile ? 15.5 : 16,
-                cursor: 'pointer',
-                boxShadow: '0 8px 28px var(--accent-a25), inset 0 1px 0 rgba(255,255,255,0.18)',
-                letterSpacing: '-0.005em',
-              }}
-            >
-              <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span style={{
-                  width: 30, height: 30, borderRadius: 10,
-                  background: 'rgba(255,255,255,0.22)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  border: '1px solid rgba(255,255,255,0.2)',
-                }}>
-                  <IconPlus size={16} />
-                </span>
-                Начать тренировку
-              </span>
-              <IconArrowRight size={16} />
-            </button>
+          {/* ── СВОДКА ТРЕНИРОВКИ (Claude Design widget) ── */}
+          <div className="dash-fade" style={{ marginBottom: 18, animationDelay: '120ms' }}>
+            <WorkoutSummaryWidget
+              lastWorkout={lastWorkout}
+              weeklyStreak={weeklyStreak}
+              onStart={onStartNew}
+            />
+          </div>
 
+          {/* ── Дополнительные действия (повтор + AI) ── */}
+          <div className="dash-fade" style={{ marginBottom: 28, animationDelay: '180ms' }}>
             {lastWorkout && (
               <button
                 onClick={onRepeatLast}
                 disabled={!!repeatingId}
                 className="dash-press"
                 style={{
-                  marginTop: 10,
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
                   width: '100%', padding: '13px 18px',
                   borderRadius: 14,
