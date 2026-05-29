@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { authedFetch, clearTokens } from '../utils/api';
 import { apiFetch, ApiError } from '../lib/api';
+import { useWorkoutsContext } from '../contexts/WorkoutsContext';
 import { PersonalDataCard, type ProfileData, type Goal } from '../components/Profile/PersonalDataCard';
 import { DataActionsCard } from '../components/Profile/DataActionsCard';
 import { ThemeSettingsCard } from '../components/Profile/ThemeSettingsCard';
 import { ConfirmModal } from '../components/Profile/ConfirmModal';
+import { ProfileHeroCard } from '../components/Profile/ProfileHeroCard';
 
 interface Stats {
   total: number;
@@ -20,23 +22,6 @@ interface ProfileApiResponse {
   height?: number | null;
   goal?: string;
 }
-
-function formatWorkouts(n: number): string {
-  const abs = Math.abs(n);
-  const mod10 = abs % 10;
-  const mod100 = abs % 100;
-  if (mod100 >= 11 && mod100 <= 19) return `${n} тренировок`;
-  if (mod10 === 1) return `${n} тренировка`;
-  if (mod10 >= 2 && mod10 <= 4) return `${n} тренировки`;
-  return `${n} тренировок`;
-}
-
-const IconPerson = () => (
-  <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-    <circle cx="12" cy="6" r="3" stroke="var(--accent)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M5 21v-1a7 7 0 0114 0v1" stroke="var(--accent)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
 
 function readProfileFromResponse(data: ProfileApiResponse): ProfileData {
   return {
@@ -64,6 +49,34 @@ export const ProfilePage = () => {
   const [stats, setStats] = useState<Stats>({ total: 0, this_month: 0 });
   const [statsLoaded, setStatsLoaded] = useState(false);
   const [profileLoaded, setProfileLoaded] = useState(false);
+
+  const { workouts, fetchWorkouts } = useWorkoutsContext();
+  useEffect(() => { if (workouts.length === 0) fetchWorkouts(); }, [workouts.length, fetchWorkouts]);
+
+  const weeklyStreak = useMemo(() => {
+    if (workouts.length === 0) return 0;
+    const now = new Date();
+    const day = now.getDay() === 0 ? 7 : now.getDay();
+    const mondayThisWeek = new Date(now);
+    mondayThisWeek.setHours(0, 0, 0, 0);
+    mondayThisWeek.setDate(now.getDate() - (day - 1));
+    let streak = 0;
+    for (let w = 0; w < 200; w++) {
+      const ws = new Date(mondayThisWeek);
+      ws.setDate(mondayThisWeek.getDate() - w * 7);
+      const we = new Date(ws);
+      we.setDate(ws.getDate() + 7);
+      const has = workouts.some(wk => {
+        if (!wk.date) return false;
+        const wd = new Date(wk.date);
+        return wd >= ws && wd < we;
+      });
+      if (has) streak++;
+      else if (w === 0) continue;
+      else break;
+    }
+    return streak;
+  }, [workouts]);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -174,11 +187,6 @@ export const ProfilePage = () => {
     navigate('/login');
   };
 
-  const statItems = [
-    { label: 'Тренировок', value: statsLoaded ? formatWorkouts(stats.total) : '—' },
-    { label: 'Этот месяц', value: statsLoaded ? String(stats.this_month) : '—' },
-  ];
-
   const skBase: React.CSSProperties = {
     background: 'linear-gradient(90deg, var(--surface) 25%, var(--border2) 50%, var(--surface) 75%)',
     backgroundSize: '200% 100%',
@@ -191,49 +199,35 @@ export const ProfilePage = () => {
       <style>{`@keyframes sk-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }`}</style>
 
       {profileLoaded ? (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 40 }}>
-          <div style={{
-            width: 80, height: 80, borderRadius: '50%',
-            background: 'var(--accent-a12)',
-            border: '2px solid var(--accent-a30)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            marginBottom: 16,
-          }}>
-            <IconPerson />
-          </div>
-          <h2 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 700 }}>{profile.displayName || profile.username || 'Ваш профиль'}</h2>
-          <p style={{ margin: '0 0 2px', color: 'var(--faint)', fontSize: 13 }}>@{profile.username}</p>
-          <p style={{ margin: 0, color: 'var(--faint)', fontSize: 14 }}>Личные данные и настройки</p>
+        <div style={{ marginBottom: 32 }}>
+          <ProfileHeroCard
+            name={profile.displayName || profile.username || ''}
+            username={profile.username || ''}
+            streak={weeklyStreak}
+            totalLabel={statsLoaded ? String(stats.total) : null}
+            thisMonth={statsLoaded ? stats.this_month : null}
+          />
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 40 }}>
-          <div style={{ ...skBase, width: 80, height: 80, borderRadius: '50%', marginBottom: 16 }} />
-          <div style={{ ...skBase, width: 150, height: 22, marginBottom: 8 }} />
-          <div style={{ ...skBase, width: 90, height: 13, marginBottom: 6 }} />
-          <div style={{ ...skBase, width: 190, height: 14 }} />
+        <div style={{
+          width: '100%', maxWidth: 560, margin: '0 auto 32px',
+          background: 'var(--bg)', border: '1px solid var(--border)',
+          borderRadius: 26, padding: 28,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 24 }}>
+            <div style={{ ...skBase, width: 80, height: 80, borderRadius: '50%', flexShrink: 0 }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ ...skBase, width: '70%', height: 22, marginBottom: 8 }} />
+              <div style={{ ...skBase, width: '40%', height: 14, marginBottom: 10 }} />
+              <div style={{ ...skBase, width: 120, height: 18, borderRadius: 999 }} />
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div style={{ ...skBase, height: 68, borderRadius: 16 }} />
+            <div style={{ ...skBase, height: 68, borderRadius: 16 }} />
+          </div>
         </div>
       )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginBottom: 32 }}>
-        {statsLoaded ? statItems.map(({ label, value }) => (
-          <div key={label} style={{
-            background: 'var(--surface)', border: '1px solid var(--border)',
-            borderRadius: 16, padding: '20px 12px', textAlign: 'center',
-          }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--accent)' }}>{value}</div>
-            <div style={{ fontSize: 12, color: 'var(--faint)', marginTop: 4 }}>{label}</div>
-          </div>
-        )) : [1, 2].map(i => (
-          <div key={i} style={{
-            background: 'var(--surface)', border: '1px solid var(--border)',
-            borderRadius: 16, padding: '20px 12px', textAlign: 'center',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-          }}>
-            <div style={{ ...skBase, width: 80, height: 20 }} />
-            <div style={{ ...skBase, width: 60, height: 12 }} />
-          </div>
-        ))}
-      </div>
 
       <PersonalDataCard
         profile={profile}
