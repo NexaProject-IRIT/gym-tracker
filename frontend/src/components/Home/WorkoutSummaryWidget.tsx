@@ -10,6 +10,26 @@ const fmtDateLabel = (d: Date): string =>
 
 const padNum = (n: number) => String(n).padStart(2, '0');
 
+const TimeIcon = ({ hour }: { hour: number }) => {
+  if (hour >= 5 && hour < 11) return (
+    <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 8h1a3 3 0 0 1 0 6h-1M3 8h15v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z" />
+      <path d="M6 2v3M10 2v3M14 2v3" />
+    </svg>
+  );
+  if (hour >= 11 && hour < 18) return (
+    <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+    </svg>
+  );
+  return (
+    <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+  );
+};
+
 interface Props {
   lastWorkout: Workout | null;
   weeklyStreak: number;
@@ -18,8 +38,9 @@ interface Props {
 
 export const WorkoutSummaryWidget: React.FC<Props> = ({ lastWorkout, weeklyStreak, onStart }) => {
   const today = new Date();
+  const hour = today.getHours();
   const streakCapped = Math.min(weeklyStreak, 4);
-  const exercisesCount = lastWorkout?.exercises?.length ?? 0;
+  const exercisesCount = lastWorkout?.exercise_count ?? lastWorkout?.exercises?.length ?? 0;
 
   const lastDateLabel = lastWorkout
     ? `${new Date(lastWorkout.date).getDate()} ${MONTH_SHORT[new Date(lastWorkout.date).getMonth()]}`
@@ -56,9 +77,11 @@ export const WorkoutSummaryWidget: React.FC<Props> = ({ lastWorkout, weeklyStrea
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
               fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase',
               color: 'var(--faint)', fontWeight: 600,
             }}>
+              <TimeIcon hour={hour} />
               Сегодня
             </span>
             <span style={{
@@ -85,7 +108,7 @@ export const WorkoutSummaryWidget: React.FC<Props> = ({ lastWorkout, weeklyStrea
               fontSize: 11, fontWeight: 600, color: 'var(--accent)',
               letterSpacing: '0.02em',
             }}>
-              {lastWorkout ? 'Готова к старту' : 'Запланирована'}
+              {lastWorkout ? 'Активна' : 'Запланирована'}
             </span>
           </div>
         </div>
@@ -115,17 +138,17 @@ export const WorkoutSummaryWidget: React.FC<Props> = ({ lastWorkout, weeklyStrea
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           gap: 16, paddingTop: 2,
         }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <b style={{
               fontFamily: 'JetBrains Mono, ui-monospace, monospace',
-              fontSize: 46, fontWeight: 700, lineHeight: 0.9,
+              fontSize: 46, fontWeight: 700, lineHeight: 1,
               color: 'var(--accent)', letterSpacing: '-0.02em',
             }}>
               {padNum(weeklyStreak)}
             </b>
             <span style={{
               display: 'flex', flexDirection: 'column',
-              lineHeight: 1.15, fontSize: 13, color: 'var(--muted)', fontWeight: 500,
+              lineHeight: 1.2, fontSize: 13, color: 'var(--muted)', fontWeight: 500,
             }}>
               <span style={{ color: 'var(--text)', fontWeight: 600 }}>
                 {weeklyStreak === 1 ? 'неделя' : 'недели'}

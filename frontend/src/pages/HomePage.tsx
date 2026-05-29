@@ -50,8 +50,6 @@ const QUOTES: { text: string; tag: string }[] = [
 
 const WEEKDAY_LABELS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 const MONTH_SHORT = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
-const MONTH_FULL = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-const WEEKDAY_FULL = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
 const MILESTONES = [5, 10, 25, 50, 100, 200, 500, 1000];
 
 const fmtDate = (d: Date): string => {
@@ -85,23 +83,6 @@ const greetingFor = (hour: number): string => {
 
 // ─── SVG-иконки ────────────────────────────────────────────────────────────
 
-const IconSun = ({ size = 18 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="4" />
-    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
-  </svg>
-);
-const IconMoon = ({ size = 18 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-  </svg>
-);
-const IconCoffee = ({ size = 18 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 8h1a3 3 0 0 1 0 6h-1M3 8h15v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z" />
-    <path d="M6 2v3M10 2v3M14 2v3" />
-  </svg>
-);
 const IconSparkle = ({ size = 16 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8" />
@@ -140,14 +121,6 @@ const IconBrain = ({ size = 14 }: { size?: number }) => (
     <path d="M9.5 2a2.5 2.5 0 0 1 5 0v.5M9.5 2A4.5 4.5 0 0 0 5 6.5v0A4.5 4.5 0 0 0 9.5 11M9.5 2h5M14.5 2A4.5 4.5 0 0 1 19 6.5v0A4.5 4.5 0 0 1 14.5 11M9.5 11v8a2.5 2.5 0 0 0 5 0v-8M9.5 11h5M7 11.5a2.5 2.5 0 0 0 0 5h2.5M17 11.5a2.5 2.5 0 0 1 0 5h-2.5" />
   </svg>
 );
-
-// ─── шаблоны для приветствия (иконка времени суток) ───────────────────────
-const greetingIconFor = (hour: number) => {
-  if (hour < 5) return <IconMoon size={18} />;
-  if (hour < 11) return <IconCoffee size={18} />;
-  if (hour < 18) return <IconSun size={18} />;
-  return <IconMoon size={18} />;
-};
 
 // ─── AI-подсказки (меняются каждый день) ─────────────────────────────────
 const AI_TIPS: { hint: string; prompt: string }[] = [
@@ -250,9 +223,7 @@ export const HomePage = () => {
   // ─── деривативные данные ────────────────────────────────────────────
   const hour = now.getHours();
   const greeting = greetingFor(hour);
-  const greetingIcon = greetingIconFor(hour);
   const quote = QUOTES[dayOfYear(now) % QUOTES.length];
-  const dateLabel = `${now.getDate()} ${MONTH_FULL[now.getMonth()]}, ${WEEKDAY_FULL[now.getDay()]}`;
 
   const workoutsByDate = useMemo(() => {
     const map = new Map<string, number>();
@@ -395,24 +366,12 @@ export const HomePage = () => {
           padding: `${isMobile ? 28 : 44}px ${sidePad}px 0`,
         }}>
 
-          {/* ── ШАПКА ── приветствие + дата ── */}
+          {/* ── ШАПКА ── приветствие ── */}
           <header
             className="dash-fade"
             style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 22 }}
           >
             <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                color: 'var(--muted)', fontSize: 12, fontWeight: 500,
-                background: 'var(--surface)',
-                border: '1px solid var(--border)',
-                padding: '5px 10px 5px 8px',
-                borderRadius: 999,
-                marginBottom: 12,
-              }}>
-                <span style={{ color: 'var(--accent)' }}>{greetingIcon}</span>
-                <span style={{ letterSpacing: '0.01em' }}>{dateLabel}</span>
-              </div>
               <h1 style={{
                 margin: 0,
                 fontSize: isMobile ? 30 : 38,
@@ -433,6 +392,15 @@ export const HomePage = () => {
             </div>
           </header>
 
+          {/* ── СВОДКА ТРЕНИРОВКИ ── */}
+          <div className="dash-fade" style={{ marginBottom: 18, animationDelay: '60ms' }}>
+            <WorkoutSummaryWidget
+              lastWorkout={lastWorkout}
+              weeklyStreak={weeklyStreak}
+              onStart={onStartNew}
+            />
+          </div>
+
           {/* ── ЦИТАТА ── */}
           <div
             className="dash-fade"
@@ -442,8 +410,8 @@ export const HomePage = () => {
               border: '1px solid var(--border2)',
               borderRadius: 20,
               padding: isMobile ? '18px 18px 18px 20px' : '20px 22px',
-              marginBottom: 24,
-              animationDelay: '60ms',
+              marginBottom: 18,
+              animationDelay: '120ms',
               boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), 0 8px 28px rgba(0,0,0,0.18)',
               overflow: 'hidden',
             }}
@@ -487,15 +455,6 @@ export const HomePage = () => {
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* ── СВОДКА ТРЕНИРОВКИ (Claude Design widget) ── */}
-          <div className="dash-fade" style={{ marginBottom: 18, animationDelay: '120ms' }}>
-            <WorkoutSummaryWidget
-              lastWorkout={lastWorkout}
-              weeklyStreak={weeklyStreak}
-              onStart={onStartNew}
-            />
           </div>
 
           {/* ── Дополнительные действия (повтор + AI) ── */}
@@ -589,7 +548,7 @@ export const HomePage = () => {
           >
             <StatCell
               icon={<IconFlame size={14} />}
-              label="недельный стрик"
+              label="стрик"
               value={weeklyStreak}
               unit={weeklyStreak === 1 ? 'нед' : 'нед'}
               accent="#fb923c"
@@ -598,7 +557,7 @@ export const HomePage = () => {
             />
             <StatCell
               icon={<IconCheck size={14} />}
-              label="всего тренировок"
+              label="всего"
               value={totalWorkouts}
               accent="var(--accent)"
               loading={loading && !workouts.length}
