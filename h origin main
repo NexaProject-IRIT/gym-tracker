@@ -1,0 +1,495 @@
+[33mcommit 9812a1ec9af6d706381911d46c14b9699cfe3e10[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Merge: cb59e4c 3dacfbc
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Fri May 29 23:01:35 2026 +0500
+
+    Merge remote: новые тренажёры + дизайн-апдейты
+
+[33mcommit cb59e4cd206250ce93e7a627a5702439a82eae7f[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Fri May 29 22:49:11 2026 +0500
+
+    feat: добавлен раздел тренировок за эту неделю во вкладке тренировок
+
+[33mcommit 1770e799915ef1a077bc3840d51159fc23866647[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Fri May 29 13:58:51 2026 +0500
+
+    feat: изменен дизайн карточек тренировок
+
+[33mcommit 582cd93b9e41569e5a565532f0822fd9232695b3[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Fri May 29 13:40:29 2026 +0500
+
+    feat: изменен дизайн ии-тренера
+
+[33mcommit 63ea15e23a1d2b6a8007dc2cd05658fcb644c40a[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Fri May 29 13:20:17 2026 +0500
+
+    feat: изменен дизайн таймера и профиля
+
+[33mcommit 055bcc10fd2460d308a04c10db2992dadda6dd9a[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Fri May 29 00:30:29 2026 +0500
+
+    feat: дизайн тренировок, лендинг внутренний, пустая вкладка тренировок подкачен, поменял текст
+
+[33mcommit 3dacfbc5548efd92f59254029c5ccb4fb2a72cd0[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: niksa1515 <shmoylova2006@mail.ru>
+Date:   Thu May 28 11:48:39 2026 +0500
+
+    фото новых тренажеров
+
+[33mcommit 7e5fbac84b5e45588e63eca328d444086913b7f9[m
+Author: IceCube <zhiliakovdanil@gmail.com>
+Date:   Tue May 26 21:44:23 2026 +0500
+
+    Добавил deploy job
+
+[33mcommit d423ab558c997df1733c9ade4be7a86e260f4664[m
+Author: niksa1515 <shmoylova2006@mail.ru>
+Date:   Tue May 26 12:12:10 2026 +0500
+
+    добавлены тренажеры и упражнения(без фото)
+
+[33mcommit 8cf53a8f82bbd8b2a080fbeaf75a6d6db77067d1[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Tue May 26 02:12:37 2026 +0500
+
+    feat: поменял на deepseek ии-тренера, а так же улучшил промты
+
+[33mcommit ca532e03cfd51d4f746194be00102e23322eaf5a[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Mon May 25 23:26:27 2026 +0500
+
+    fix: ci тесты после PWA
+
+[33mcommit d2ade5642814f22d034a71ec495eda1e3c905c26[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Mon May 25 23:15:57 2026 +0500
+
+    feat: добавлен PWA для мобильных устройств
+
+[33mcommit 90e500c558752da0809b04c71752629996f29c1d[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Mon May 25 23:04:08 2026 +0500
+
+    fix: обновление страниц на вкладке тренировок и ии-тренера
+
+[33mcommit bf071bd567e12b84db37637d578ae63e72b634e5[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Mon May 25 20:01:38 2026 +0500
+
+    fix: шрифт
+
+[33mcommit 8b8d8782437cc3227dab0d105db0e107ec8432fc[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Mon May 25 19:50:31 2026 +0500
+
+    fix: ci тест
+
+[33mcommit a76365bef9bb8621019bdf99f23284033f9a85ac[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Mon May 25 19:48:01 2026 +0500
+
+    fix: поправил нечитабельный шрифт
+
+[33mcommit 12c6d9615dcda5d49e9ad9ac4bc54a7471358897[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Mon May 25 19:13:28 2026 +0500
+
+    feat: страница аналитики
+
+[33mcommit 920d224e932b617281e16721f30443fcd493c70c[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Mon May 25 15:53:41 2026 +0500
+
+    fix: ci тесты
+
+[33mcommit 7fa36c533ab473a318f39bc68b6ea6414a479f5d[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Mon May 25 15:45:46 2026 +0500
+
+    feat: добавил ci тесты
+
+[33mcommit 9fd521658725a1f7fc7184aa45a58816412cdd90[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Mon May 25 15:41:49 2026 +0500
+
+    feat: добавлен логотип приложения
+
+[33mcommit a91f451a722212680e6307c0687089142f49cfec[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Thu May 21 21:51:47 2026 +0500
+
+    feat: добавил скелетон при загрузки страничек
+
+[33mcommit 1c3ba9b7ab8a94741720822beb1f593dfe6bd117[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Thu May 21 13:47:33 2026 +0500
+
+    fix: убрал переключение темы в профиль + добавил названия у иконок в баре на постоянной основе
+
+[33mcommit 7ba474f1dbbf1ddaa9980e105e7e84f8537d3d0d[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Thu May 21 13:38:16 2026 +0500
+
+    feat: изменен лендинг + добавлен лендинг без регистрации
+
+[33mcommit 08d3ea4ec17232dd69266ab501f7ed2113af9c9f[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Thu May 21 13:04:55 2026 +0500
+
+    style: улучшено качество кода 2
+
+[33mcommit 287cb6c96871c2dbb39f6639c593a508387a96a2[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Wed May 20 21:26:12 2026 +0500
+
+    style: улучшил качество кода
+
+[33mcommit 63519448b572f7b10c0f971593312c1c0a8cd63a[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Wed May 20 20:56:07 2026 +0500
+
+    more bugfix
+
+[33mcommit 6de3a4e7d93207085493e6c7f8908c323e1c5750[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Fri May 15 18:12:54 2026 +0500
+
+    fix: кнопка 'Новая тренировка' не прижимается к нижнему краю
+
+[33mcommit 75113a44f518d3b9d32820f025a42cd8f2b6a23f[m
+Author: niksa1515 <shmoylova2006@mail.ru>
+Date:   Fri May 15 10:38:47 2026 +0500
+
+    начальный вариант светлой темы
+
+[33mcommit e6ae65863f48c521f415ca450c0155fc84ee113d[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Mon May 11 21:47:12 2026 +0500
+
+    feat: изменил логику в таймере
+
+[33mcommit 6b67abb3fb050cc54d165bc906c4a11342b93add[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Mon May 11 20:52:41 2026 +0500
+
+    feat: изменил регистрацию, добавил юзернейм и никнейм
+
+[33mcommit 96c5b3e96d5b4e38eb4aeecd1a0c36311767eb2b[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Mon May 11 20:25:46 2026 +0500
+
+    fix: безопасность в коде
+
+[33mcommit 36f1493dc8b63859f10ab134451effa418ef4206[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Mon May 4 03:40:28 2026 +0500
+
+    fix: отображение карточек тренажерев
+
+[33mcommit c845098d753117877cdd109eb1ec210c9d8566bf[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Sun May 3 20:25:28 2026 +0500
+
+    feat: редизайн 'базы тренировок'
+
+[33mcommit f278f442dceb9fd0b33c1e8002607eb688362d2a[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Sun May 3 19:35:31 2026 +0500
+
+    fix: таймер теперь только во время тренировки
+
+[33mcommit 77f02455ee851e777cc7748647a06dfc72d5d53f[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Sun May 3 13:32:44 2026 +0500
+
+    fix: таймер
+
+[33mcommit 6ec4af992c779c5d24fa8b76083626cceeaf8e99[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Sat May 2 23:45:06 2026 +0500
+
+    feat: таймер
+
+[33mcommit 768a9ffd4143fe165c4f0a6894cc5464a09f47b6[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Sat May 2 16:51:52 2026 +0500
+
+    feat: мерж веток backend-dev, frontend-dev и ai в main & bugfix
+
+[33mcommit b6859837cf9fa6b9e4bed308a5d168b609d7b658[m
+Merge: 777c6a9 110b530
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Sat May 2 15:57:51 2026 +0500
+
+    merge: ai-тренер (GigaChat) — backend + frontend
+    
+    - Новое Django-приложение ai/ с ChatMessage, ChatView, HistoryView
+    - Интеграция GigaChat API с OAuth-токеном (кэш 30 мин, thread-safe)
+    - Mock-клиент для разработки без ключа (LLM_PROVIDER=mock)
+    - Системный промпт с историей тренировок и базой упражнений в контексте
+    - Парсинг <workout>...</workout> из ответа модели → кнопка "Добавить тренировку"
+    - Rate-limiting: 30 сообщений в минуту на пользователя
+    - Фронт: AiChatPage, MessageBubble, WorkoutSuggestionCard, AiChatContext
+    - GigaChat env vars в docker-compose; /ai прокси в vite.config.ts
+    - Конфликт vite.config.ts разрешён: сохранены оба прокси /media и /ai
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+[33mcommit 777c6a90b49555fda9173cb4da6cb5a6b257936b[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Sat May 2 15:31:51 2026 +0500
+
+    fix: исправить кнопку (i), прокси /media и сохранение exerciseId как slug
+    
+    - exercises/views.py: фильтр exercise_id теперь ищет по полю exercise_id (slug),
+      а не по id (integer PK) — кнопка (i) в WorkoutDetail работает корректно
+    - WorkoutForm.tsx: при выборе из автодополнения сохраняем exerciseId (slug)
+      вместо числового PK, чтобы info button мог найти упражнение
+    - vite.config.ts: добавить прокси /media → backend:8000,
+      без него картинки knowledge_base не загружались в dev-режиме
+    - .gitignore: добавить CLAUDE.md
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+[33mcommit 50d7e8045780dbcf51aeb6e552ac808bd5ff48c1[m
+Author: lov3waste <vladislavoglushevich@gmail.com>
+Date:   Sat May 2 01:40:49 2026 +0500
+
+    Добавлены изображения упражнений и оборудования knowledge_base
+
+[33mcommit d3f3c93c8a7a3dc9f3fef11d91f114affc989a8f[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Tue Apr 28 14:47:48 2026 +0500
+
+    fix: отдельный PATCH endpoint для is_done, убрать вызов updateExercise из toggleDone
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+[33mcommit 87d187b88185509a71c0537e7130aedfd20290a5[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Tue Apr 28 14:37:50 2026 +0500
+
+    feat: сохранение галочек выполненных упражнений (is_done)
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+[33mcommit 5d6539874d1ba665db1e12d816970e6a5aa3761a[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Tue Apr 28 14:31:04 2026 +0500
+
+    fix: кнопка (i) — фильтр по id вместо exercise_id, переиспользовать ExerciseModal
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+[33mcommit 9243256a75f140577f3712958e196cb10b5d8753[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Tue Apr 28 14:25:58 2026 +0500
+
+    fix: добавить фильтр по equipment в ExerciseListView
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+[33mcommit 21a7e420fdf7db755a537336949735f7a94b9cc7[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Tue Apr 28 14:23:15 2026 +0500
+
+    fix: исправить URL тренажёров /equipment/ → /exercises/equipment/
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+[33mcommit c4c51c1b7521a5b07e85c0e56524085b74381661[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Tue Apr 28 14:12:25 2026 +0500
+
+    merge: backend-dev — rapidfuzz, миграции created_at, убрать collectstatic
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+[33mcommit 329f56267053b558802cdb7f6914e83af2ccaa63[m[33m ([m[1;32mfrontend-dev[m[33m)[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Tue Apr 28 14:10:54 2026 +0500
+
+    fix: убрать хардкод localhost в ExerciseGrid, добавить exercise_id фильтр в бэкенд
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+[33mcommit 50e15df24c581cb77694c602e5225235e0db0add[m[33m ([m[1;31morigin/frontend-dev[m[33m)[m
+Author: Дарья Артемьева <dashaartemeva844@gmail.com>
+Date:   Sat Apr 25 23:13:21 2026 +0500
+
+    4 спринт
+
+[33mcommit 78dd0bcef01f71de1636365f2a16d121ab52344f[m
+Author: niksa1515 <shmoylova2006@mail.ru>
+Date:   Thu Apr 23 17:04:02 2026 +0500
+
+    модалка деталей, скрытие стрелок, убраны эмодзи
+
+[33mcommit e81afb6f7f11ca371e16543ccf53198ce462cb42[m
+Author: niksa1515 <shmoylova2006@mail.ru>
+Date:   Thu Apr 23 17:02:44 2026 +0500
+
+    переделан лендинг, убраны эмодзи
+
+[33mcommit 110b530633785b35fe3395b87abb12fbc01966fd[m[33m ([m[1;31morigin/ai[m[33m, [m[1;32mai[m[33m)[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Tue Apr 21 16:29:23 2026 +0500
+
+    ии-тренер
+
+[33mcommit 5575689db205925a2bd4fc7e31c8b3d7c20b84fc[m
+Merge: 0fd396f a57da2f
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Mon Apr 20 23:40:40 2026 +0500
+
+    Merge main → frontend-dev
+
+[33mcommit a57da2fe6133004e354ef2e6db425da5587a958a[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Mon Apr 20 23:38:29 2026 +0500
+
+    фикс описаний в базе
+
+[33mcommit cbe105c25b7ea948985e296b62cc0abb128f0aea[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Mon Apr 20 17:32:15 2026 +0500
+
+    результат 4 спринта
+
+[33mcommit 0fd396f39925abc0f4e8692ff25e3870973d4b39[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Mon Apr 20 17:18:55 2026 +0500
+
+    фиксы фронта после 4 спринта
+
+[33mcommit 813907d8d550bcfcaa1b959d793d1e16823cc424[m
+Author: hitroVie <vladislavoglushevich@gmail.com>
+Date:   Fri Apr 3 15:14:37 2026 +0500
+
+    feat: add generate_export_text for workout export
+
+[33mcommit 5342cdb508e82cd26e74ff0369644e89f92a62b6[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Sun Mar 29 14:10:11 2026 +0500
+
+    фикс для постгрис, фикс путей
+
+[33mcommit a730c323d82964d3c477f88869086d0c9067c965[m
+Author: IceCube <zhiliakovdanil@gmail.com>
+Date:   Sat Mar 28 23:03:16 2026 +0500
+
+    Парсер
+
+[33mcommit ca694abaa338cb272f4e4cd3267ae837d8db2b93[m
+Author: IceCube <zhiliakovdanil@gmail.com>
+Date:   Sat Mar 28 22:58:13 2026 +0500
+
+    Добавил CRUD
+
+[33mcommit bcd0a76c65583dc6e7c43b321f8c73b3a72c070b[m
+Author: lov3waste <vladislavoglushevich@gmail.com>
+Date:   Thu Mar 26 20:47:21 2026 +0500
+
+    Add markdown parser and automatic exercise sync to API
+
+[33mcommit 915400c6e9883f1d0c618a25887c624996338494[m
+Author: IceCube <zhiliakovdanil@gmail.com>
+Date:   Fri Mar 20 10:43:49 2026 +0500
+
+    Added models and get-endpoints
+
+[33mcommit 63f88d90784fa1ed24d0c4351a8117c10a79d6f0[m
+Author: Дарья Артемьева <dashaartemeva844@gmail.com>
+Date:   Mon Apr 6 21:07:49 2026 +0500
+
+    изменения
+
+[33mcommit cae3137780921460c20c406e1bc719e090860485[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Mon Apr 6 15:56:37 2026 +0500
+
+    fetch запросы к реальному апи, логин и профиль с сохранением токена, ворклист переключен на файлы с беком, добавлен AppMain.tsx (после сливания в main это точка входа будет)
+
+[33mcommit 0735f63e5cda5177caadb0ed53b1405d9daad2e2[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Mon Apr 6 15:32:08 2026 +0500
+
+    фикс useWorkoutsApi.ts в соответствии бэка
+
+[33mcommit 2521cd1f7c06508274164cb556843e8e0520dc20[m
+Author: niksa1515 <shmoylova2006@mail.ru>
+Date:   Mon Apr 6 14:18:55 2026 +0500
+
+    поправила вид для мобилки, есть окна регистрации и входа но пока без сохранений
+
+[33mcommit ba5b0276a0edde0f8393de128d902e92e785ab80[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Fri Apr 3 11:23:03 2026 +0500
+
+    переписал в useWorkouts на fetch-запросы
+
+[33mcommit 4d7839c4335de25c1deec12b226ac28f96e37681[m
+Merge: e7057a1 42da9b7
+Author: Дарья Артемьева <dashaartemeva844@gmail.com>
+Date:   Tue Mar 31 14:28:33 2026 +0500
+
+    база знаний добавлена в навигацию
+
+[33mcommit e7057a1c6948376c923d6bc279a2ca1c09e16f5d[m
+Author: Дарья Артемьева <dashaartemeva844@gmail.com>
+Date:   Tue Mar 31 14:10:50 2026 +0500
+
+    База знаний
+
+[33mcommit 42da9b7e6728450a9359b5a488e295cd772cc7e7[m
+Author: niksa1515 <shmoylova2006@mail.ru>
+Date:   Sun Mar 29 18:34:27 2026 +0500
+
+    Чекбокс перед каждым упражнением в режиме просмотра
+
+[33mcommit 5bb5049c05510aeb76ed682880f7e6cd5ad3a7b5[m
+Author: niksa1515 <shmoylova2006@mail.ru>
+Date:   Sun Mar 29 18:33:42 2026 +0500
+
+    дополнила навигацию
+
+[33mcommit c898febaaac040bc0151550b0b0dcf14fd00ddbf[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Fri Mar 20 15:56:41 2026 +0500
+
+    Добавлена страница тренировок
+
+[33mcommit c9dc2253d8f647f665e4e911d7703704c45adcb5[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Sun Mar 15 16:46:01 2026 +0500
+
+    добавлен iOS таймер и секундомер с кастомной каруселью
+
+[33mcommit 49a69d1b2b3d1a2146af480f8fc244b70faafb0b[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Sun Mar 15 16:23:25 2026 +0500
+
+    настройка Tailwind CSS
+
+[33mcommit cb52bc491bc854a23eaff0cdbf04a7a72306f558[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Sun Mar 15 15:45:27 2026 +0500
+
+    Добавлены недостоющие файлы
+
+[33mcommit fe4186f81c60f6898f89731bdc9968061ddb9013[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Tue Mar 3 15:08:23 2026 +0500
+
+    Настроено подключение к постгрис, создана таблица exercises
+
+[33mcommit a77b4db09f513a82d745b5cf452e9d96bb338fa5[m
+Author: desper1do <opdaniello05@gmail.com>
+Date:   Tue Mar 3 14:33:19 2026 +0500
+
+    Инициализация проекта, структура с докером, реактом и фастапи

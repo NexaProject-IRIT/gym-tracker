@@ -1,5 +1,5 @@
 import React from 'react';
-import type { WorkoutExercise } from '../../types/workout';
+import type { WorkoutExercise, ParameterType } from '../../types/workout';
 
 interface Stat {
   value: string;
@@ -18,7 +18,7 @@ const fmtTime = (sec: number): { value: string; unit: string } => {
 
 const buildStats = (ex: WorkoutExercise): Stat[] => {
   const stats: Stat[] = [];
-  const has = (p: string) => ex.parameters.includes(p);
+  const has = (p: ParameterType) => ex.parameters.includes(p);
 
   if (has('sets') && ex.sets != null && ex.sets > 0) {
     stats.push({ value: String(ex.sets), label: ex.sets === 1 ? 'Подход' : 'Подх' });

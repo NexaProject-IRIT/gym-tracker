@@ -44,7 +44,7 @@ interface Props extends Partial<StripData> {
 }
 
 // Compute strip data from raw workouts list, for the current week (Mon..Sun).
-export function computeWeekStrip(workouts: Workout[]): StripData {
+function computeWeekStrip(workouts: Workout[]): StripData {
   const now = new Date();
   const dayOfWeek = now.getDay() === 0 ? 7 : now.getDay();
   const monday = new Date(now);
