@@ -97,6 +97,10 @@ export const WorkoutList: React.FC = () => {
                   isMenuOpen={openMenuId === workout.id}
                   onSelect={() => handleSelectWorkout(workout.id)}
                   onMenuToggle={() => setOpenMenuId(openMenuId === workout.id ? null : workout.id)}
+                  onEdit={() => {
+                    setOpenMenuId(null);
+                    navigate(`/workouts/${workout.id}`, { state: { edit: true } });
+                  }}
                   onRepeat={() => { repeatWorkout(workout.id); setOpenMenuId(null); }}
                   onDelete={() => { deleteWorkout(workout.id); setOpenMenuId(null); }}
                 />

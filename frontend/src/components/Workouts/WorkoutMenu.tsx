@@ -2,8 +2,8 @@ import React from 'react';
 
 const IconEdit = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
     <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
 const IconRepeat = () => (
@@ -24,11 +24,13 @@ interface Props {
   onEdit: () => void;
   onRepeat: () => void;
   onDelete: () => void;
+  /** Override the menu's positioning. Defaults to top-right (top: 40, right: 0). */
+  style?: React.CSSProperties;
 }
 
-export const WorkoutMenu: React.FC<Props> = ({ onEdit, onRepeat, onDelete }) => {
+export const WorkoutMenu: React.FC<Props> = ({ onEdit, onRepeat, onDelete, style }) => {
   const items = [
-    { icon: <IconEdit />, label: 'Открыть', action: onEdit, color: 'var(--muted)' },
+    { icon: <IconEdit />, label: 'Редактировать', action: onEdit, color: 'var(--muted)' },
     { icon: <IconRepeat />, label: 'Повторить', action: onRepeat, color: 'var(--muted)' },
     { icon: <IconTrash />, label: 'Удалить', action: onDelete, color: '#f87171' },
   ];
@@ -39,6 +41,7 @@ export const WorkoutMenu: React.FC<Props> = ({ onEdit, onRepeat, onDelete }) => 
       background: 'var(--surface2)', borderRadius: 14, overflow: 'hidden',
       border: '1px solid var(--border2)',
       boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+      ...style,
     }}>
       {items.map((item, i) => (
         <button

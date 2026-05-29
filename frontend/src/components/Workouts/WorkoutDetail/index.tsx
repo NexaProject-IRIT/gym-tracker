@@ -94,7 +94,8 @@ export const WorkoutDetail: React.FC<Props> = ({
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [isEditMode, setIsEditMode] = useState(false);
+  const initialEdit = !!(location.state as { edit?: boolean } | null)?.edit;
+  const [isEditMode, setIsEditMode] = useState(initialEdit);
   const [editingExercise, setEditingExercise] = useState<WorkoutExercise | null>(null);
   const [showMenu, setShowMenu] = useState(false);
   const [editingName, setEditingName] = useState(false);
