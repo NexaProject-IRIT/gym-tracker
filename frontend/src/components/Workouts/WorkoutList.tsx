@@ -4,7 +4,7 @@ import { useWorkoutsContext } from '../../contexts/WorkoutsContext';
 import { WORKOUT_TYPE_COLORS } from '../../types/workout';
 import { WorkoutForm } from './WorkoutForm';
 import { WorkoutCard, WorkoutCardSkeleton } from './WorkoutCard';
-import { StatsRow } from './StatsRow';
+import { WeeklyActivityStrip } from './WeeklyActivityStrip';
 import { WorkoutEmptyState } from './WorkoutEmptyState';
 
 const CSS = `
@@ -68,7 +68,14 @@ export const WorkoutList: React.FC = () => {
           <p style={{ margin: 0, fontSize: 14, color: 'var(--text-muted)' }}>История и дневник тренировок</p>
         </div>
 
-        {workouts.length > 0 && <StatsRow workouts={workouts} />}
+        {workouts.length > 0 && (
+          <div style={{
+            padding: '0 32px 20px',
+            maxWidth: 900, width: '100%', margin: '0 auto',
+          }}>
+            <WeeklyActivityStrip workouts={workouts} />
+          </div>
+        )}
 
         {error && (
           <div style={{ textAlign: 'center', padding: 20, color: '#f87171', fontSize: 13 }}>{error}</div>
@@ -83,13 +90,13 @@ export const WorkoutList: React.FC = () => {
           maxWidth: 900, width: '100%', margin: '0 auto',
         }}>
           {loading ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))', gap: 12 }}>
               {Array.from({ length: 6 }).map((_, i) => <WorkoutCardSkeleton key={i} />)}
             </div>
           ) : workouts.length === 0 ? (
             <WorkoutEmptyState onAdd={openForm} />
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))', gap: 12 }}>
               {[...workouts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(workout => (
                 <WorkoutCard
                   key={workout.id}

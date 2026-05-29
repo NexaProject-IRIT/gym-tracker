@@ -1,6 +1,28 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
+import { WeeklyActivityStrip, type StripData } from '../components/Workouts/WeeklyActivityStrip';
+
+// Демо-данные для лендинга — показывают как выглядит неделя у активного пользователя.
+const DEMO_STRIP: StripData = {
+  bars: [
+    { count: 1, intensity: 0.78, color: '#3b82f6' }, // Пн — силовая
+    { count: 1, intensity: 0.54, color: '#ef4444' }, // Вт — кардио
+    { count: 0, intensity: 0,    color: ''        }, // Ср — отдых
+    { count: 2, intensity: 0.92, color: '#3b82f6' }, // Чт — силовая
+    { count: 1, intensity: 1.0,  color: '#6ee7b7' }, // Пт — сегодня
+    { count: 0, intensity: 0,    color: ''        }, // Сб — отдых
+    { count: 1, intensity: 0.62, color: '#a855f7' }, // Вс — функц.
+  ],
+  todayIndex: 4,
+  totalWorkouts: 6,
+  typeCounts: [
+    { type: 'strength',   count: 3 },
+    { type: 'cardio',     count: 1 },
+    { type: 'functional', count: 1 },
+    { type: 'custom',     count: 1 },
+  ],
+};
 
 // ─── SVG-иконки ────────────────────────────────────────────────────────────
 const IconDumbbell = ({ s = 22 }: { s?: number }) => (
@@ -112,6 +134,7 @@ export const LandingPage = () => {
           <TrustLine />
           <FeaturesBento isMobile={isMobile} />
           <HowItWorksSection isMobile={isMobile} />
+          <ActivityShowcase isMobile={isMobile} />
           <FinalCta onClick={() => navigate('/register')} />
           <FooterSection />
         </main>
@@ -1103,6 +1126,61 @@ const HowItWorksSection = ({ isMobile }: { isMobile: boolean }) => (
 // ════════════════════════════════════════════════════════════════════════
 // Final CTA
 // ════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════
+// Activity showcase — превью недели на лендинге
+// ════════════════════════════════════════════════════════════════════════
+const ActivityShowcase = ({ isMobile }: { isMobile: boolean }) => (
+  <section style={{
+    maxWidth: 1180, margin: '0 auto',
+    padding: isMobile ? '40px 20px 24px' : '80px 28px 40px',
+    position: 'relative',
+  }}>
+    <div style={{ textAlign: 'center', marginBottom: isMobile ? 28 : 40 }}>
+      <div style={{
+        display: 'inline-flex', alignItems: 'center', gap: 8,
+        padding: '6px 12px 6px 8px',
+        background: 'var(--surface)',
+        border: '1px solid var(--border2)',
+        borderRadius: 999,
+        fontSize: 12, color: 'var(--muted)', fontWeight: 500,
+        marginBottom: 18,
+      }}>
+        <span style={{
+          width: 16, height: 16, borderRadius: '50%',
+          background: 'var(--accent-a20)', color: 'var(--accent)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <IconChartBar s={10} />
+        </span>
+        <span>Превью</span>
+      </div>
+
+      <h2 style={{
+        margin: '0 0 14px',
+        fontSize: isMobile ? 'clamp(28px, 7vw, 36px)' : 'clamp(36px, 4.5vw, 52px)',
+        fontWeight: 800, letterSpacing: '-0.035em',
+        lineHeight: 1.1, color: 'var(--text)',
+        maxWidth: 640, marginLeft: 'auto', marginRight: 'auto',
+      }}>
+        Так выглядит твоя&nbsp;неделя
+      </h2>
+      <p style={{
+        margin: '0 auto',
+        maxWidth: 520,
+        fontSize: isMobile ? 14.5 : 15.5,
+        color: 'var(--dim)', lineHeight: 1.55,
+      }}>
+        Каждая тренировка — столбик в твоём ритме. Сегодняшний день подсвечен,
+        свободные дни — пунктиром.
+      </p>
+    </div>
+
+    <div className="lp-fade" style={{ maxWidth: 620, margin: '0 auto' }}>
+      <WeeklyActivityStrip data={DEMO_STRIP} />
+    </div>
+  </section>
+);
+
 const FinalCta = ({ onClick }: { onClick: () => void }) => (
   <section style={{
     maxWidth: 1180, margin: '0 auto',
