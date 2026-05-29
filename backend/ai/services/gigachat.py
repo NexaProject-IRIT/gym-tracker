@@ -169,6 +169,14 @@ class GigaChatClient:
         except (KeyError, IndexError, TypeError):
             raise LLMError(f'Неожиданный формат ответа GigaChat: {payload}')
 
+    def health(self) -> bool:
+        """Проверка доступности — пробуем получить OAuth-токен (кэшированный)."""
+        try:
+            self._get_access_token()
+            return True
+        except (LLMError, Exception):
+            return False
+
 
 class DeepSeekClient:
     """
@@ -211,6 +219,18 @@ class DeepSeekClient:
         except (KeyError, IndexError, TypeError):
             raise LLMError(f'Неожиданный формат ответа DeepSeek: {payload}')
 
+    def health(self) -> bool:
+        """Проверка доступности — GET /v1/models (бесплатно, без расхода токенов)."""
+        try:
+            resp = requests.get(
+                'https://api.deepseek.com/v1/models',
+                headers={'Authorization': f'Bearer {self.api_key}'},
+                timeout=8,
+            )
+            return resp.status_code == 200
+        except requests.RequestException:
+            return False
+
 
 class MockLLMClient:
     """
@@ -249,6 +269,10 @@ class MockLLMClient:
             'LLM_PROVIDER=deepseek, чтобы получить реальные ответы.\n\n'
             f'Ты написал: «{user_text[:200]}»'
         )
+
+    def health(self) -> bool:
+        """Заглушка всегда «на связи»."""
+        return True
 
 
 # ---------- Одиночный экземпляр клиента ----------

@@ -1,5 +1,7 @@
 import re
+import time
 import logging
+import threading
 from datetime import timedelta
 
 from django.utils import timezone
@@ -10,7 +12,7 @@ from rest_framework.views import APIView
 from .models import ChatMessage
 from .serializers import ChatMessageSerializer, ChatRequestSerializer
 from .services.context_builder import build_messages_for_llm
-from .services.gigachat import get_llm_client, LLMError
+from .services.gigachat import get_llm_client, LLMError, DeepSeekClient, GigaChatClient, MockLLMClient
 from .services.workout_parser import extract_workout_suggestion, extract_workout_imports, extract_workout_renames
 from .services.import_detector import looks_like_workout_import, build_import_messages, split_diary_into_chunks
 
@@ -20,6 +22,12 @@ logger = logging.getLogger(__name__)
 
 RATE_LIMIT_MESSAGES = 30
 RATE_LIMIT_WINDOW_SECONDS = 60
+
+# In-memory кэш для health-check ИИ-провайдера.
+# Не дёргаем внешний API на каждый запрос — кэш на 60 секунд.
+_HEALTH_TTL_SECONDS = 60
+_health_cache = {'status': None, 'ts': 0.0}
+_health_lock = threading.Lock()
 
 # Паттерн для очистки XML-тегов, которые LLM иногда копирует из промпта.
 # Убираем <user-data>...</user-data> и другие служебные теги.
@@ -257,3 +265,51 @@ class HistoryView(APIView):
     def delete(self, request):
         ChatMessage.objects.filter(user=request.user).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+def _provider_name(client) -> str:
+    if isinstance(client, DeepSeekClient):
+        return 'deepseek'
+    if isinstance(client, GigaChatClient):
+        return 'gigachat'
+    if isinstance(client, MockLLMClient):
+        return 'mock'
+    return 'unknown'
+
+
+def _check_llm_health(client) -> bool:
+    """Кэшированная проверка доступности провайдера. Кэш — 60 секунд."""
+    now = time.time()
+    with _health_lock:
+        if _health_cache['status'] is not None and now - _health_cache['ts'] < _HEALTH_TTL_SECONDS:
+            return _health_cache['status']
+    # Сетевой вызов вне lock'а, чтобы не блокировать другие запросы
+    try:
+        ok = bool(client.health())
+    except Exception:
+        ok = False
+    with _health_lock:
+        _health_cache['status'] = ok
+        _health_cache['ts'] = time.time()
+    return ok
+
+
+class HealthView(APIView):
+    """
+    GET /ai/health/
+    Возвращает { status: 'online' | 'offline', provider: 'deepseek' | 'gigachat' | 'mock' }
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        try:
+            client = get_llm_client()
+        except Exception as e:
+            logger.warning('AI health: ошибка инициализации клиента: %s', e)
+            return Response({'status': 'offline', 'provider': 'unknown'})
+
+        ok = _check_llm_health(client)
+        return Response({
+            'status': 'online' if ok else 'offline',
+            'provider': _provider_name(client),
+        })
