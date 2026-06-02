@@ -38,6 +38,7 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
+    allowedHosts: ['gymlog.desp-dev.ru'],
     proxy: {
       '/auth':      { target: 'http://backend:8000', changeOrigin: true },
       '/workouts':  { target: 'http://backend:8000', changeOrigin: true, bypass: spaAwareBypass },
