@@ -5,4 +5,6 @@ __pycache__/
 .venv
 venv/
 .DS_Store
-CLAUDE.mdfrontend/dev-dist/
+CLAUDE.md
+frontend/dev-dist/
+h origin main
