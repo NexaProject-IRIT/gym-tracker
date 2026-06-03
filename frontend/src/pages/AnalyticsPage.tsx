@@ -554,7 +554,7 @@ const LineChart = ({ data, yLabel, color, formatY = (v) => formatNumber(v, 1), h
           {/* Точки: рендерим ВСЕ. Те, что вне окна — opacity 0, склеены у краёв.
               CSS-transition плавно сдвигает cx/cy и проявляет/прячет opacity. */}
           <g clipPath={`url(#${clipId})`}>
-            {data.map((d, i) => {
+            {data.map((_d, i) => {
               const p = positions[i];
               const op = p.inWindow ? 1 : 0;
               const tStyle = { transition: flowTransition('cx, cy, opacity') };

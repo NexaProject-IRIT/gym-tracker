@@ -14,7 +14,7 @@ WORKOUTS = '/workouts/'
 AI_CHAT  = '/ai/chat/'
 AI_HIST  = '/ai/history/'
 
-# Валидный пароль: ≥10 символов + минимум 1 цифра (HasDigitValidator)
+# Валидный пароль: ≥6 символов, не только цифры (MinimumLength + NumericPasswordValidator)
 VALID_PWD = 'Gymlog1234!'
 
 
@@ -80,12 +80,23 @@ def test_register_duplicate_username(api):
 
 
 @pytest.mark.django_db
-def test_register_password_no_digit(api):
-    """Пароль без цифры должен отклоняться кастомным HasDigitValidator."""
+def test_register_password_too_short(api):
+    """Пароль короче 6 символов должен отклоняться MinimumLengthValidator."""
     resp = api.post(REGISTER, {
-        'username': 'nodgtuser',
-        'password': 'PasswordNoDigits',  # ≥10 символов, нет цифр
-        'password2': 'PasswordNoDigits',
+        'username': 'shortpwd',
+        'password': 'abc1',
+        'password2': 'abc1',
+    }, format='json')
+    assert resp.status_code == 400
+
+
+@pytest.mark.django_db
+def test_register_password_numeric_only(api):
+    """Пароль из одних цифр должен отклоняться NumericPasswordValidator."""
+    resp = api.post(REGISTER, {
+        'username': 'numericpwd',
+        'password': '12345678',
+        'password2': '12345678',
     }, format='json')
     assert resp.status_code == 400
 
