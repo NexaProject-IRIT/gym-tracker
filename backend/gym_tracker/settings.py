@@ -1,7 +1,5 @@
 import os
 from pathlib import Path
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -73,8 +71,11 @@ DATABASES = {
 }
 
 AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', 'OPTIONS': {'min_length': 6}},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', 'OPTIONS': {'min_length': 8}},
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+    {'NAME': 'profiles.validators.HasDigitValidator'},
 ]
 
 LANGUAGE_CODE = 'ru-ru'
@@ -120,8 +121,11 @@ SIMPLE_JWT = {
 KNOWLEDGE_BASE_PATH = BASE_DIR / 'knowledge_base'
 
 CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:8000',
-    'http://127.0.0.1:8000',
+    o.strip() for o in os.environ.get(
+        'CSRF_TRUSTED_ORIGINS',
+        'http://localhost:8000,http://127.0.0.1:8000,http://localhost:5173',
+    ).split(',')
+    if o.strip()
 ]
 
 # ---- ИИ-тренер ----

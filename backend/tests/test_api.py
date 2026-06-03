@@ -14,8 +14,9 @@ WORKOUTS = '/workouts/'
 AI_CHAT  = '/ai/chat/'
 AI_HIST  = '/ai/history/'
 
-# Валидный пароль: ≥6 символов, не только цифры (MinimumLength + NumericPasswordValidator)
-VALID_PWD = 'Gymlog1234!'
+# Валидный пароль: ≥8 символов, содержит цифру, не общеизвестный, не похож на username.
+# Подобран так, чтобы проходить все AUTH_PASSWORD_VALIDATORS из settings.py.
+VALID_PWD = 'Tr8ner_X9qLm!Pz'
 
 
 # ── Фикстуры ───────────────────────────────────────────────────────────────────
@@ -81,11 +82,11 @@ def test_register_duplicate_username(api):
 
 @pytest.mark.django_db
 def test_register_password_too_short(api):
-    """Пароль короче 6 символов должен отклоняться MinimumLengthValidator."""
+    """Пароль короче 8 символов должен отклоняться MinimumLengthValidator."""
     resp = api.post(REGISTER, {
         'username': 'shortpwd',
-        'password': 'abc1',
-        'password2': 'abc1',
+        'password': 'abc1Xy',
+        'password2': 'abc1Xy',
     }, format='json')
     assert resp.status_code == 400
 

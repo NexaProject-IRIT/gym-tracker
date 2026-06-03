@@ -10,6 +10,7 @@ import { RegisterPage } from './pages/RegisterPage';
 import { AiChatPage } from './pages/AiChatPage';
 import { WorkoutDetailPage } from './pages/WorkoutDetailPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
+import { TrashPage } from './pages/TrashPage';
 import { TimerProvider } from './contexts/TimerContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 
@@ -51,6 +52,7 @@ function App() {
                 <Route path="analytics" element={<AnalyticsPage />} />
                 <Route path="ai" element={<AiChatPage />} />
                 <Route path="profile" element={<ProfilePage />} />
+                <Route path="trash" element={<TrashPage />} />
                 <Route path="settings" element={<Navigate to="/profile" replace />} />
                 <Route path="timer" element={<Navigate to="/" replace />} />
               </Route>

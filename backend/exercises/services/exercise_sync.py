@@ -7,6 +7,15 @@ from exercises.models import Equipment, Exercise, ExerciseParameter
 from .md_parser import parse_knowledge_base
 
 
+def _kb_image_exists(path: str) -> bool:
+    """Проверяем что картинка по пути из frontmatter реально лежит в knowledge_base/."""
+    if not path:
+        return True  # пустое — не ошибка, просто нет картинки
+    clean = path.removeprefix("images/")
+    full = Path(settings.BASE_DIR) / "knowledge_base" / "images" / clean
+    return full.exists()
+
+
 PARAMETER_META = {
     "sets": {"label": "Подходы", "unit": ""},
     "reps": {"label": "Повторения", "unit": ""},
@@ -38,13 +47,31 @@ def build_image_url(path: str) -> str:
     return f"{settings.MEDIA_URL}knowledge_base/{clean}"
 
 
-def build_images_dict(raw_images: dict) -> dict:
+def build_images_dict(raw_images: dict, exercise_name: str = "") -> dict:
     if not isinstance(raw_images, dict):
         raw_images = {}
-    cover = build_image_url(raw_images.get("cover", ""))
-    technique = [build_image_url(p) for p in raw_images.get("technique", []) if p]
-    muscle_map = build_image_url(raw_images.get("muscleMap", ""))
-    return {"cover": cover, "technique": technique, "muscleMap": muscle_map}
+    cover_path = raw_images.get("cover", "")
+    technique_paths = [p for p in raw_images.get("technique", []) if p]
+    muscle_map_path = raw_images.get("muscleMap", "")
+
+    # Warn о битых ссылках — иначе фронт молча отдаёт 404 пользователю
+    missing = []
+    if cover_path and not _kb_image_exists(cover_path):
+        missing.append(cover_path)
+    for p in technique_paths:
+        if not _kb_image_exists(p):
+            missing.append(p)
+    if muscle_map_path and not _kb_image_exists(muscle_map_path):
+        missing.append(muscle_map_path)
+    if missing:
+        label = f" ({exercise_name})" if exercise_name else ""
+        print(f"[exercise_sync] WARN: missing images{label}: {missing}")
+
+    return {
+        "cover": build_image_url(cover_path),
+        "technique": [build_image_url(p) for p in technique_paths],
+        "muscleMap": build_image_url(muscle_map_path),
+    }
 
 
 def sync_equipment_to_db(equipment_items):
@@ -141,7 +168,7 @@ def sync_exercises_to_db():
                 "target_muscles": [m.lower() for m in exercise_data.get("targetMuscles", [])],
                 "synonyms": [str(s).strip() for s in exercise_data.get("synonyms", []) if str(s).strip()],
                 "difficulty": exercise_data.get("difficulty", ""),
-                "images": build_images_dict(exercise_data.get("images", {})),
+                "images": build_images_dict(exercise_data.get("images", {}), name),
                 "source_file": exercise_data.get("source_file", ""),
             }
 

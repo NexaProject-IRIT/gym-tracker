@@ -22,6 +22,13 @@ logger = logging.getLogger(__name__)
 
 RATE_LIMIT_MESSAGES = 30
 RATE_LIMIT_WINDOW_SECONDS = 60
+# Лимит по объёму контента: 30 сообщений × ~6KB/файл ≈ 200KB.
+# Без этого юзер может слать 30 раз по 1MB файлу и сжечь токены в LLM,
+# не нарвавшись на лимит по штукам.
+RATE_LIMIT_CONTENT_BYTES = 200 * 1024
+# Жёсткий верхний предел на длину одного user_message + file_content,
+# чтобы один запрос не превысил всё окно сразу.
+MAX_SINGLE_REQUEST_BYTES = 100 * 1024
 
 # In-memory кэш для health-check ИИ-провайдера.
 # Не дёргаем внешний API на каждый запрос — кэш на 60 секунд.
@@ -50,14 +57,29 @@ def _clean_llm_response(text: str) -> str:
     return cleaned
 
 
-def _is_rate_limited(user) -> bool:
+def _rate_limit_reason(user, incoming_bytes: int) -> str | None:
+    """Возвращает текст причины блокировки, либо None если можно отвечать."""
     window_start = timezone.now() - timedelta(seconds=RATE_LIMIT_WINDOW_SECONDS)
-    recent_count = ChatMessage.objects.filter(
+    recent = ChatMessage.objects.filter(
         user=user,
         role='user',
         created_at__gte=window_start,
-    ).count()
-    return recent_count >= RATE_LIMIT_MESSAGES
+    ).only('content')
+
+    count = 0
+    total_bytes = 0
+    for msg in recent:
+        count += 1
+        total_bytes += len(msg.content.encode('utf-8'))
+
+    if count >= RATE_LIMIT_MESSAGES:
+        return 'Слишком много сообщений. Подожди минуту и попробуй снова.'
+    if total_bytes + incoming_bytes > RATE_LIMIT_CONTENT_BYTES:
+        return (
+            'Слишком большой объём данных за последнюю минуту. '
+            'Подожди немного перед следующим сообщением.'
+        )
+    return None
 
 
 class ChatView(APIView):
@@ -102,11 +124,18 @@ class ChatView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if _is_rate_limited(request.user):
+        # Жёсткий лимит на один запрос — даже если за окно ещё ничего не было,
+        # одиночный мега-файл всё равно отбиваем.
+        incoming_bytes = len(user_message_text.encode('utf-8')) + len(file_content.encode('utf-8'))
+        if incoming_bytes > MAX_SINGLE_REQUEST_BYTES:
             return Response(
-                {'error': 'Слишком много сообщений. Подожди минуту и попробуй снова.'},
-                status=status.HTTP_429_TOO_MANY_REQUESTS,
+                {'error': 'Файл или сообщение слишком большое. Сократи до ~100 KB.'},
+                status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             )
+
+        reason = _rate_limit_reason(request.user, incoming_bytes)
+        if reason:
+            return Response({'error': reason}, status=status.HTTP_429_TOO_MANY_REQUESTS)
 
         # Текст для LLM: включаем содержимое файла (если есть) как контекст.
         # В историю чата сохраняем только набранный текст — чтобы история оставалась чистой.

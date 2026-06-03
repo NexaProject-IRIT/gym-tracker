@@ -4,7 +4,7 @@ import { authedFetch, clearTokens } from '../utils/api';
 import { apiFetch, ApiError } from '../lib/api';
 import { useWorkoutsContext } from '../contexts/WorkoutsContext';
 import { PersonalDataCard, type ProfileData, type Goal, type Gender } from '../components/Profile/PersonalDataCard';
-import { DataActionsCard } from '../components/Profile/DataActionsCard';
+import { DataActionsCard, type ExportFormat } from '../components/Profile/DataActionsCard';
 import { ThemeSettingsCard } from '../components/Profile/ThemeSettingsCard';
 import { ChangePasswordCard } from '../components/Profile/ChangePasswordCard';
 import { AboutCard } from '../components/Profile/AboutCard';
@@ -282,16 +282,16 @@ export const ProfilePage = () => {
 
   const handleCancel = () => { setDraft(profile); setSaveError(null); setUsernameError(null); setIsEditing(false); };
 
-  const handleExport = async () => {
+  const handleExport = async (format: ExportFormat = 'txt') => {
     setExporting(true);
     try {
-      const res = await authedFetch('/export/');
+      const res = await authedFetch(`/export/?fmt=${format}`);
       if (res.ok) {
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `workouts_export_${new Date().toISOString().slice(0, 10)}.txt`;
+        a.download = `workouts_export_${new Date().toISOString().slice(0, 10)}.${format}`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -379,7 +379,9 @@ export const ProfilePage = () => {
 
       {showClearConfirm && (
         <ConfirmModal
-          message="Вы уверены? Все тренировки будут удалены без возможности восстановления."
+          message="Все тренировки переедут в корзину. Восстановить их можно в течение 30 дней — после чего они удалятся навсегда."
+          confirmWord="УДАЛИТЬ"
+          confirmButtonLabel="Очистить"
           onConfirm={handleClearHistory}
           onCancel={() => navigate(-1)}
         />

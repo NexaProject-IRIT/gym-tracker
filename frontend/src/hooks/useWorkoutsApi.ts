@@ -18,6 +18,7 @@ interface RawWorkoutExercise {
   distance?: number | null;
   isCustom?: boolean;
   isDone?: boolean;
+  setsDone?: number;
   isPR?: boolean;
   parameters?: ParameterType[];
   order?: number;
@@ -42,6 +43,8 @@ function generateExId(): string {
 // Frontend → Backend body
 // ИСПРАВЛЕНО: добавлено поле parameters — без него бэкенд сохраняет [],
 // и при следующем открытии тренировки все упражнения выглядят пустыми.
+// setsDone тоже шлём round-trip: иначе сериализатор не получает значение,
+// и при PUT (сохранение тренировки) частично выполненные подходы сбрасываются.
 function serializeExercise(e: WorkoutExercise, idx?: number) {
   return {
     uid: e.id,
@@ -54,6 +57,7 @@ function serializeExercise(e: WorkoutExercise, idx?: number) {
     distance: e.distance ?? null,
     isCustom: e.isCustom,
     isDone: e.isDone ?? false,
+    setsDone: e.setsDone ?? (e.isDone ? (e.sets ?? 0) : 0),
     parameters: e.parameters ?? [],
     order: idx !== undefined ? idx : (e.order ?? 0),
   };
@@ -90,6 +94,7 @@ function normalizeWorkout(raw: RawWorkout): Workout {
       parameters: inferParameters(e),
       isCustom: e.isCustom ?? true,
       isDone: e.isDone ?? false,
+      setsDone: e.setsDone ?? (e.isDone ? (e.sets ?? 0) : 0),
       isPR: e.isPR ?? false,
       order: e.order ?? idx,
       weight: e.weight ?? undefined,

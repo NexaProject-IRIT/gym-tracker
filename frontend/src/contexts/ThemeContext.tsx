@@ -10,17 +10,42 @@ interface ThemeContextValue {
 
 const ThemeCtx = createContext<ThemeContextValue | null>(null);
 
+const STORAGE_KEY = 'theme';
+
+const getSystemTheme = (): Theme => {
+  if (typeof window === 'undefined' || !window.matchMedia) return 'dark';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+};
+
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
+  // Если юзер явно не переключал тему — следуем за prefers-color-scheme.
+  // После toggleTheme выбор фиксируется в localStorage и system override уже не влияет.
   const [theme, setTheme] = useState<Theme>(() => {
-    return (localStorage.getItem('theme') as Theme) || 'dark';
+    const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
+    return stored ?? getSystemTheme();
   });
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
   }, [theme]);
 
-  const toggleTheme = () => setTheme(t => (t === 'dark' ? 'light' : 'dark'));
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mql = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = (e: MediaQueryListEvent) => {
+      // Авто-апдейт только если юзер не зафиксировал тему вручную.
+      if (localStorage.getItem(STORAGE_KEY)) return;
+      setTheme(e.matches ? 'dark' : 'light');
+    };
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
+
+  const toggleTheme = () => setTheme(t => {
+    const next: Theme = t === 'dark' ? 'light' : 'dark';
+    localStorage.setItem(STORAGE_KEY, next);
+    return next;
+  });
 
   return (
     <ThemeCtx.Provider value={{ theme, toggleTheme, isDark: theme === 'dark' }}>

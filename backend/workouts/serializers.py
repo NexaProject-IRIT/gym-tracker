@@ -7,7 +7,9 @@ class WorkoutExerciseSerializer(serializers.ModelSerializer):
     customName = serializers.CharField(source='custom_name', required=False, allow_null=True, allow_blank=True)
     isCustom = serializers.BooleanField(source='is_custom', required=False, default=False)
     isDone = serializers.BooleanField(source='is_done', required=False, default=False)
-    setsDone = serializers.IntegerField(source='sets_done', required=False, default=0)
+    # Без default=0 — иначе при PUT, когда фронт не шлёт setsDone, DRF
+    # подставляет 0 и затирает реальное число выполненных подходов в БД.
+    setsDone = serializers.IntegerField(source='sets_done', required=False)
     parameters = serializers.ListField(
         child=serializers.CharField(),
         required=False,

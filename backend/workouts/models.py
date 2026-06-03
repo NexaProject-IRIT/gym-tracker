@@ -21,6 +21,8 @@ class Workout(models.Model):
     notes = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    # NULL = активная тренировка; не-NULL = в корзине, hard-delete после 30 дней.
+    deleted_at = models.DateTimeField(blank=True, null=True, db_index=True)
 
     class Meta:
         db_table = 'workouts'
