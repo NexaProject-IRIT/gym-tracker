@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { apiFetch } from '../lib/api';
 import type { WorkoutType } from '../types/workout';
 import { WORKOUT_TYPE_LABELS, WORKOUT_TYPE_COLORS } from '../types/workout';
@@ -204,46 +204,234 @@ interface LineChartProps {
   height?: number;
 }
 
-const LineChart = ({ data, yLabel, color, formatY = (v) => formatNumber(v, 1), height = 220 }: LineChartProps) => {
-  const padding = { top: 16, right: 16, bottom: 32, left: 44 };
-  const width = 600;
-  const innerW = width - padding.left - padding.right;
-  const innerH = height - padding.top - padding.bottom;
-
-  if (data.length === 0) {
-    return null;
+// Алгоритм "круглых" чисел для оси Y (на основе D3 d3-array nice/ticks):
+// возвращает шаг и границы, в которых все деления попадают на круглые значения.
+const niceNum = (range: number, round: boolean): number => {
+  if (range <= 0) return 1;
+  const exponent = Math.floor(Math.log10(range));
+  const fraction = range / Math.pow(10, exponent);
+  let nice: number;
+  if (round) {
+    if (fraction < 1.5) nice = 1;
+    else if (fraction < 3) nice = 2;
+    else if (fraction < 7) nice = 5;
+    else nice = 10;
+  } else {
+    if (fraction <= 1) nice = 1;
+    else if (fraction <= 2) nice = 2;
+    else if (fraction <= 5) nice = 5;
+    else nice = 10;
   }
+  return nice * Math.pow(10, exponent);
+};
 
-  const values = data.map(d => d.value);
-  const minV = Math.min(...values);
-  const maxV = Math.max(...values);
-  const range = Math.max(maxV - minV, maxV * 0.1, 1);
-  const yMin = Math.max(0, minV - range * 0.15);
-  const yMax = maxV + range * 0.15;
-  const ySpan = yMax - yMin || 1;
+const niceScale = (min: number, max: number, ticks = 4) => {
+  if (!isFinite(min) || !isFinite(max)) return { tickValues: [0, 1], yMin: 0, yMax: 1 };
+  if (min === max) {
+    const pad = Math.max(Math.abs(min) * 0.1, 1);
+    min -= pad; max += pad;
+  }
+  const niceRange = niceNum(max - min, false);
+  const step = niceNum(niceRange / Math.max(1, ticks), true);
+  const niceMin = Math.floor(min / step) * step;
+  const niceMax = Math.ceil(max / step) * step;
+  const tickValues: number[] = [];
+  for (let v = niceMin; v <= niceMax + step * 1e-6; v += step) {
+    tickValues.push(Number(v.toFixed(10)));
+  }
+  return { tickValues, yMin: niceMin, yMax: niceMax };
+};
 
-  const xAt = (i: number) => data.length === 1
-    ? padding.left + innerW / 2
-    : padding.left + (i / (data.length - 1)) * innerW;
-  const yAt = (v: number) => padding.top + (1 - (v - yMin) / ySpan) * innerH;
+// Кубический ease для tween Y-шкалы.
+const easeInOutCubic = (t: number): number =>
+  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
-  const linePath = data.map((d, i) => `${i === 0 ? 'M' : 'L'} ${xAt(i)} ${yAt(d.value)}`).join(' ');
-  const areaPath = `${linePath} L ${xAt(data.length - 1)} ${padding.top + innerH} L ${xAt(0)} ${padding.top + innerH} Z`;
+type ScaleState = { yMin: number; yMax: number; tickValues: number[] };
 
-  const ticks = 4;
-  const yTicks = Array.from({ length: ticks + 1 }, (_, i) => yMin + (ySpan * i) / ticks);
+// Кривая перехода между состояниями графика — едина для всех CSS-трансишенов.
+// Быстрый settle, чтобы при частой навигации точки успевали доехать до места.
+const FLOW_EASE = 'cubic-bezier(0.25, 0.8, 0.3, 1)';
+const FLOW_MS = 240;
 
+const LineChart = ({ data, yLabel, color, formatY = (v) => formatNumber(v, 1), height = 240 }: LineChartProps) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(560);
+  const [pageEnd, setPageEnd] = useState(data.length);
+  const [viewMode, setViewMode] = useState<'window' | 'all'>('window');
+  const uid = useRef(Math.random().toString(36).slice(2, 8));
+
+  // Измеряем ширину контейнера, чтоб шрифт и линии рендерились в реальных пикселях.
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const el = containerRef.current;
+    setWidth(Math.max(280, Math.floor(el.getBoundingClientRect().width)));
+    const ro = new ResizeObserver(([entry]) => {
+      setWidth(Math.max(280, Math.floor(entry.contentRect.width)));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // Сколько точек умещается, чтоб подписи дат не слипались.
+  const pointsPerPage = useMemo(() => {
+    if (width < 360) return 5;
+    if (width < 480) return 6;
+    if (width < 640) return 8;
+    return 10;
+  }, [width]);
+
+  // По умолчанию показываем самые свежие точки.
+  useEffect(() => {
+    setPageEnd(data.length);
+  }, [data.length]);
+
+  // Если изменилось число точек на странице — нормализуем правую границу.
+  useEffect(() => {
+    setPageEnd(prev => Math.min(Math.max(pointsPerPage, prev), data.length));
+  }, [pointsPerPage, data.length]);
+
+  const safePageEnd = Math.min(Math.max(pointsPerPage, pageEnd), data.length);
+  const pageStart = Math.max(0, safePageEnd - pointsPerPage);
+  const visible = data.slice(pageStart, safePageEnd);
+
+  const canGoBack = viewMode === 'window' && pageStart > 0;
+  const canGoForward = viewMode === 'window' && safePageEnd < data.length;
+  const stepBy = Math.max(1, Math.floor(pointsPerPage / 2));
+  const goBack = () => setPageEnd(p => Math.max(pointsPerPage, p - stepBy));
+  const goForward = () => setPageEnd(p => Math.min(data.length, p + stepBy));
+
+  const padding = { top: 22, right: 16, bottom: 38, left: 52 };
+  const innerW = Math.max(40, width - padding.left - padding.right);
+  const innerH = Math.max(40, height - padding.top - padding.bottom);
+
+  // ── Целевая Y-шкала по «эффективным» данным (окно или вся история).
+  const effective = viewMode === 'all' ? data : visible;
+  const targetScale: ScaleState = useMemo(() => {
+    if (!effective.length) return { yMin: 0, yMax: 1, tickValues: [0, 1] };
+    const values = effective.map(d => d.value);
+    return niceScale(Math.min(...values), Math.max(...values), 4);
+  }, [effective]);
+
+  // ── Анимация Y-шкалы: rAF-tween от старых значений к новым.
+  // Каждый кадр пересчитываем «круглые» деления — числа на оси плавно перетекают
+  // через промежуточные nice-значения, а не моргают между конечными состояниями.
+  const [animScale, setAnimScale] = useState<ScaleState>(targetScale);
+  const animRef = useRef<ScaleState>(animScale);
+  const rafRef = useRef<number | null>(null);
+
+  // ВАЖНО: зависим от примитивных yMin/yMax, а не от объекта targetScale.
+  // Иначе на каждом ререндере (data — новый массив сверху, useMemo пересчитывает
+  // и возвращает новый объект) эффект бы рефайрился, перезапускал rAF и вызывал
+  // setAnimScale → новый ререндер → бесконечный цикл, который замораживает страницу.
+  const targetYMin = targetScale.yMin;
+  const targetYMax = targetScale.yMax;
+  useEffect(() => {
+    if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+    const from = animRef.current;
+    const toYMin = targetYMin;
+    const toYMax = targetYMax;
+    // Если разница ничтожна — ничего не делаем, чтобы не плодить лишние ререндеры.
+    if (Math.abs(from.yMin - toYMin) < 1e-6 && Math.abs(from.yMax - toYMax) < 1e-6) {
+      return;
+    }
+    const start = performance.now();
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / FLOW_MS);
+      const e = easeInOutCubic(t);
+      const yMin = from.yMin + (toYMin - from.yMin) * e;
+      const yMax = from.yMax + (toYMax - from.yMax) * e;
+      const tickValues = niceScale(yMin, yMax, 4).tickValues;
+      const next: ScaleState = { yMin, yMax, tickValues };
+      animRef.current = next;
+      setAnimScale(next);
+      if (t < 1) {
+        rafRef.current = requestAnimationFrame(tick);
+      } else {
+        rafRef.current = null;
+      }
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current != null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+  }, [targetYMin, targetYMax]);
+
+  if (data.length === 0) return null;
+
+  const ySpan = (animScale.yMax - animScale.yMin) || 1;
+  const yAt = (v: number) => padding.top + (1 - (v - animScale.yMin) / ySpan) * innerH;
+
+  // ── Позиции для ВСЕХ точек: вне окна — «склеены» в первой/последней видимой
+  // точке (нулевая длина сегмента), снаружи клипа. Path всегда имеет одно и то же
+  // число команд, поэтому браузер плавно интерполирует `d` при смене состояния.
+  const firstVisible = visible[0];
+  const lastVisible = visible[visible.length - 1];
+  const positions = data.map((d, i) => {
+    if (viewMode === 'all') {
+      const x = data.length === 1
+        ? padding.left + innerW / 2
+        : padding.left + (i / (data.length - 1)) * innerW;
+      return { x, y: yAt(d.value), inWindow: true };
+    }
+    if (i < pageStart) {
+      return {
+        x: padding.left,
+        y: firstVisible ? yAt(firstVisible.value) : padding.top + innerH,
+        inWindow: false,
+      };
+    }
+    if (i >= safePageEnd) {
+      return {
+        x: padding.left + innerW,
+        y: lastVisible ? yAt(lastVisible.value) : padding.top + innerH,
+        inWindow: false,
+      };
+    }
+    const winLen = visible.length;
+    const x = winLen === 1
+      ? padding.left + innerW / 2
+      : padding.left + ((i - pageStart) / (winLen - 1)) * innerW;
+    return { x, y: yAt(d.value), inWindow: true };
+  });
+
+  const linePath = positions
+    .map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`)
+    .join(' ');
+  const areaPath = positions.length >= 2
+    ? `${linePath} L ${positions[positions.length - 1].x.toFixed(2)} ${(padding.top + innerH).toFixed(2)} L ${positions[0].x.toFixed(2)} ${(padding.top + innerH).toFixed(2)} Z`
+    : '';
+
+  // В режиме «всё время» подписи дат не лезут друг на друга:
+  // показываем равномерное подмножество + всегда последнюю.
+  const xLabelEvery = viewMode === 'all'
+    ? Math.max(1, Math.ceil(data.length / Math.max(4, pointsPerPage)))
+    : 1;
+
+  // Тренд по всей истории, не по окну — пользователь видит общую картину.
   const trend = data.length >= 2 ? data[data.length - 1].value - data[0].value : 0;
   const trendPct = data[0].value > 0 ? (trend / data[0].value) * 100 : 0;
 
+  const clipId = `lc-clip-${uid.current}`;
+  const gradId = `lc-area-${uid.current}`;
+  const flowTransition = (props: string) =>
+    props.split(',').map(p => `${p.trim()} ${FLOW_MS}ms ${FLOW_EASE}`).join(', ');
+
   return (
     <div style={{ width: '100%' }}>
-      {/* Заголовок-метрики */}
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
-        <div className="num-mono" style={{ fontSize: 28, fontWeight: 600, color: 'var(--text)' }}>
-          {formatY(data[data.length - 1].value)}
+      {/* Заголовок-метрики + переключатель режима */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        marginBottom: 12, flexWrap: 'wrap',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flex: 1, minWidth: 0 }}>
+          <div className="num-mono" style={{ fontSize: 28, fontWeight: 600, color: 'var(--text)' }}>
+            {formatY(data[data.length - 1].value)}
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--ghost)' }}>последнее значение</div>
         </div>
-        <div style={{ fontSize: 12, color: 'var(--ghost)' }}>последнее значение</div>
         {data.length >= 2 && (
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 4,
@@ -251,7 +439,6 @@ const LineChart = ({ data, yLabel, color, formatY = (v) => formatNumber(v, 1), h
             background: trend >= 0 ? 'rgba(110,231,183,0.12)' : 'rgba(239,68,68,0.12)',
             color: trend >= 0 ? 'var(--accent)' : '#ef4444',
             fontSize: 11.5, fontWeight: 600,
-            marginLeft: 'auto',
           }}>
             {trend >= 0 ? <IconTrendUp size={11} /> : <IconTrendDown size={11} />}
             {trend >= 0 ? '+' : ''}{formatY(Math.abs(trend))}
@@ -260,27 +447,73 @@ const LineChart = ({ data, yLabel, color, formatY = (v) => formatNumber(v, 1), h
         )}
       </div>
 
-      <div style={{ width: '100%', overflowX: 'auto' }}>
-        <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', minWidth: 320, height: 'auto', display: 'block' }}>
+      {/* Сегментированный переключатель «окно» / «всё время» */}
+      <div style={{
+        display: 'inline-flex', gap: 4,
+        background: 'var(--bg)',
+        border: '1px solid var(--border2)',
+        borderRadius: 10, padding: 3,
+        marginBottom: 14,
+      }}>
+        {([
+          { key: 'window', label: 'Окно' },
+          { key: 'all',    label: 'Всё время' },
+        ] as const).map(opt => {
+          const active = viewMode === opt.key;
+          return (
+            <button
+              key={opt.key}
+              onClick={() => setViewMode(opt.key)}
+              style={{
+                padding: '6px 14px',
+                borderRadius: 7,
+                border: 'none',
+                background: active ? 'var(--accent-a12)' : 'transparent',
+                color: active ? 'var(--accent)' : 'var(--muted)',
+                fontSize: 12.5, fontWeight: active ? 600 : 500,
+                cursor: 'pointer',
+                transition: 'background 200ms ease, color 200ms ease',
+              }}
+            >
+              {opt.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Контейнер фиксированной ширины — никакого горизонтального скролла */}
+      <div ref={containerRef} style={{ width: '100%' }}>
+        <svg
+          width={width}
+          height={height}
+          viewBox={`0 0 ${width} ${height}`}
+          style={{ display: 'block' }}
+        >
           <defs>
-            <linearGradient id="lc-area" x1="0" y1="0" x2="0" y2="1">
+            <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={color} stopOpacity="0.28" />
               <stop offset="100%" stopColor={color} stopOpacity="0" />
             </linearGradient>
+            <clipPath id={clipId}>
+              <rect x={padding.left} y={padding.top - 4} width={innerW} height={innerH + 8} />
+            </clipPath>
           </defs>
 
-          {/* Y-сетка */}
-          {yTicks.map((v, i) => (
-            <g key={i}>
+          {/* Y-сетка: ключи по индексу — существующие деления плавно скользят,
+              новые/уходящие появляются/исчезают через opacity. */}
+          {animScale.tickValues.map((v, i) => (
+            <g key={i} style={{ transition: flowTransition('opacity') }}>
               <line
                 x1={padding.left} x2={width - padding.right}
                 y1={yAt(v)} y2={yAt(v)}
                 stroke="var(--border)" strokeWidth="1" strokeDasharray={i === 0 ? '0' : '2 4'}
+                style={{ transition: flowTransition('y1, y2') }}
               />
               <text
-                x={padding.left - 8} y={yAt(v) + 3}
-                fontSize="10" fill="var(--ghost)" textAnchor="end"
+                x={padding.left - 8} y={yAt(v) + 4}
+                fontSize="11" fill="var(--ghost)" textAnchor="end"
                 fontFamily="JetBrains Mono, ui-monospace, monospace"
+                style={{ transition: flowTransition('y') }}
               >
                 {formatY(v)}
               </text>
@@ -289,37 +522,72 @@ const LineChart = ({ data, yLabel, color, formatY = (v) => formatNumber(v, 1), h
 
           {/* Y-метка */}
           <text
-            x={padding.left} y={padding.top - 4}
-            fontSize="9" fill="var(--ghost)" textAnchor="start"
+            x={padding.left} y={padding.top - 6}
+            fontSize="10" fill="var(--ghost)" textAnchor="start"
             letterSpacing="0.05em"
           >
             {yLabel.toUpperCase()}
           </text>
 
-          {/* Заливка под линией */}
-          <path d={areaPath} fill="url(#lc-area)" />
+          {/* Заливка + линия — обёрнуты в clipPath, поэтому склеенные за пределами
+              окна команды не вылезают визуально. CSS transition на `d` плавно
+              перетекает форму при навигации и при переключении режима. */}
+          <g clipPath={`url(#${clipId})`}>
+            {areaPath && (
+              <path
+                d={areaPath}
+                fill={`url(#${gradId})`}
+                style={{ transition: flowTransition('d') }}
+              />
+            )}
+            <path
+              d={linePath}
+              fill="none"
+              stroke={color}
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ transition: flowTransition('d') }}
+            />
+          </g>
 
-          {/* Линия */}
-          <path d={linePath} fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+          {/* Точки: рендерим ВСЕ. Те, что вне окна — opacity 0, склеены у краёв.
+              CSS-transition плавно сдвигает cx/cy и проявляет/прячет opacity. */}
+          <g clipPath={`url(#${clipId})`}>
+            {data.map((d, i) => {
+              const p = positions[i];
+              const op = p.inWindow ? 1 : 0;
+              const tStyle = { transition: flowTransition('cx, cy, opacity') };
+              return (
+                <g key={i}>
+                  <circle cx={p.x} cy={p.y} r="6" fill={color} opacity={0.15 * op} style={tStyle} />
+                  <circle
+                    cx={p.x} cy={p.y} r="3.5"
+                    fill="var(--bg)" stroke={color} strokeWidth="2"
+                    opacity={op}
+                    style={tStyle}
+                  />
+                </g>
+              );
+            })}
+          </g>
 
-          {/* Точки */}
-          {data.map((d, i) => (
-            <g key={i}>
-              <circle cx={xAt(i)} cy={yAt(d.value)} r="6" fill={color} opacity="0.15" />
-              <circle cx={xAt(i)} cy={yAt(d.value)} r="3.2" fill="var(--bg)" stroke={color} strokeWidth="2" />
-            </g>
-          ))}
-
-          {/* X-метки (не все, чтоб не наслаивались) */}
+          {/* X-метки: тоже рендерим все. В «окне» — только видимые подписи,
+              в «всё время» — каждая N-ая + последняя, чтобы не слипались. */}
           {data.map((d, i) => {
-            const showEvery = Math.max(1, Math.ceil(data.length / 6));
-            if (i % showEvery !== 0 && i !== data.length - 1) return null;
+            const p = positions[i];
+            let op = p.inWindow ? 1 : 0;
+            if (viewMode === 'all' && i % xLabelEvery !== 0 && i !== data.length - 1) {
+              op = 0;
+            }
             return (
               <text
                 key={i}
-                x={xAt(i)} y={height - padding.bottom + 16}
-                fontSize="10" fill="var(--ghost)" textAnchor="middle"
+                x={p.x} y={height - padding.bottom + 18}
+                fontSize="11" fill="var(--ghost)" textAnchor="middle"
                 fontFamily="JetBrains Mono, ui-monospace, monospace"
+                opacity={op}
+                style={{ transition: flowTransition('x, opacity') }}
               >
                 {formatShortDate(d.date)}
               </text>
@@ -327,6 +595,58 @@ const LineChart = ({ data, yLabel, color, formatY = (v) => formatNumber(v, 1), h
           })}
         </svg>
       </div>
+
+      {/* Навигация: только в режиме «окно» и только если есть что листать */}
+      {viewMode === 'window' && data.length > pointsPerPage && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          gap: 12, marginTop: 8,
+        }}>
+          <button
+            onClick={goBack}
+            disabled={!canGoBack}
+            aria-label="Назад"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4,
+              padding: '6px 10px', borderRadius: 8,
+              background: canGoBack ? 'var(--bg)' : 'transparent',
+              border: '1px solid var(--border2)',
+              color: canGoBack ? 'var(--text)' : 'var(--dim)',
+              fontSize: 12, fontWeight: 500,
+              cursor: canGoBack ? 'pointer' : 'default',
+              opacity: canGoBack ? 1 : 0.4,
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+            раньше
+          </button>
+          <div className="num-mono" style={{ fontSize: 11, color: 'var(--ghost)' }}>
+            {pageStart + 1}–{safePageEnd} из {data.length}
+          </div>
+          <button
+            onClick={goForward}
+            disabled={!canGoForward}
+            aria-label="Вперёд"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4,
+              padding: '6px 10px', borderRadius: 8,
+              background: canGoForward ? 'var(--bg)' : 'transparent',
+              border: '1px solid var(--border2)',
+              color: canGoForward ? 'var(--text)' : 'var(--dim)',
+              fontSize: 12, fontWeight: 500,
+              cursor: canGoForward ? 'pointer' : 'default',
+              opacity: canGoForward ? 1 : 0.4,
+            }}
+          >
+            позже
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 6l6 6-6 6" />
+            </svg>
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -386,7 +706,8 @@ interface MiniBarProps {
 }
 
 const MiniBars = ({ data, color, formatValue }: MiniBarProps) => {
-  const items = data.slice(-10);
+  // Сверху самая свежая дата, снизу самая старая.
+  const items = data.slice(-10).slice().reverse();
   const max = Math.max(...items.map(d => d.value), 1);
 
   return (
@@ -469,6 +790,177 @@ const HintIcon = ({ text }: { text: string }) => {
 
 // ─── Главный компонент ──────────────────────────────────────────────────
 
+// ─── Скелетон загрузки ──────────────────────────────────────────────────
+// Повторяет общую сетку страницы, чтобы при первом запросе аналитики не было
+// «прыжка» layout'а и пустых пятен. Используется тот же sk-shimmer, что и на
+// ProfilePage / WorkoutDetail / KnowledgeBase.
+
+const AnalyticsSkeleton: React.FC<{ isMobile: boolean }> = ({ isMobile }) => {
+  const skBase: React.CSSProperties = {
+    background: 'linear-gradient(90deg, var(--surface) 25%, var(--border2) 50%, var(--surface) 75%)',
+    backgroundSize: '200% 100%',
+    animation: 'sk-shimmer 1.4s ease-in-out infinite',
+    borderRadius: 6,
+  };
+  const cardStyle: React.CSSProperties = {
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 14,
+    padding: isMobile ? 14 : 18,
+    position: 'relative',
+    overflow: 'hidden',
+  };
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      background: 'var(--bg)',
+      color: 'var(--text)',
+      padding: isMobile ? '20px 16px 24px' : '28px 32px 40px',
+    }}>
+      <style>{`@keyframes sk-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }`}</style>
+
+      {/* Шапка */}
+      <header style={{ marginBottom: 24 }}>
+        <div style={{ ...skBase, width: 110, height: 12, marginBottom: 10 }} />
+        <div style={{ ...skBase, width: '52%', height: isMobile ? 30 : 36, marginBottom: 10 }} />
+        <div style={{ ...skBase, width: '34%', height: 14 }} />
+      </header>
+
+      {/* Селектор периода */}
+      <div style={{
+        display: 'flex', gap: 6, marginBottom: 28,
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 12, padding: 4,
+        width: 'fit-content',
+      }}>
+        {[44, 56, 56, 64].map((w, i) => (
+          <div key={i} style={{
+            ...skBase,
+            width: isMobile ? Math.round(w * 0.72) : w,
+            height: isMobile ? 26 : 30,
+            borderRadius: 8,
+          }} />
+        ))}
+      </div>
+
+      {/* KPI */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
+        gap: 12, marginBottom: 32,
+      }}>
+        {[0, 1, 2, 3].map(i => (
+          <div key={i} style={cardStyle}>
+            <div style={{
+              ...skBase,
+              position: 'absolute', top: 12, right: 12,
+              width: 28, height: 28, borderRadius: 8,
+            }} />
+            <div style={{ ...skBase, width: 80, height: 10, marginBottom: 10 }} />
+            <div style={{ ...skBase, width: '55%', height: isMobile ? 22 : 26, marginBottom: 6 }} />
+            <div style={{ ...skBase, width: '75%', height: 11 }} />
+          </div>
+        ))}
+      </div>
+
+      {/* Donut + Top exercises */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: isMobile ? '1fr' : 'minmax(280px, 360px) 1fr',
+        gap: 16, marginBottom: 32,
+      }}>
+        <section style={{ ...cardStyle, borderRadius: 16, padding: 20 }}>
+          <div style={{ ...skBase, width: 160, height: 12, marginBottom: 18 }} />
+          <div style={{ display: 'flex', gap: 18, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ ...skBase, width: 140, height: 140, borderRadius: '50%', flexShrink: 0 }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1, minWidth: 140 }}>
+              {[0, 1, 2].map(i => (
+                <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <div style={{ ...skBase, width: 24, height: 24, borderRadius: 6, flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ ...skBase, width: `${65 - i * 8}%`, height: 12, marginBottom: 6 }} />
+                    <div style={{ ...skBase, width: `${40 - i * 5}%`, height: 9 }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section style={{ ...cardStyle, borderRadius: 16, padding: 20 }}>
+          <div style={{ ...skBase, width: 140, height: 12, marginBottom: 18 }} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {[0, 1, 2, 3, 4, 5].map(i => (
+              <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                <div style={{ ...skBase, width: 26, height: 26, borderRadius: 7, flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ ...skBase, width: `${72 - i * 7}%`, height: 13, marginBottom: 8 }} />
+                  <div style={{ ...skBase, width: `${90 - i * 12}%`, height: 6, borderRadius: 999 }} />
+                </div>
+                <div style={{ ...skBase, width: 36, height: 16, flexShrink: 0 }} />
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+
+      {/* Прогресс упражнения: заголовок + переключатель режима + chart */}
+      <section style={{ ...cardStyle, borderRadius: 16, padding: 20, marginBottom: 32 }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          gap: 12, marginBottom: 14, flexWrap: 'wrap',
+        }}>
+          <div style={{ ...skBase, width: 200, height: 12 }} />
+          <div style={{ ...skBase, width: 220, height: 36, borderRadius: 10 }} />
+        </div>
+        <div style={{ ...skBase, width: 180, height: 32, borderRadius: 10, marginBottom: 18 }} />
+
+        {/* Chart placeholder */}
+        <div style={{
+          position: 'relative',
+          height: isMobile ? 200 : 240,
+        }}>
+          {/* Y-axis ticks */}
+          {[0, 1, 2, 3, 4].map(i => {
+            const yPct = 22 + i * ((isMobile ? 200 : 240) - 60) / 4;
+            return (
+              <div key={i} style={{
+                position: 'absolute',
+                left: 0, right: 0, top: yPct,
+                display: 'flex', alignItems: 'center', gap: 8,
+              }}>
+                <div style={{ ...skBase, width: 32, height: 9 }} />
+                <div style={{ flex: 1, height: 1, background: 'var(--border)', opacity: 0.5 }} />
+              </div>
+            );
+          })}
+          {/* Псевдо-волна линии графика */}
+          <div style={{
+            position: 'absolute',
+            left: 52, right: 16,
+            top: '38%', height: 56,
+            ...skBase,
+            borderRadius: 14,
+            opacity: 0.55,
+          }} />
+          {/* X-axis labels */}
+          <div style={{
+            position: 'absolute',
+            left: 52, right: 16, bottom: 4,
+            display: 'flex', justifyContent: 'space-between',
+          }}>
+            {[0, 1, 2, 3, 4, 5].map(i => (
+              <div key={i} style={{ ...skBase, width: 26, height: 10 }} />
+            ))}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
 export const AnalyticsPage = () => {
   const [period, setPeriod] = useState<number>(30);
   const [data, setData] = useState<AnalyticsResponse | null>(null);
@@ -477,6 +969,7 @@ export const AnalyticsPage = () => {
   const [selectedExercise, setSelectedExercise] = useState<string>('');
   const [progress, setProgress] = useState<ProgressPoint[]>([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [dropdownSearch, setDropdownSearch] = useState('');
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
 
   useEffect(() => {
@@ -597,6 +1090,12 @@ export const AnalyticsPage = () => {
   );
 
   // ── Render ──
+
+  // Первичная загрузка — показываем скелетон, чтобы layout не «прыгал».
+  // При смене периода data остаётся, отображаем реальный контент с loading-плейсхолдерами.
+  if (loading && !data) {
+    return <AnalyticsSkeleton isMobile={isMobile} />;
+  }
 
   return (
     <div style={{
@@ -898,7 +1397,10 @@ export const AnalyticsPage = () => {
                 {/* Custom dropdown */}
                 <div style={{ position: 'relative', minWidth: 220 }}>
                   <button
-                    onClick={() => setDropdownOpen(o => !o)}
+                    onClick={() => {
+                      setDropdownOpen(o => !o);
+                      setDropdownSearch('');
+                    }}
                     style={{
                       width: '100%',
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -927,38 +1429,77 @@ export const AnalyticsPage = () => {
                       <IconChevron size={14} />
                     </span>
                   </button>
-                  {dropdownOpen && (
-                    <div
-                      className="an-dropdown"
-                      style={{
-                        position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
-                        background: 'var(--surface)',
-                        border: '1px solid var(--border2)',
-                        borderRadius: 10, padding: 4,
-                        maxHeight: 240, overflowY: 'auto',
-                        zIndex: 50,
-                        boxShadow: '0 10px 24px rgba(0,0,0,0.25)',
-                      }}
-                    >
-                      {data.exercise_names.map(name => (
-                        <button
-                          key={name}
-                          onClick={() => { setSelectedExercise(name); setDropdownOpen(false); }}
-                          style={{
-                            display: 'block', width: '100%', textAlign: 'left',
-                            padding: '7px 10px', borderRadius: 6,
-                            background: name === selectedExercise ? 'var(--accent-a12)' : 'transparent',
-                            color: name === selectedExercise ? 'var(--accent)' : 'var(--text)',
-                            border: 'none', cursor: 'pointer',
-                            fontSize: 12.5,
-                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                          }}
+                  {dropdownOpen && (() => {
+                    const q = dropdownSearch.trim().toLowerCase();
+                    const filtered = q
+                      ? data.exercise_names.filter(n => n.toLowerCase().includes(q))
+                      : data.exercise_names;
+                    return (
+                      <div
+                        style={{
+                          position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
+                          background: 'var(--surface)',
+                          border: '1px solid var(--border2)',
+                          borderRadius: 10, padding: 4,
+                          zIndex: 50,
+                          boxShadow: '0 10px 24px rgba(0,0,0,0.25)',
+                          display: 'flex', flexDirection: 'column',
+                        }}
+                      >
+                        <div style={{ padding: 4 }}>
+                          <input
+                            autoFocus
+                            value={dropdownSearch}
+                            onChange={(e) => setDropdownSearch(e.target.value)}
+                            placeholder="Поиск упражнения..."
+                            style={{
+                              width: '100%', boxSizing: 'border-box',
+                              padding: '7px 10px',
+                              background: 'var(--bg)',
+                              border: '1px solid var(--border2)',
+                              borderRadius: 8,
+                              color: 'var(--text)',
+                              fontSize: 12.5,
+                              outline: 'none',
+                            }}
+                          />
+                        </div>
+                        <div
+                          className="an-dropdown"
+                          style={{ maxHeight: 220, overflowY: 'auto', padding: 0 }}
                         >
-                          {name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                          {filtered.length === 0 ? (
+                            <div style={{
+                              padding: '10px', fontSize: 12, color: 'var(--ghost)',
+                              textAlign: 'center',
+                            }}>
+                              Ничего не найдено
+                            </div>
+                          ) : filtered.map(name => (
+                            <button
+                              key={name}
+                              onClick={() => {
+                                setSelectedExercise(name);
+                                setDropdownOpen(false);
+                                setDropdownSearch('');
+                              }}
+                              style={{
+                                display: 'block', width: '100%', textAlign: 'left',
+                                padding: '7px 10px', borderRadius: 6,
+                                background: name === selectedExercise ? 'var(--accent-a12)' : 'transparent',
+                                color: name === selectedExercise ? 'var(--accent)' : 'var(--text)',
+                                border: 'none', cursor: 'pointer',
+                                fontSize: 12.5,
+                                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
 

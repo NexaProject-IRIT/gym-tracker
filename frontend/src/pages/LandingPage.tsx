@@ -1311,7 +1311,7 @@ const FooterSection = () => (
       </div>
       <div style={{ fontSize: 11.5, color: 'var(--ghost)',
         fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.04em' }}>
-        MVP v0.1
+        v1.0
       </div>
     </div>
   </footer>

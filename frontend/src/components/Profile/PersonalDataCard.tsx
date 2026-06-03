@@ -9,6 +9,8 @@ export type Goal =
   | 'increase_strength'
   | 'maintain';
 
+export type Gender = 'male' | 'female' | 'unspecified';
+
 // eslint-disable-next-line react-refresh/only-export-components
 export const GOAL_LABELS: Record<Goal, string> = {
   lose_weight: 'Похудение',
@@ -19,7 +21,15 @@ export const GOAL_LABELS: Record<Goal, string> = {
   maintain: 'Поддержание формы',
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
+export const GENDER_LABELS: Record<Gender, string> = {
+  male: 'Мужской',
+  female: 'Женский',
+  unspecified: 'Не указан',
+};
+
 const GOAL_OPTIONS = Object.entries(GOAL_LABELS) as [Goal, string][];
+const GENDER_OPTIONS = Object.entries(GENDER_LABELS) as [Gender, string][];
 
 export interface ProfileData {
   username: string;
@@ -28,6 +38,7 @@ export interface ProfileData {
   weight: string;
   height: string;
   goal: Goal | '';
+  gender: Gender;
 }
 
 const rowStyle: React.CSSProperties = {
@@ -145,6 +156,27 @@ export const PersonalDataCard: React.FC<Props> = ({
         )}
       </div>
     ))}
+
+    <div style={rowStyle}>
+      <span style={{ color: 'var(--muted)', fontSize: 14 }}>Пол</span>
+      {isEditing ? (
+        <select value={draft.gender} onChange={e => onDraftChange({ ...draft, gender: e.target.value as Gender })}
+          style={{
+            background: 'var(--surface2)', color: 'var(--text)',
+            border: '1px solid var(--border2)',
+            borderRadius: 8, padding: '6px 10px', fontSize: 14, outline: 'none', width: 180, cursor: 'pointer',
+          }}
+        >
+          {GENDER_OPTIONS.map(([key, label]) => (
+            <option key={key} value={key}>{label}</option>
+          ))}
+        </select>
+      ) : (
+        <span style={{ color: profile.gender && profile.gender !== 'unspecified' ? 'var(--text)' : 'var(--ghost)', fontSize: 14 }}>
+          {profile.gender && profile.gender !== 'unspecified' ? GENDER_LABELS[profile.gender] : '— не указано'}
+        </span>
+      )}
+    </div>
 
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0' }}>
       <span style={{ color: 'var(--muted)', fontSize: 14 }}>Цель</span>

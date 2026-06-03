@@ -165,7 +165,7 @@ export const MainLayout = () => {
                 color: 'var(--ghost)', fontSize: 11,
                 textAlign: 'center',
               }}>
-                MVP v0.1
+                v1.0
               </div>
             </aside>
           )}

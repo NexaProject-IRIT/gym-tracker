@@ -186,6 +186,195 @@ const AI_TIPS: { hint: string; prompt: string }[] = [
   },
 ];
 
+// ─── Скелетон главной ───────────────────────────────────────────────────
+// Показывается при первой загрузке (когда ещё нет ни одной тренировки в кэше).
+// Зеркалит layout страницы: шапка-приветствие, сводка тренировки, цитата,
+// карта статистики, сетка активности и бар-чарт по неделям.
+
+const HomeSkeleton: React.FC<{ greeting: string; userName: string; isMobile: boolean }> = ({
+  greeting, userName, isMobile,
+}) => {
+  const skBase: React.CSSProperties = {
+    background: 'linear-gradient(90deg, var(--surface) 25%, var(--border2) 50%, var(--surface) 75%)',
+    backgroundSize: '200% 100%',
+    animation: 'sk-shimmer 1.4s ease-in-out infinite',
+    borderRadius: 6,
+  };
+  const wrapMaxWidth = 760;
+  const sidePad = isMobile ? 20 : 32;
+
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', paddingBottom: 80 }}>
+      <style>{`@keyframes sk-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }`}</style>
+      <div style={{ maxWidth: wrapMaxWidth, margin: '0 auto', padding: `${isMobile ? 28 : 44}px ${sidePad}px 0` }}>
+
+        {/* Приветствие — без скелетона: имя берётся из localStorage и доступно сразу */}
+        <header style={{ marginBottom: 22 }}>
+          <h1 style={{
+            margin: 0, fontSize: isMobile ? 30 : 38, fontWeight: 700,
+            letterSpacing: '-0.03em', lineHeight: 1.05, color: 'var(--text)',
+          }}>
+            {greeting},<br />
+            <span style={{
+              background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%)',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+            }}>{userName || 'спортсмен'}</span>
+          </h1>
+        </header>
+
+        {/* WorkoutSummaryWidget placeholder */}
+        <div style={{
+          background: 'var(--surface)', border: '1px solid var(--border2)',
+          borderRadius: 28, padding: 24, marginBottom: 18,
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+            <div style={{ ...skBase, width: 130, height: 24, borderRadius: 999 }} />
+            <div style={{ ...skBase, width: 90, height: 18 }} />
+          </div>
+          <div style={{ display: 'flex', gap: 16 }}>
+            <div style={{ ...skBase, width: 9, height: 34, borderRadius: 6, flexShrink: 0 }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ ...skBase, width: '60%', height: 22, marginBottom: 8 }} />
+              <div style={{ ...skBase, width: '40%', height: 14 }} />
+            </div>
+          </div>
+          <div style={{
+            marginTop: 18,
+            background: 'var(--surface2)', borderRadius: 18, padding: 16,
+          }}>
+            <div style={{ ...skBase, width: '70%', height: 14, marginBottom: 10 }} />
+            <div style={{ ...skBase, width: '45%', height: 12 }} />
+          </div>
+        </div>
+
+        {/* Цитата */}
+        <div style={{
+          position: 'relative',
+          background: 'var(--surface)', border: '1px solid var(--border2)',
+          borderRadius: 20, padding: isMobile ? '18px 18px 18px 20px' : '20px 22px',
+          marginBottom: 18, overflow: 'hidden',
+        }}>
+          <div style={{
+            position: 'absolute', top: 16, bottom: 16, left: 0,
+            width: 3, borderRadius: 4,
+            background: 'linear-gradient(180deg, var(--accent), var(--accent2))',
+          }} />
+          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+            <div style={{ ...skBase, width: 28, height: 28, borderRadius: 8, flexShrink: 0 }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ ...skBase, width: '95%', height: 14, marginBottom: 6 }} />
+              <div style={{ ...skBase, width: '78%', height: 14, marginBottom: 12 }} />
+              <div style={{ ...skBase, width: 110, height: 10 }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Опциональные кнопки (повтор + AI) */}
+        <div style={{ marginBottom: 28 }}>
+          <div style={{ ...skBase, height: 44, borderRadius: 14, marginBottom: 10 }} />
+          <div style={{ ...skBase, height: 54, borderRadius: 14 }} />
+        </div>
+
+        {/* Статистика 3 ячейки */}
+        <div style={{
+          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+          borderTop: '1px solid var(--border)',
+          borderBottom: '1px solid var(--border)',
+          marginBottom: 36,
+        }}>
+          {[0, 1, 2].map(i => (
+            <div key={i} style={{
+              padding: '14px 14px 16px',
+              borderRight: i < 2 ? '1px solid var(--border)' : 'none',
+              minWidth: 0,
+            }}>
+              <div style={{ ...skBase, width: 60, height: 11, marginBottom: 10 }} />
+              <div style={{ ...skBase, width: 48, height: 28, borderRadius: 6 }} />
+            </div>
+          ))}
+        </div>
+
+        {/* Сетка активности */}
+        <section style={{ marginBottom: 36 }}>
+          <div style={{
+            display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+            marginBottom: 14,
+          }}>
+            <div style={{ ...skBase, width: 180, height: 13 }} />
+            <div style={{ ...skBase, width: 90, height: 11 }} />
+          </div>
+          {/* Подписи дней недели */}
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)',
+            gap: isMobile ? 6 : 8, marginBottom: 8,
+          }}>
+            {Array.from({ length: 7 }).map((_, i) => (
+              <div key={i} style={{ ...skBase, width: '60%', height: 10, margin: '0 auto', borderRadius: 4 }} />
+            ))}
+          </div>
+          {/* 5 строк × 7 клеток */}
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)',
+            gap: isMobile ? 6 : 8,
+          }}>
+            {Array.from({ length: 35 }).map((_, i) => (
+              <div key={i} style={{
+                ...skBase,
+                aspectRatio: '1 / 1',
+                borderRadius: isMobile ? 8 : 10,
+              }} />
+            ))}
+          </div>
+          {/* Легенда */}
+          <div style={{
+            display: 'flex', justifyContent: 'flex-end',
+            gap: 6, marginTop: 12, alignItems: 'center',
+          }}>
+            <div style={{ ...skBase, width: 48, height: 10 }} />
+            <div style={{ ...skBase, width: 11, height: 11, borderRadius: 3 }} />
+            <div style={{ ...skBase, width: 11, height: 11, borderRadius: 3 }} />
+            <div style={{ ...skBase, width: 11, height: 11, borderRadius: 3 }} />
+            <div style={{ ...skBase, width: 48, height: 10 }} />
+          </div>
+        </section>
+
+        {/* Bar chart по неделям */}
+        <section style={{ marginBottom: 24 }}>
+          <div style={{
+            display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+            marginBottom: 16,
+          }}>
+            <div style={{ ...skBase, width: 220, height: 13 }} />
+            <div style={{ ...skBase, width: 70, height: 11 }} />
+          </div>
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)',
+            gap: 6, alignItems: 'flex-end',
+            height: isMobile ? 130 : 140,
+          }}>
+            {[55, 75, 40, 90, 30, 65, 50, 80].map((h, i) => (
+              <div key={i} style={{
+                ...skBase,
+                height: `${h}%`,
+                borderRadius: 4,
+              }} />
+            ))}
+          </div>
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)',
+            gap: 0, marginTop: 6,
+          }}>
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} style={{ ...skBase, width: '60%', height: 10, margin: '0 auto', borderRadius: 4 }} />
+            ))}
+          </div>
+        </section>
+
+      </div>
+    </div>
+  );
+};
+
 // ─── главный компонент ───────────────────────────────────────────────────
 export const HomePage = () => {
   const navigate = useNavigate();
@@ -322,6 +511,13 @@ export const HomePage = () => {
     setRepeatingId(null);
     if (newId) navigate(`/workouts/${newId}`);
   };
+
+  // Первичная загрузка (нет ни одной тренировки в кэше) — показываем скелетон,
+  // чтобы layout не «прыгал» из-за пустого WorkoutSummaryWidget, нулевых
+  // статистик и пустого календаря активности.
+  if (loading && workouts.length === 0) {
+    return <HomeSkeleton greeting={greeting} userName={userName} isMobile={isMobile} />;
+  }
 
   // ─── стили (инлайн в JSX ниже) ─────────────────────────────────────
   const wrapMaxWidth = 760;

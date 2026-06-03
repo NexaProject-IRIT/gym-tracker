@@ -3,9 +3,11 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { authedFetch, clearTokens } from '../utils/api';
 import { apiFetch, ApiError } from '../lib/api';
 import { useWorkoutsContext } from '../contexts/WorkoutsContext';
-import { PersonalDataCard, type ProfileData, type Goal } from '../components/Profile/PersonalDataCard';
+import { PersonalDataCard, type ProfileData, type Goal, type Gender } from '../components/Profile/PersonalDataCard';
 import { DataActionsCard } from '../components/Profile/DataActionsCard';
 import { ThemeSettingsCard } from '../components/Profile/ThemeSettingsCard';
+import { ChangePasswordCard } from '../components/Profile/ChangePasswordCard';
+import { AboutCard } from '../components/Profile/AboutCard';
 import { ConfirmModal } from '../components/Profile/ConfirmModal';
 import { ProfileHeroCard } from '../components/Profile/ProfileHeroCard';
 
@@ -21,9 +23,135 @@ interface ProfileApiResponse {
   weight?: number | null;
   height?: number | null;
   goal?: string;
+  gender?: string;
 }
 
+// ─── Полный скелетон страницы профиля ──────────────────────────────────
+// Используется пока грузится /auth/profile/. Зеркалит layout всех блоков:
+// hero, личные данные (6 строк), тема, действия и кнопка выхода.
+
+const ProfileSkeleton: React.FC = () => {
+  const skBase: React.CSSProperties = {
+    background: 'linear-gradient(90deg, var(--surface) 25%, var(--border2) 50%, var(--surface) 75%)',
+    backgroundSize: '200% 100%',
+    animation: 'sk-shimmer 1.4s ease-in-out infinite',
+    borderRadius: 6,
+  };
+  const cardStyle: React.CSSProperties = {
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 16,
+    padding: 24,
+    marginBottom: 16,
+  };
+  const rowStyle: React.CSSProperties = {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    padding: '14px 0', borderBottom: '1px solid var(--border)',
+  };
+
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', padding: '48px 24px', maxWidth: 600, margin: '0 auto' }}>
+      <style>{`@keyframes sk-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }`}</style>
+
+      {/* Hero */}
+      <div style={{
+        width: '100%', maxWidth: 560, margin: '0 auto 32px',
+        background: 'var(--bg)', border: '1px solid var(--border)',
+        borderRadius: 26, padding: 28,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 24 }}>
+          <div style={{ ...skBase, width: 80, height: 80, borderRadius: '50%', flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ ...skBase, width: '70%', height: 22, marginBottom: 8 }} />
+            <div style={{ ...skBase, width: '40%', height: 14, marginBottom: 10 }} />
+            <div style={{ ...skBase, width: 120, height: 18, borderRadius: 999 }} />
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ ...skBase, height: 68, borderRadius: 16 }} />
+          <div style={{ ...skBase, height: 68, borderRadius: 16 }} />
+        </div>
+      </div>
+
+      {/* Личные данные */}
+      <div style={cardStyle}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div style={{ ...skBase, width: 110, height: 12 }} />
+          <div style={{ ...skBase, width: 130, height: 30, borderRadius: 20 }} />
+        </div>
+        {['Логин', 'Имя', 'Возраст', 'Вес', 'Рост', 'Пол'].map((_, i) => (
+          <div key={i} style={rowStyle}>
+            <div style={{ ...skBase, width: 90 + (i * 13) % 40, height: 13 }} />
+            <div style={{ ...skBase, width: 110 + (i * 7) % 50, height: 14 }} />
+          </div>
+        ))}
+        {/* Цель — без нижнего бордера */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0' }}>
+          <div style={{ ...skBase, width: 50, height: 13 }} />
+          <div style={{ ...skBase, width: 140, height: 14 }} />
+        </div>
+      </div>
+
+      {/* Внешний вид */}
+      <div style={cardStyle}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div style={{ ...skBase, width: 120, height: 12 }} />
+          <div style={{ ...skBase, width: 100, height: 12 }} />
+        </div>
+        <div style={{
+          display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4,
+          background: 'var(--surface2)', border: '1px solid var(--border)',
+          borderRadius: 12, padding: 4,
+        }}>
+          <div style={{ ...skBase, height: 38, borderRadius: 9 }} />
+          <div style={{ ...skBase, height: 38, borderRadius: 9 }} />
+        </div>
+      </div>
+
+      {/* Безопасность (пароль) */}
+      <div style={cardStyle}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ ...skBase, width: 110, height: 12, marginBottom: 6 }} />
+            <div style={{ ...skBase, width: 140, height: 14 }} />
+          </div>
+          <div style={{ ...skBase, width: 130, height: 30, borderRadius: 20 }} />
+        </div>
+      </div>
+
+      {/* Данные (кнопки экспорта/очистки) */}
+      <div style={cardStyle}>
+        <div style={{ ...skBase, width: 70, height: 12, marginBottom: 16 }} />
+        <div style={{ ...skBase, height: 46, borderRadius: 12, marginBottom: 10 }} />
+        <div style={{ ...skBase, height: 46, borderRadius: 12 }} />
+      </div>
+
+      {/* О команде */}
+      <div style={cardStyle}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ ...skBase, width: 32, height: 32, borderRadius: 8, flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ ...skBase, width: 120, height: 13, marginBottom: 6 }} />
+            <div style={{ ...skBase, width: 150, height: 11 }} />
+          </div>
+          <div style={{ ...skBase, width: 90, height: 12 }} />
+        </div>
+      </div>
+
+      {/* Кнопка выхода */}
+      <div style={{ ...skBase, height: 46, borderRadius: 12 }} />
+
+      <div style={{ textAlign: 'center', marginTop: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+        <img src="/favicon.png" alt="GymLog" style={{ width: 20, height: 20, borderRadius: 6, display: 'block', opacity: 0.5 }} />
+        <span style={{ color: 'var(--ghost)', fontSize: 12 }}>GymLog v1.0</span>
+      </div>
+    </div>
+  );
+};
+
 function readProfileFromResponse(data: ProfileApiResponse): ProfileData {
+  const rawGender = (data.gender as Gender) || 'unspecified';
+  const gender: Gender = rawGender === 'male' || rawGender === 'female' ? rawGender : 'unspecified';
   return {
     username: data.username ?? '',
     displayName: data.display_name ?? data.username ?? '',
@@ -31,6 +159,7 @@ function readProfileFromResponse(data: ProfileApiResponse): ProfileData {
     weight: data.weight != null ? String(data.weight) : '',
     height: data.height != null ? String(data.height) : '',
     goal: (data.goal as Goal) || '',
+    gender,
   };
 }
 
@@ -43,7 +172,7 @@ export const ProfilePage = () => {
   const [exporting, setExporting] = useState(false);
   const [clearing, setClearing] = useState(false);
   const showClearConfirm = (location.state as { modal?: string } | null)?.modal === 'confirm';
-  const [profile, setProfile] = useState<ProfileData>({ username: '', displayName: '', age: '', weight: '', height: '', goal: '' });
+  const [profile, setProfile] = useState<ProfileData>({ username: '', displayName: '', age: '', weight: '', height: '', goal: '', gender: 'unspecified' });
   const [draft, setDraft] = useState<ProfileData>(profile);
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [stats, setStats] = useState<Stats>({ total: 0, this_month: 0 });
@@ -129,6 +258,7 @@ export const ProfilePage = () => {
       if (draft.weight) body.weight = parseFloat(draft.weight);
       if (draft.age) body.age = parseInt(draft.age);
       if (draft.goal) body.goal = draft.goal;
+      if (draft.gender !== profile.gender) body.gender = draft.gender;
 
       const data = await apiFetch<ProfileApiResponse>('/auth/profile/', { method: 'PATCH', body: JSON.stringify(body) });
       const p = readProfileFromResponse(data);
@@ -187,47 +317,26 @@ export const ProfilePage = () => {
     navigate('/login');
   };
 
-  const skBase: React.CSSProperties = {
-    background: 'linear-gradient(90deg, var(--surface) 25%, var(--border2) 50%, var(--surface) 75%)',
-    backgroundSize: '200% 100%',
-    animation: 'sk-shimmer 1.4s ease-in-out infinite',
-    borderRadius: 6,
-  };
+  // Пока грузится профиль — отдаём полноценный скелетон. После загрузки
+  // все блоки получают реальные данные одним проходом, без «прыжков» строк
+  // и «— не задано» плейсхолдеров.
+  if (!profileLoaded) {
+    return <ProfileSkeleton />;
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', padding: '48px 24px', maxWidth: 600, margin: '0 auto' }}>
       <style>{`@keyframes sk-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }`}</style>
 
-      {profileLoaded ? (
-        <div style={{ marginBottom: 32 }}>
-          <ProfileHeroCard
-            name={profile.displayName || profile.username || ''}
-            username={profile.username || ''}
-            streak={weeklyStreak}
-            totalLabel={statsLoaded ? String(stats.total) : null}
-            thisMonth={statsLoaded ? stats.this_month : null}
-          />
-        </div>
-      ) : (
-        <div style={{
-          width: '100%', maxWidth: 560, margin: '0 auto 32px',
-          background: 'var(--bg)', border: '1px solid var(--border)',
-          borderRadius: 26, padding: 28,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 24 }}>
-            <div style={{ ...skBase, width: 80, height: 80, borderRadius: '50%', flexShrink: 0 }} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ ...skBase, width: '70%', height: 22, marginBottom: 8 }} />
-              <div style={{ ...skBase, width: '40%', height: 14, marginBottom: 10 }} />
-              <div style={{ ...skBase, width: 120, height: 18, borderRadius: 999 }} />
-            </div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div style={{ ...skBase, height: 68, borderRadius: 16 }} />
-            <div style={{ ...skBase, height: 68, borderRadius: 16 }} />
-          </div>
-        </div>
-      )}
+      <div style={{ marginBottom: 32 }}>
+        <ProfileHeroCard
+          name={profile.displayName || profile.username || ''}
+          username={profile.username || ''}
+          streak={weeklyStreak}
+          totalLabel={statsLoaded ? String(stats.total) : null}
+          thisMonth={statsLoaded ? stats.this_month : null}
+        />
+      </div>
 
       <PersonalDataCard
         profile={profile}
@@ -244,12 +353,16 @@ export const ProfilePage = () => {
 
       <ThemeSettingsCard />
 
+      <ChangePasswordCard />
+
       <DataActionsCard
         exporting={exporting}
         clearing={clearing}
         onExport={handleExport}
         onClearRequest={() => navigate('.', { state: { modal: 'confirm' } })}
       />
+
+      <AboutCard />
 
       <button onClick={handleLogout} style={{
         width: '100%', padding: '14px', borderRadius: 12,
@@ -261,7 +374,7 @@ export const ProfilePage = () => {
 
       <div style={{ textAlign: 'center', marginTop: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
         <img src="/favicon.png" alt="GymLog" style={{ width: 20, height: 20, borderRadius: 6, display: 'block' }} />
-        <span style={{ color: 'var(--ghost)', fontSize: 12 }}>GymLog MVP v0.1</span>
+        <span style={{ color: 'var(--ghost)', fontSize: 12 }}>GymLog v1.0</span>
       </div>
 
       {showClearConfirm && (

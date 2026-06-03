@@ -11,10 +11,11 @@ class RegisterSerializer(serializers.ModelSerializer):
     weight = serializers.FloatField(write_only=True, required=False, allow_null=True)
     age = serializers.IntegerField(write_only=True, required=False, allow_null=True)
     goal = serializers.ChoiceField(choices=UserProfile.GOAL_CHOICES, required=False, default='maintain')
+    gender = serializers.ChoiceField(choices=UserProfile.GENDER_CHOICES, required=False, default='unspecified')
 
     class Meta:
         model = User
-        fields = ('username', 'password', 'password2', 'height', 'weight', 'age', 'goal')
+        fields = ('username', 'password', 'password2', 'height', 'weight', 'age', 'goal', 'gender')
 
     def validate_username(self, value):
         if User.objects.filter(username__iexact=value).exists():
@@ -32,6 +33,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         weight = validated_data.pop('weight', None)
         age = validated_data.pop('age', None)
         goal = validated_data.pop('goal', 'maintain')
+        gender = validated_data.pop('gender', 'unspecified')
 
         user = User.objects.create(username=validated_data['username'])
         user.set_password(validated_data['password'])
@@ -45,6 +47,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         if age is not None:
             profile.age = age
         profile.goal = goal
+        profile.gender = gender
         profile.save()
 
         return user
@@ -56,10 +59,11 @@ class UserSerializer(serializers.ModelSerializer):
     weight = serializers.FloatField(source='profile.weight', read_only=True)
     age = serializers.IntegerField(source='profile.age', read_only=True)
     goal = serializers.CharField(source='profile.goal', read_only=True)
+    gender = serializers.CharField(source='profile.gender', read_only=True)
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'display_name', 'height', 'weight', 'age', 'goal')
+        fields = ('id', 'username', 'display_name', 'height', 'weight', 'age', 'goal', 'gender')
 
     def get_display_name(self, obj):
         return obj.first_name if obj.first_name else obj.username
@@ -72,10 +76,11 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
     weight = serializers.FloatField(required=False, allow_null=True)
     age = serializers.IntegerField(required=False, allow_null=True)
     goal = serializers.ChoiceField(choices=UserProfile.GOAL_CHOICES, required=False)
+    gender = serializers.ChoiceField(choices=UserProfile.GENDER_CHOICES, required=False)
 
     class Meta:
         model = UserProfile
-        fields = ('username', 'display_name', 'height', 'weight', 'age', 'goal')
+        fields = ('username', 'display_name', 'height', 'weight', 'age', 'goal', 'gender')
 
     def validate_username(self, value):
         current_user = self.instance.user

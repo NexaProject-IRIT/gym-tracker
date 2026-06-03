@@ -14,11 +14,18 @@ class UserProfile(models.Model):
         ('maintain', 'Поддержание формы'),
     ]
 
+    GENDER_CHOICES = [
+        ('male', 'Мужской'),
+        ('female', 'Женский'),
+        ('unspecified', 'Не указан'),
+    ]
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     height = models.FloatField(verbose_name='Рост (см)', null=True, blank=True)
     weight = models.FloatField(verbose_name='Вес (кг)', null=True, blank=True)
     age = models.IntegerField(verbose_name='Возраст', null=True, blank=True)
     goal = models.CharField(verbose_name='Цель тренировок', max_length=50, choices=GOAL_CHOICES, default='maintain')
+    gender = models.CharField(verbose_name='Пол', max_length=20, choices=GENDER_CHOICES, default='unspecified')
     created_at = models.DateField(auto_now_add=True)
     updated_at = models.DateField(auto_now=True)
 

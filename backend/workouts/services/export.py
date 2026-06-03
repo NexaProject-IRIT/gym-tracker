@@ -32,6 +32,27 @@ def format_number(value: Any) -> str:
     return str(value)
 
 
+def format_duration(seconds: Any) -> str:
+    """
+    Поле `time` хранится в СЕКУНДАХ (см. WorkoutExercise.time).
+    Превращаем в человекочитаемую строку с правильным падежом.
+    """
+    try:
+        total = int(seconds)
+    except (TypeError, ValueError):
+        return ""
+    if total <= 0:
+        return ""
+    if total < 60:
+        return f"{total} {pluralize(total, ('секунда', 'секунды', 'секунд'))}"
+    minutes, secs = divmod(total, 60)
+    minutes_str = f"{minutes} {pluralize(minutes, ('минута', 'минуты', 'минут'))}"
+    if secs == 0:
+        return minutes_str
+    secs_str = f"{secs} {pluralize(secs, ('секунда', 'секунды', 'секунд'))}"
+    return f"{minutes_str} {secs_str}"
+
+
 def parse_date(date_value: Any) -> datetime | None:
     if isinstance(date_value, datetime):
         dt = date_value
@@ -88,8 +109,9 @@ def build_exercise_stats_line(exercise: dict) -> str:
     if weight not in (None, "", 0):
         parts.append(f"{format_number(weight)} кг")
     elif reps in (None, 0) and time_value not in (None, "", 0):
-        time_value = int(time_value)
-        parts.append(f"{time_value} {pluralize(time_value, ('минута', 'минуты', 'минут'))}")
+        duration = format_duration(time_value)
+        if duration:
+            parts.append(duration)
 
     return " х ".join(parts)
 

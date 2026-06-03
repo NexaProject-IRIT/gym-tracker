@@ -338,7 +338,8 @@ class WorkoutViewSet(viewsets.ModelViewSet):
                 if ex.distance:
                     total_distance += float(ex.distance)
                 if ex.time:
-                    total_time += int(ex.time)
+                    time_multiplier = int(ex.sets) if ex.sets and int(ex.sets) > 0 else 1
+                    total_time += int(ex.time) * time_multiplier
 
             iso_date = w.date.isoformat()
             if total_tonnage > 0:

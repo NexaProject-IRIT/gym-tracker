@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import React from 'react';
 import { NumberStepper } from '../components/UI/NumberStepper';
@@ -25,6 +25,8 @@ type Goal =
   | 'improve_endurance'
   | 'increase_strength'
   | 'maintain';
+
+type Gender = 'male' | 'female' | 'unspecified';
 
 const GOAL_OPTIONS: { value: Goal; label: string; icon: React.ReactNode }[] = [
   { value: 'lose_weight', label: 'Похудение', icon: (
@@ -59,6 +61,12 @@ const GOAL_OPTIONS: { value: Goal; label: string; icon: React.ReactNode }[] = [
   )},
 ];
 
+const GENDER_OPTIONS: { value: Gender; label: string }[] = [
+  { value: 'male', label: 'Мужской' },
+  { value: 'female', label: 'Женский' },
+  { value: 'unspecified', label: 'Не указан' },
+];
+
 interface AccountForm {
   login: string;
   password: string;
@@ -70,6 +78,7 @@ interface BodyForm {
   weight: string;
   age: string;
   goal: Goal | '';
+  gender: Gender;
 }
 
 interface AccountErrors {
@@ -86,30 +95,64 @@ interface BodyErrors {
   api?: string;
 }
 
+const MIN_PASSWORD_LENGTH = 6;
+
 export const RegisterPage = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>('account');
 
   const [account, setAccount] = useState<AccountForm>({ login: '', password: '', confirmPassword: '' });
-  const [body, setBody] = useState<BodyForm>({ height: '', weight: '', age: '', goal: '' });
+  const [body, setBody] = useState<BodyForm>({ height: '', weight: '', age: '', goal: '', gender: 'unspecified' });
   const [accountErrors, setAccountErrors] = useState<AccountErrors>({});
   const [bodyErrors, setBodyErrors] = useState<BodyErrors>({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const validateAccount = (): boolean => {
-    const e: AccountErrors = {};
-    if (!account.login.trim()) e.login = 'Введите логин';
-    else if (account.login.length < 3) e.login = 'Минимум 3 символа';
-    if (!account.password) e.password = 'Введите пароль';
-    else if (account.password.length < 10) e.password = 'Минимум 10 символов';
-    else if (!/\d/.test(account.password)) e.password = 'Пароль должен содержать хотя бы одну цифру';
-    if (!account.confirmPassword) e.confirmPassword = 'Повторите пароль';
-    else if (account.password !== account.confirmPassword) e.confirmPassword = 'Пароли не совпадают';
-    setAccountErrors(e);
-    return Object.keys(e).length === 0;
-  };
+  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'short'>('idle');
+  const usernameCheckRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const login = account.login.trim();
+    if (usernameCheckRef.current) window.clearTimeout(usernameCheckRef.current);
+
+    if (!login) { setUsernameStatus('idle'); return; }
+    if (login.length < 3) { setUsernameStatus('short'); return; }
+
+    setUsernameStatus('checking');
+    usernameCheckRef.current = window.setTimeout(async () => {
+      try {
+        const res = await fetch(`/auth/check-username/?username=${encodeURIComponent(login)}`);
+        if (!res.ok) return;
+        const data: { available: boolean } = await res.json();
+        setUsernameStatus(data.available ? 'available' : 'taken');
+      } catch {
+        setUsernameStatus('idle');
+      }
+    }, 400);
+
+    return () => { if (usernameCheckRef.current) window.clearTimeout(usernameCheckRef.current); };
+  }, [account.login]);
+
+  const passwordIssue: string | null = (() => {
+    if (!account.password) return null;
+    if (account.password.length < MIN_PASSWORD_LENGTH) return `Минимум ${MIN_PASSWORD_LENGTH} символов`;
+    if (/^\d+$/.test(account.password)) return 'Пароль не может состоять только из цифр';
+    return null;
+  })();
+
+  const confirmIssue: string | null = (() => {
+    if (!account.confirmPassword) return null;
+    if (account.password !== account.confirmPassword) return 'Пароли не совпадают';
+    return null;
+  })();
+
+  const accountValid =
+    account.login.trim().length >= 3 &&
+    usernameStatus === 'available' &&
+    account.password.length >= MIN_PASSWORD_LENGTH &&
+    !passwordIssue &&
+    account.confirmPassword === account.password;
 
   const validateBody = (): boolean => {
     const e: BodyErrors = {};
@@ -127,7 +170,19 @@ export const RegisterPage = () => {
     return Object.keys(e).length === 0;
   };
 
-  const handleNextStep = () => { if (validateAccount()) setStep('body'); };
+  const handleNextStep = () => {
+    const e: AccountErrors = {};
+    if (!account.login.trim()) e.login = 'Введите логин';
+    else if (account.login.length < 3) e.login = 'Минимум 3 символа';
+    else if (usernameStatus === 'taken') e.login = 'Этот логин уже занят';
+    else if (usernameStatus === 'checking') e.login = 'Проверяем логин...';
+    if (!account.password) e.password = 'Введите пароль';
+    else if (passwordIssue) e.password = passwordIssue;
+    if (!account.confirmPassword) e.confirmPassword = 'Повторите пароль';
+    else if (confirmIssue) e.confirmPassword = confirmIssue;
+    setAccountErrors(e);
+    if (Object.keys(e).length === 0) setStep('body');
+  };
 
   const handleSubmit = async () => {
     if (!validateBody()) return;
@@ -145,6 +200,7 @@ export const RegisterPage = () => {
           weight: parseFloat(body.weight),
           age: body.age ? parseInt(body.age) : null,
           goal: body.goal || null,
+          gender: body.gender,
         }),
       });
       const data = await res.json();
@@ -167,6 +223,28 @@ export const RegisterPage = () => {
       setLoading(false);
     }
   };
+
+  const loginHint = (() => {
+    if (accountErrors.login) return { text: accountErrors.login, color: '#f87171' };
+    if (!account.login) return null;
+    if (usernameStatus === 'short') return { text: 'Минимум 3 символа', color: 'var(--faint)' };
+    if (usernameStatus === 'checking') return { text: 'Проверяем доступность...', color: 'var(--faint)' };
+    if (usernameStatus === 'taken') return { text: 'Этот логин уже занят', color: '#f87171' };
+    if (usernameStatus === 'available') return { text: 'Логин свободен', color: 'var(--accent2)' };
+    return null;
+  })();
+
+  const passwordHint = (() => {
+    if (accountErrors.password) return { text: accountErrors.password, color: '#f87171' };
+    if (passwordIssue) return { text: passwordIssue, color: '#f87171' };
+    return null;
+  })();
+
+  const confirmHint = (() => {
+    if (accountErrors.confirmPassword) return { text: accountErrors.confirmPassword, color: '#f87171' };
+    if (confirmIssue) return { text: confirmIssue, color: '#f87171' };
+    return null;
+  })();
 
   return (
     <div style={{
@@ -224,12 +302,17 @@ export const RegisterPage = () => {
               <Field
                 label="Логин" value={account.login}
                 onChange={v => setAccount(f => ({ ...f, login: v }))}
-                error={accountErrors.login} placeholder="Придумайте логин"
+                hint={loginHint} placeholder="Придумайте логин"
+                rightEl={usernameStatus === 'available' ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                ) : null}
               />
               <Field
                 label="Пароль" value={account.password}
                 onChange={v => setAccount(f => ({ ...f, password: v }))}
-                error={accountErrors.password} placeholder="Минимум 10 символов, хотя бы одна цифра"
+                hint={passwordHint} placeholder={`Минимум ${MIN_PASSWORD_LENGTH} символов`}
                 type={showPassword ? 'text' : 'password'}
                 rightEl={
                   <button onClick={() => setShowPassword(s => !s)}
@@ -242,7 +325,7 @@ export const RegisterPage = () => {
               <Field
                 label="Повтор пароля" value={account.confirmPassword}
                 onChange={v => setAccount(f => ({ ...f, confirmPassword: v }))}
-                error={accountErrors.confirmPassword} placeholder="Повторите пароль"
+                hint={confirmHint} placeholder="Повторите пароль"
                 type={showConfirm ? 'text' : 'password'}
                 rightEl={
                   <button onClick={() => setShowConfirm(s => !s)}
@@ -251,12 +334,19 @@ export const RegisterPage = () => {
                   </button>
                 }
               />
-              <button onClick={handleNextStep} style={{
-                width: '100%', padding: '14px', borderRadius: 12, border: 'none',
-                background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
-                color: 'var(--accent-fg)', fontWeight: 700, fontSize: 15, cursor: 'pointer',
-                marginTop: 8, transition: 'opacity 0.15s',
-              }}>
+              <button
+                onClick={handleNextStep}
+                disabled={!accountValid}
+                style={{
+                  width: '100%', padding: '14px', borderRadius: 12, border: 'none',
+                  background: accountValid
+                    ? 'linear-gradient(135deg, var(--accent), var(--accent2))'
+                    : 'var(--border)',
+                  color: accountValid ? 'var(--accent-fg)' : 'var(--faint)',
+                  fontWeight: 700, fontSize: 15,
+                  cursor: accountValid ? 'pointer' : 'not-allowed',
+                  marginTop: 8, transition: 'all 0.15s',
+                }}>
                 Далее →
               </button>
             </>
@@ -284,6 +374,28 @@ export const RegisterPage = () => {
                 <label style={{ fontSize: 12, color: 'var(--dim)', fontWeight: 500, display: 'block', marginBottom: 6 }}>Начальный вес (кг)</label>
                 <NumberStepper value={body.weight} onChange={v => setBody(f => ({ ...f, weight: v }))} step={0.5} min={20} max={500} placeholder="Например: 75" />
                 {bodyErrors.weight && <p style={{ margin: '4px 0 0', fontSize: 12, color: '#f87171' }}>{bodyErrors.weight}</p>}
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ fontSize: 12, color: 'var(--dim)', fontWeight: 500, display: 'block', marginBottom: 10 }}>Пол</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+                  {GENDER_OPTIONS.map(opt => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setBody(f => ({ ...f, gender: opt.value }))}
+                      style={{
+                        padding: '10px 8px', borderRadius: 10, cursor: 'pointer',
+                        border: `1.5px solid ${body.gender === opt.value ? 'var(--accent)' : 'var(--border)'}`,
+                        background: body.gender === opt.value ? 'var(--accent-a10)' : 'var(--surface2)',
+                        color: body.gender === opt.value ? 'var(--accent)' : 'var(--muted)',
+                        fontSize: 13, fontWeight: body.gender === opt.value ? 600 : 400,
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div style={{ marginBottom: 16 }}>
@@ -352,10 +464,12 @@ export const RegisterPage = () => {
 function getPasswordStrength(p: string): 0 | 1 | 2 | 3 {
   if (!p) return 0;
   const long = p.length >= 10;
+  const okLen = p.length >= 6;
   const hasDigit = /\d/.test(p);
   const hasSpecial = /[^a-zA-Z0-9]/.test(p);
   if (long && hasDigit && hasSpecial) return 3;
   if (long && hasDigit) return 2;
+  if (okLen) return 1;
   return 1;
 }
 
@@ -384,39 +498,42 @@ const PasswordStrength = ({ password }: { password: string }) => {
 };
 
 const Field = ({
-  label, value, onChange, error, placeholder, type = 'text', rightEl
+  label, value, onChange, hint, placeholder, type = 'text', rightEl
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
-  error?: string;
+  hint?: { text: string; color: string } | null;
   placeholder?: string;
   type?: string;
   rightEl?: React.ReactNode;
-}) => (
-  <div style={{ marginBottom: 16 }}>
-    <label style={{ fontSize: 12, color: 'var(--dim)', fontWeight: 500, display: 'block', marginBottom: 6 }}>
-      {label}
-    </label>
-    <div style={{ position: 'relative' }}>
-      <input
-        type={type} value={value} onChange={e => onChange(e.target.value)}
-        placeholder={placeholder}
-        style={{
-          width: '100%', background: 'var(--surface2)', color: 'var(--text)',
-          borderRadius: 10, padding: rightEl ? '10px 40px 10px 14px' : '10px 14px',
-          border: `1px solid ${error ? 'rgba(248,113,113,0.5)' : 'var(--border)'}`,
-          fontSize: 14, outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.15s',
-        }}
-        onFocus={e => (e.target.style.borderColor = error ? 'rgba(248,113,113,0.7)' : 'var(--accent-a25)')}
-        onBlur={e => (e.target.style.borderColor = error ? 'rgba(248,113,113,0.5)' : 'var(--border)')}
-      />
-      {rightEl && (
-        <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)' }}>
-          {rightEl}
-        </div>
-      )}
+}) => {
+  const isError = hint?.color === '#f87171';
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <label style={{ fontSize: 12, color: 'var(--dim)', fontWeight: 500, display: 'block', marginBottom: 6 }}>
+        {label}
+      </label>
+      <div style={{ position: 'relative' }}>
+        <input
+          type={type} value={value} onChange={e => onChange(e.target.value)}
+          placeholder={placeholder}
+          style={{
+            width: '100%', background: 'var(--surface2)', color: 'var(--text)',
+            borderRadius: 10, padding: rightEl ? '10px 40px 10px 14px' : '10px 14px',
+            border: `1px solid ${isError ? 'rgba(248,113,113,0.5)' : 'var(--border)'}`,
+            fontSize: 14, outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.15s',
+          }}
+          onFocus={e => (e.target.style.borderColor = isError ? 'rgba(248,113,113,0.7)' : 'var(--accent-a25)')}
+          onBlur={e => (e.target.style.borderColor = isError ? 'rgba(248,113,113,0.5)' : 'var(--border)')}
+        />
+        {rightEl && (
+          <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)' }}>
+            {rightEl}
+          </div>
+        )}
+      </div>
+      {hint && <p style={{ margin: '4px 0 0', fontSize: 12, color: hint.color }}>{hint.text}</p>}
     </div>
-    {error && <p style={{ margin: '4px 0 0', fontSize: 12, color: '#f87171' }}>{error}</p>}
-  </div>
-);
+  );
+};
